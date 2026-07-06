@@ -11,6 +11,49 @@ router = APIRouter(
     tags=["Users"]
 )
 
+# Bootstrap first owner
+@router.post("/bootstrap-owner/{setup_key}")
+def bootstrap_owner(
+    setup_key: str,
+    data: UserCreate
+):
+    db = SessionLocal()
+
+    # Secret setup key check
+    if setup_key != "pharmacore_setup_2026":
+        db.close()
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid setup key"
+        )
+
+    # Allow only if no users exist
+    existing_users = db.query(User).count()
+
+    if existing_users > 0:
+        db.close()
+        raise HTTPException(
+            status_code=403,
+            detail="Bootstrap disabled. Users already exist."
+        )
+
+    owner = User(
+        full_name=data.full_name,
+        username=data.username,
+        password=hash_password(data.password),
+        role="owner",
+        store_id=None
+    )
+
+    db.add(owner)
+    db.commit()
+    db.refresh(owner)
+    db.close()
+
+    return {
+        "message": "Owner account created successfully",
+        "user_id": owner.id
+    }
 
 # Create user (owner only)
 @router.post("/")

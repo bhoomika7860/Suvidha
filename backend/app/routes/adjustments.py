@@ -115,6 +115,31 @@ def approve_adjustment(
     adjustment.status = "approved"
 
     db.commit()
+    db.refresh(adjustment)
+
+    create_audit_log(
+        db=db,
+        user_id=adjustment.requested_by,
+        action="APPROVE",
+        table_name="adjustment_requests",
+        record_id=adjustment.id,
+        description="Approved adjustment request"
+    )
+
+    return {
+        "message": "Adjustment approved"
+    }
+
+    # Apply new value
+    setattr(
+        report,
+        adjustment.field_name,
+        adjustment.new_value
+    )
+
+    adjustment.status = "approved"
+
+    db.commit()
     create_audit_log(
     db=db,
     user_id=adjustment.requested_by,

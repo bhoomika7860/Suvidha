@@ -24,6 +24,9 @@ from app.routes import products
 from app.routes import analytics
 from app.models.task_target import TaskTarget
 from app.routes import task_targets
+from app.routes import export
+from app.models.purchase import Purchase
+from app.routes import purchase
 
 app = FastAPI()
 app.include_router(auth_router)
@@ -39,16 +42,15 @@ app.include_router(audit_logs.router)
 app.include_router(products.router)
 app.include_router(analytics.router)
 app.include_router(task_targets.router)
-
+app.include_router(export.router)
 Base.metadata.create_all(bind=engine)
+app.include_router(purchase.router)
 
-origins = [
-    "http://localhost:5173"
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

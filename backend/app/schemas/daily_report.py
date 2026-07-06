@@ -10,3 +10,4 @@ class DailyReportCreate(BaseModel):
     card_sales: float
     udhaar_sales: float
     total_expenses: float
+    total_purchases: float = 0
