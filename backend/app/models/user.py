@@ -16,6 +16,11 @@ class User(Base):
 
     store_id = Column(Integer, ForeignKey("stores.id"))
 
+    store = relationship(
+    "Store",
+    back_populates="users"
+)
+
     is_active = Column(Boolean, default=True)
 
     # Reports submitted by this user

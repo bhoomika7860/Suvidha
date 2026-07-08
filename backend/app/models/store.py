@@ -12,3 +12,7 @@ class Store(Base):
     address = Column(String)
     is_active = Column(Boolean, default=True)
     reports = relationship("DailyReport", back_populates="store")
+    users = relationship(
+    "User",
+    back_populates="store"
+)

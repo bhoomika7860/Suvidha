@@ -105,8 +105,24 @@ def get_user(
 
     # Owner can view anyone
     if current_user["role"] == "owner":
-        db.close()
-        return user
+     users = db.query(User).all()
+
+    result = []
+
+    for user in users:
+        result.append({
+            "id": user.id,
+            "full_name": user.full_name,
+            "username": user.username,
+            "role": user.role,
+            "is_active": user.is_active,
+            "store_id": user.store_id,
+            "store_name": user.store.name if user.store else None,
+        })
+
+    db.close()
+    return result
+
 
     # Staff can only view users from same store
     if user.store_id != current_user["store_id"]:
@@ -197,13 +213,40 @@ def get_users(
     # Owner sees all users
     if current_user["role"] == "owner":
         users = db.query(User).all()
+
+        result = []
+
+        for user in users:
+            result.append({
+                "id": user.id,
+                "full_name": user.full_name,
+                "username": user.username,
+                "role": user.role,
+                "is_active": user.is_active,
+                "store_id": user.store_id,
+                "store_name": user.store.name if user.store else None,
+            })
+
         db.close()
-        return users
+        return result
 
     # Staff sees only their own store users
     users = db.query(User).filter(
         User.store_id == current_user["store_id"]
     ).all()
 
+    result = []
+
+    for user in users:
+        result.append({
+            "id": user.id,
+            "full_name": user.full_name,
+            "username": user.username,
+            "role": user.role,
+            "is_active": user.is_active,
+            "store_id": user.store_id,
+            "store_name": user.store.name if user.store else None,
+        })
+
     db.close()
-    return users
+    return result

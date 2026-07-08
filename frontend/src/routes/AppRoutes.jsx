@@ -6,6 +6,7 @@ import LoginScreen from "../pages/auth/LoginScreen";
 import OwnerLayout from "../components/layout/OwnerLayout";
 import DailyReports from "../pages/owner/DailyReports";
 import Analytics from "../pages/analytics/Analytics";
+import StaffManagement from "../pages/staff_management/StaffManagement";
 
 function AppRoutes() {
   return (
@@ -55,9 +56,19 @@ function AppRoutes() {
   }
 />
       <Route path="/staff-dashboard" element={<StoreDashboard />} />
+
+      <Route
+  path="/staff"
+  element={
+    <OwnerLayout>
+      <StaffManagement />
+    </OwnerLayout>
+  }
+/>
     </Routes>
   );
 }
+
 
 
 
