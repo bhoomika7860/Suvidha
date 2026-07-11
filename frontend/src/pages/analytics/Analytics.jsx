@@ -234,6 +234,34 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     setRefreshing(false);
   }
 };
+
+const handleExportExcel = async () => {
+  try {
+    const blob = await analyticsService.exportExcel(
+      selectedPeriod,
+      selectedStore
+    );
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "PharmaCore360_Analytics.xlsx";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to export analytics.");
+  }
+};
+
 useEffect(() => {
   loadAnalytics();
 }, [selectedStore, selectedPeriod]);
@@ -309,7 +337,8 @@ console.log("Stores:", stores);
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <button onClick={handleExportExcel}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               <Download size={16} />
               Export Analytics
             </button>

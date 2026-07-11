@@ -1,6 +1,18 @@
-import api from "../api/api";
+import api from "../api/api"; 
 
 const analyticsService = {
+
+  exportExcel: async (period = "today", store = "all") => {
+  const response = await api.get("/analytics/export/excel", {
+    params: {
+      period,
+      store_id: store,
+    },
+    responseType: "blob",
+  });
+
+  return response.data;
+},
   getDashboardSummary: (period = "today", store = "all") =>
     api.get("/analytics/dashboard-summary", {
       params: {

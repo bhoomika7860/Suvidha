@@ -15,6 +15,11 @@ from app.models.expense import Expense
 from app.models.store import Store
 from app.models.udhaar_entry import UdhaarEntry
 
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from fastapi.responses import StreamingResponse
+from io import BytesIO
+
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
@@ -626,7 +631,70 @@ def performance(
     overview = analytics_overview(period, store_id, current_user, db)
 
     top_store = overview["top_stores"][0] if overview["top_stores"] else None
+@router.get("/export/excel")
+def export_analytics_excel(
+    period: str = "today",
+    store_id: str = "all",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    require_role(["owner"], current_user["role"])
 
+    overview = analytics_overview(period, store_id, current_user, db)
+
+    workbook = Workbook()
+
+    sheet = workbook.active
+    sheet.title = "Dashboard Summary"
+
+    headers = ["Metric", "Value"]
+
+    for column, header in enumerate(headers, start=1):
+        cell = sheet.cell(row=1, column=column)
+        cell.value = header
+        cell.font = Font(bold=True)
+
+    row = 2
+
+    for key, value in overview["kpis"].items():
+        sheet.cell(row=row, column=1).value = key.replace("_", " ").title()
+        sheet.cell(row=row, column=2).value = value
+        row += 1
+
+    store_sheet = workbook.create_sheet("Store Performance")
+
+    headers = [
+        "Store",
+        "Revenue",
+        "Bills",
+        "Growth (%)",
+    ]
+
+    for column, header in enumerate(headers, start=1):
+        cell = store_sheet.cell(row=1, column=column)
+        cell.value = header
+        cell.font = Font(bold=True)
+
+    row = 2
+
+    for store in overview["store_comparison"]:
+        store_sheet.cell(row=row, column=1).value = store["store_name"]
+        store_sheet.cell(row=row, column=2).value = store["revenue"]
+        store_sheet.cell(row=row, column=3).value = store["bills"]
+        store_sheet.cell(row=row, column=4).value = store["growth"]
+        row += 1
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": 'attachment; filename="PharmaCore360_Analytics.xlsx"'
+        },
+    )
     return [
         {
             "title": "Most Profitable Store",
