@@ -1,6 +1,6 @@
-import { api } from "./api";
+import api from "../api/api";
 
-export const analyticsService = {
+const analyticsService = {
   getDashboardSummary: (period = "today", store = "all") =>
     api.get("/analytics/dashboard-summary", {
       params: {
@@ -81,3 +81,5 @@ export const analyticsService = {
       },
     }).then((r) => r.data),
 };
+
+export default analyticsService;

@@ -38,10 +38,9 @@ import {
   Legend
 } from "recharts";
 import Card from "../../components/common/Card";
-import { analyticsService } from "../../services/analyticsService";
-import { api } from "../../services/api";
+import dashboardService from "../../services/dashboardService";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "../../hooks/useAuth";
 
 // ── data ────────────────────────────────────────────────────────────────────
 
@@ -346,14 +345,24 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 // ── Main App ─────────────────────────────────────────────────────────────────
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [salesData, setSalesData] = useState([]);
-
+const [loading, setLoading] = useState(true);
 const [comparisonData, setComparisonData] = useState([]);
   const [totalStores, setTotalStores] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
+  const { user } = useAuth();
+  console.log("Logged in user:", user);
   const [dashboardSummary, setDashboardSummary] = useState({
   total_sales: 0,
   total_purchases: 0,
@@ -364,51 +373,35 @@ const [comparisonData, setComparisonData] = useState([]);
 const [storeSummary, setStoreSummary] = useState([]);
 console.log("STORE SUMMARY STATE:", storeSummary);
 useEffect(() => {
-  const fetchDashboardSummary = async () => {
+  const loadDashboard = async () => {
     try {
-      // Dashboard KPI data
-      const data = await analyticsService.getDashboardSummary();
-console.log("DASHBOARD DATA:", data); 
-      console.log("Dashboard API:", data);
-      console.log("TOKEN:", localStorage.getItem("token"));
-      setDashboardSummary(data);
+      setLoading(true);
 
-      // Total stores
-      const stores = await api.get("/stores");
-      console.log("STORES API:", stores.data);
-      setTotalStores(stores.data.length);
+      const data = await dashboardService.getDashboardData();
 
-      // Store-wise analytics
-      const storeData = await analyticsService.getStoreSummary();
-      console.log("STORE DATA RECEIVED:", storeData);
-
-      setStoreSummary(storeData);
-
-      // Pie chart data
-      const formattedSales = storeData.map((store) => ({
-        name: store.store_name,
-        value: store.total_sales,
-      }));
-
-      setSalesData(formattedSales);
-
-      // Bar chart data
-      const formattedComparison = storeData.map((store) => ({
-        store: store.store_name,
-        sales: store.total_sales,
-        purchases: store.total_purchases,
-      }));
-
-      setComparisonData(formattedComparison);
+      setDashboardSummary(data.summary);
+      setTotalStores(data.totalStores);
+      setStoreSummary(data.storeSummary);
+      setSalesData(data.salesData);
+      setComparisonData(data.comparisonData);
 
     } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  fetchDashboardSummary();
+  loadDashboard();
 }, []);
   
+if (loading) {
+  return (
+    <div className="flex items-center justify-center h-full text-lg font-medium text-slate-600">
+      Loading dashboard...
+    </div>
+  );
+}
 
  return (
   <main
@@ -434,8 +427,8 @@ console.log("DASHBOARD DATA:", data);
 
     {/* Greeting */}
     <h1 className="text-2xl font-bold text-[#0F172A] mt-2 leading-tight">
-      Good Evening, Owner
-    </h1>
+  {getGreeting()}, {user?.full_name || "User"}
+</h1>
 
     {/* Subtitle */}
     <p className="text-base text-[#64748B] mt-2">

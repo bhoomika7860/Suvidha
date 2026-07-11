@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 
 export function useAuth() {
-  return useMemo(() => ({ user: null, isAuthenticated: false }), []);
+  return useContext(AuthContext);
 }

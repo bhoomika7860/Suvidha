@@ -9,6 +9,7 @@ import {
   Download,
   Package,
   Receipt,
+  RotateCcw,
   ScrollText,
   Share2,
   ShoppingCart,
@@ -19,7 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 
-import { dailyReportsService } from "../../services/dailyReportsService";
+import dailyReportsService from "../../services/dailyReportsService";
 
 import Card from "../../components/reportDetails/shared/Card";
 import StatusBadge from "../../components/reportDetails/shared/StatusBadge";
@@ -49,34 +50,63 @@ console.log("URL PARAM ID:", id);
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchReport = async () => {
-      try {
-        console.log("Fetching report:", id);
+ const loadReport = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-console.log("Requesting report:", id);
+    const data = await dailyReportsService.getReport(id);
 
-const data = await dailyReportsService.getReport(id);
+    setReport(data);
+  } catch (err) {
+    console.error(err);
+    setError("Failed to load report.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-console.log("Backend returned:", data);
-console.log("Response:", data);
-        console.log("FULL REPORT", data);
-console.log("EXPENSES", data.expenses);
-console.log("BOUNCED", data.bounced_products);
-console.log("ADJUSTMENTS", data.adjustments);
-        setReport(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchReport();
-  }, [id]);
 
-  if (loading) return <div className="p-10">Loading...</div>;
+useEffect(() => {
+  loadReport();
+}, [id]);
+
+  if (loading) {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+      <div className="text-center">
+        <p className="text-lg font-medium text-gray-700">
+          Loading report...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+if (error) {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+      <div className="text-center">
+
+        <h2 className="text-xl font-semibold text-red-600">
+          {error}
+        </h2>
+
+        <button
+          onClick={loadReport}
+          className="mt-5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2 rounded-lg"
+        >
+          Try Again
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
   if (!report) return <div className="p-10">Report not found</div>;
 
   const paymentRows = [
@@ -161,12 +191,37 @@ console.log("ADJUSTMENTS", data.adjustments);
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <IconAction icon={<Download size={14} />} label="Export Report" />
-                <IconAction icon={<ScrollText size={14} />} label="Audit Logs" />
-                <IconAction icon={<Share2 size={14} />} label="Share" />
-              </div>
-              <div className="w-px h-7" style={{ background: "#E5E7EB" }} />
-              <StatusBadge status={report.status} />
+
+  <IconAction
+    icon={<RotateCcw size={14} />}
+    label="Refresh Report"
+    onClick={loadReport}
+  />
+
+  <IconAction
+    icon={<Download size={14} />}
+    label="Export Report"
+  />
+
+  <IconAction
+    icon={<ScrollText size={14} />}
+    label="Audit Logs"
+  />
+
+  <IconAction
+    icon={<Share2 size={14} />}
+    label="Share"
+  />
+
+</div>
+              <div className="flex items-center gap-3">
+
+
+
+  <StatusBadge status={report.status} />
+
+</div>
+              
             </div>
           </div>
         </Card>

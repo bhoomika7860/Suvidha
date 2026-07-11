@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import { Eye, EyeOff, Shield } from "lucide-react";
+import { ROLES } from "../../constants/roles";
+
 
 function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,7 +12,8 @@ function LoginScreen() {
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [focusedField, setFocusedField] = useState(null);
-
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -29,53 +34,30 @@ function LoginScreen() {
 
   if (hasError) return;
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        password,
-      }),
-    });
+ try {
+  const user = await login(username, password);
 
-    const data = await response.json();
+  switch (user.role) {
+  case ROLES.OWNER:
+    navigate("/owner-dashboard");
+    break;
 
-    console.log("Login response:", data);
-    localStorage.setItem("token", data.access_token);
-console.log("TOKEN SAVED:", data.access_token);
+  case ROLES.STORE_MANAGER:
+    navigate("/manager-dashboard");
+    break;
 
-    if (!data.access_token) {
-      setPasswordError("Invalid username or password");
-      return;
-    }
+  case ROLES.STAFF:
+    navigate("/staff-dashboard");
+    break;
 
-    localStorage.setItem("token", data.access_token);
-
-    const meResponse = await fetch("http://127.0.0.1:8000/me", {
-      headers: {
-        Authorization: `Bearer ${data.access_token}`,
-      },
-    });
-
-    const meData = await meResponse.json();
-
-    console.log("User data:", meData);
-
-    localStorage.setItem("user", JSON.stringify(meData.user));
-
-    if (meData.user.role === "owner") {
-      window.location.href = "/owner-dashboard";
-    } else {
-      window.location.href = "/staff-dashboard";
-    }
-
-  } catch (error) {
-    console.error("Login failed:", error);
-    setPasswordError("Server connection failed");
-  }
+  case ROLES.DELIVERY:
+    navigate("/delivery");
+    break;
+}
+} catch (error) {
+  console.error(error);
+  setPasswordError("Invalid username or password");
+}  
 };
 
   const isFormValid = username.trim() && password.trim();

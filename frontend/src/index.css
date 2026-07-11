@@ -7,3 +7,12 @@ body,
   padding: 0;
   min-height: 100%;
 }
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 100%);
+  }
+
+  to {
+    transform: translate(-50%, 0%);
+  }
+}

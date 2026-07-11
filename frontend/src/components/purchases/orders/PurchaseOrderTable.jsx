@@ -1,0 +1,111 @@
+import { useState } from "react";
+
+import PurchaseOrderDrawer from "./PurchaseOrderDrawer";
+
+export default function PurchaseOrderTable({
+  purchaseOrders,
+}) {
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  return (
+
+    <>
+
+      <div className="bg-white border rounded-2xl shadow-sm overflow-hidden">
+
+        <table className="w-full">
+
+          <thead className="bg-gray-50">
+
+            <tr>
+
+              <th className="text-left px-6 py-4">
+                Supplier
+              </th>
+
+              <th className="text-left px-6 py-4">
+                Items
+              </th>
+
+              <th className="text-left px-6 py-4">
+                Expected Amount
+              </th>
+
+              <th className="text-left px-6 py-4">
+                Expected Date
+              </th>
+
+              <th className="text-left px-6 py-4">
+                Status
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {purchaseOrders.map(order => (
+
+              <tr
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className="border-t hover:bg-gray-50 cursor-pointer"
+              >
+
+                <td className="px-6 py-5 font-medium">
+
+                  {order.party}
+
+                </td>
+
+                <td className="px-6 py-5">
+
+                  {order.items}
+
+                </td>
+
+                <td className="px-6 py-5">
+
+                  ₹{order.expectedAmount.toLocaleString()}
+
+                </td>
+
+                <td className="px-6 py-5">
+
+                  {order.expectedDate}
+
+                </td>
+
+                <td className="px-6 py-5">
+
+                  <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm">
+
+                    {order.status}
+
+                  </span>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <PurchaseOrderDrawer
+        order={selectedOrder}
+        isOpen={selectedOrder !== null}
+        onClose={() => setSelectedOrder(null)}
+      />
+
+    </>
+
+  );
+
+}

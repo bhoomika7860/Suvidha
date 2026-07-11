@@ -38,7 +38,7 @@ import ReportFilters from "../../components/reports/ReportFilters";
 import ReportTable from "../../components/reports/ReportTable";
 
 import { useEffect } from "react";
-import { dailyReportsService } from "../../services/dailyReportsService";
+import dailyReportsService from "../../services/dailyReportsService";
 import { useParams } from "react-router-dom";
 
 
@@ -110,27 +110,39 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState("All Status");
 
   const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
 useEffect(() => {
   const fetchReports = async () => {
     try {
-      let data;
 
-      if (storeId) {
-        // when coming from dashboard store click
+    setLoading(true);
+    setError(null);
+
+    let data;
+
+    if (storeId) {
         data = await dailyReportsService.getStoreReports(storeId);
-      } else {
-        // when opening from sidebar
+    } else {
         data = await dailyReportsService.getAllReports();
-      }
-
-      console.log("ALL REPORTS:", data);
-      console.log(data);
-      setReports(data);
-
-    } catch (error) {
-      console.error("Failed to fetch reports:", error);
     }
+
+    setReports(data);
+
+}
+catch (err) {
+
+    console.error(err);
+
+    setError("Failed to load reports.");
+
+}
+finally {
+
+    setLoading(false);
+
+}
   };
 
   fetchReports();
@@ -138,36 +150,7 @@ useEffect(() => {
 
   console.log("RAW REPORTS", reports);
 
-const formattedReports = reports.map((r) => ({
-  id: r.id,
-
-  store: r.store_name,
-
-  payment: {
-    cash: r.cash_sales,
-    upi: r.upi_sales,
-    card: r.card_sales,
-    udhaar: r.udhaar_sales,
-  },
-
-  deliveries: r.deliveries ?? 0,
-
-  totalSales:
-    (r.cash_sales ?? 0) +
-    (r.upi_sales ?? 0) +
-    (r.card_sales ?? 0) +
-    (r.udhaar_sales ?? 0),
-
-  purchases: r.total_purchases ?? 0,
-
-  expenses: r.total_expenses ?? 0,
-
-  bills: r.total_bills ?? 0,
-
-  bouncedProducts: r.bounced_products ?? [],
-
-  status: r.is_locked ? "Locked" : "Open",
-}));
+const formattedReports = dailyReportsService.formatReports(reports);
 
 console.log("FORMATTED REPORTS", formattedReports);
 
@@ -179,6 +162,35 @@ console.log("FORMATTED REPORTS", formattedReports);
     const matchStatus = statusFilter === "All Status" || r.status === statusFilter;
     return matchSearch && matchStore && matchStatus;
   });
+
+  if (loading) {
+    return (
+        <div className="flex h-full items-center justify-center">
+            Loading reports...
+        </div>
+    );
+}
+
+if (error) {
+    return (
+        <div className="flex h-full items-center justify-center">
+            <div className="text-center">
+
+                <p className="text-red-600 font-medium">
+                    {error}
+                </p>
+
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 rounded bg-blue-600 px-4 py-2 text-white"
+                >
+                    Retry
+                </button>
+
+            </div>
+        </div>
+    );
+}
 
   return (
     <div
@@ -216,10 +228,25 @@ console.log("FORMATTED REPORTS", formattedReports);
 />
 
           
-          {/* Table */}
-          <ReportTable
-  filteredReports={filtered}
-/>
+          {/* Table / Empty State */}
+
+{filtered.length === 0 ? (
+  <div className="bg-white rounded-2xl border border-gray-200 py-20 flex flex-col items-center justify-center">
+    <FileText className="w-12 h-12 text-gray-300 mb-4" />
+
+    <h3 className="text-lg font-semibold text-gray-700">
+      No reports found
+    </h3>
+
+    <p className="text-sm text-gray-500 mt-2 text-center">
+      Try changing your filters or wait for stores to submit their daily reports.
+    </p>
+  </div>
+) : (
+  <ReportTable
+    filteredReports={filtered}
+  />
+)}
 
           
 

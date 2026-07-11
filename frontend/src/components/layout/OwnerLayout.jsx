@@ -1,7 +1,8 @@
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { Outlet } from "react-router-dom";
 
-export default function OwnerLayout({ children }) {
+export default function OwnerLayout() {
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
       {/* Sidebar */}
@@ -12,7 +13,7 @@ export default function OwnerLayout({ children }) {
         <Header />
 
         <main className="flex-1 overflow-y-auto p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

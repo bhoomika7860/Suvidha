@@ -14,15 +14,31 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/owner-dashboard" },
-  { label: "Daily Reports", icon: FileText, path: "/daily-reports" },
-  { label: "Staff", icon: Users, path: "/staff" },
-  { label: "Targets", icon: Target, path: "/targets" },
-  { label: "Inventory", icon: Package, path: "/inventory" },
-  { label: "Analytics", icon: BarChart3, path: "/analytics" },
-  { label: "Adjustments", icon: SlidersHorizontal, path: "/adjustments" },
-  { label: "Audit Logs", icon: ClipboardList, path: "/audit-logs" },
-  { label: "Settings", icon: Settings, path: "/settings" },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/owner-dashboard",
+  },
+  {
+    label: "Daily Reports",
+    icon: FileText,
+    path: "/daily-reports",
+  },
+  {
+    label: "Staff",
+    icon: Users,
+    path: "/staff-management",
+  },
+  {
+    label: "Tasks",
+    icon: Target,
+    path: "/tasks",
+  },
+  {
+    label: "Analytics",
+    icon: BarChart3,
+    path: "/analytics",
+  },
 ];
 
 export default function Sidebar({ open, onClose }) {

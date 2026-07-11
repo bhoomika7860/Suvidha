@@ -31,7 +31,7 @@ import {
   Activity,
   Lightbulb,
 } from "lucide-react";
-import { analyticsService } from "../../services/analyticsService";
+import analyticsService from "../../services/analyticsService";
 
 const BLUE = "#2563EB";
 const GREEN = "#16A34A";
@@ -167,6 +167,7 @@ const [insights, setInsights] = useState([]);
 const [performance, setPerformance] = useState([]);
 
 const [loading, setLoading] = useState(true);
+
 const [refreshing, setRefreshing] = useState(false);
 
 const [selectedStore, setSelectedStore] = useState("all");
@@ -180,6 +181,7 @@ const [error, setError] = useState("");
   const loadAnalytics = async () => {
   try {
     setLoading(true);
+    setError(null);
 
     const [
       dashboardData,
@@ -226,7 +228,8 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     console.log("Stores from backend:", storeData);
   } catch (err) {
     console.error(err);
-  } finally {
+    setError("Unable to load analytics.");
+} finally {
     setLoading(false);
     setRefreshing(false);
   }

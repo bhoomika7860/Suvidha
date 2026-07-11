@@ -124,7 +124,7 @@ def get_user(
     return result
 
 
-    # Staff can only view users from same store
+    # Non-owner users can only see users from their own store
     if user.store_id != current_user["store_id"]:
         db.close()
         raise HTTPException(

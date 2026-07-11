@@ -1,68 +1,156 @@
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../pages/owner/Dashboard";
 import DailyReportView from "../pages/DailyReportView/DailyReportView";
-import StoreDashboard from "../pages/store/Dashboard";
+
 import LoginScreen from "../pages/auth/LoginScreen";
 import OwnerLayout from "../components/layout/OwnerLayout";
 import DailyReports from "../pages/owner/DailyReports";
 import Analytics from "../pages/analytics/Analytics";
-import StaffManagement from "../pages/staff_management/StaffManagement";
+import StaffManagement from "../pages/owner/StaffManagement";
+import ManagerDashboard from "../pages/manager/Dashboard";
+import ManagerLayout from "../components/layout/ManagerLayout";
+import Purchases from "../pages/manager/Purchases";
+import Expenses from "../pages/manager/Expenses";
+import Staff from "../pages/manager/Staff";
+import DailyReport from "../pages/manager/DailyReport";
+import PreviousReports from "../pages/manager/PreviousReports";
+import Profile from "../pages/manager/Profile";
+import Tasks from "../pages/owner/Tasks";
+// Staff Layout
+import StaffLayout from "../components/layout/StaffLayout";
+
+// Staff Pages
+import StaffDashboard from "../pages/staff/StaffDashboard";
+import StaffTasks from "../pages/staff/StaffTasks";
+
+//Delivery
+import Delivery from "../pages/delivery/Delivery";
+
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import { ROLES } from "../constants/roles";
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LoginScreen />} />
-      <Route
-  path="/owner-dashboard"
-  element={
-    <OwnerLayout>
-      <Dashboard />
-    </OwnerLayout>
-  }
-/>
-<Route
-  path="/analytics"
-  element={
-    <OwnerLayout>
-      <Analytics />
-    </OwnerLayout>
-  }
-/>
+      
+      
+     {/* ================= OWNER ================= */}
 
 <Route
-  path="/daily-reports"
   element={
-    <OwnerLayout>
-      <DailyReports />
-    </OwnerLayout>
+    <ProtectedRoute allowedRoles={[ROLES.OWNER]}>
+      <OwnerLayout />
+    </ProtectedRoute>
   }
-/>
+>
+  <Route
+    path="/owner-dashboard"
+    element={<Dashboard />}
+  />
+
+  <Route
+    path="/analytics"
+    element={<Analytics />}
+  />
+
+  <Route
+    path="/staff-management"
+    element={<StaffManagement />}
+  />
+
+  <Route
+    path="/daily-reports"
+    element={<DailyReports />}
+  />
+
+  <Route
+    path="/daily-reports/:storeId"
+    element={<DailyReports />}
+  />
+
+  <Route
+    path="/tasks"
+    element={<Tasks />}
+  />
+
+  <Route
+    path="/daily-reports/report/:id"
+    element={<DailyReportView />}
+  />
+</Route>
+
+{/* ================= MANAGER ================= */}
 
 <Route
-  path="/daily-reports/:storeId"
   element={
-    <OwnerLayout>
-      <DailyReports />
-    </OwnerLayout>
+    <ProtectedRoute allowedRoles={[ROLES.STORE_MANAGER]}>
+      <ManagerLayout />
+    </ProtectedRoute>
   }
-/>
+>
+  <Route
+    path="/manager-dashboard"
+    element={<ManagerDashboard />}
+  />
+
+  <Route
+    path="/daily-report"
+    element={<DailyReport />}
+  />
+
+  <Route
+    path="/manager-purchases"
+    element={<Purchases />}
+  />
+
+  <Route
+    path="/manager-expenses"
+    element={<Expenses />}
+  />
+
+  <Route
+    path="/previous-reports"
+    element={<PreviousReports />}
+  />
+</Route>
+
+{/* ================= STAFF ================= */}
 
 <Route
-  path="/daily-reports/report/:id"
   element={
-    <OwnerLayout>
-      <DailyReportView />
-    </OwnerLayout>
+    <ProtectedRoute allowedRoles={[ROLES.STAFF]}>
+      <StaffLayout />
+    </ProtectedRoute>
   }
-/>
-      <Route path="/staff-dashboard" element={<StoreDashboard />} />
+>
+  <Route
+    path="/staff-dashboard"
+    element={<StaffDashboard />}
+  />
 
-      <Route
-  path="/staff"
+  <Route
+    path="/staff-tasks"
+    element={<StaffTasks />}
+  />
+
+  <Route
+    path="/staff-purchases"
+    element={<Purchases />}
+  />
+
+  <Route
+    path="/staff-expenses"
+    element={<Expenses />}
+  />
+</Route>
+{/* ================= DELIVERY ================= */}
+<Route
+  path="/delivery"
   element={
-    <OwnerLayout>
-      <StaffManagement />
-    </OwnerLayout>
+    <ProtectedRoute allowedRoles={[ROLES.DELIVERY]}>
+      <Delivery />
+    </ProtectedRoute>
   }
 />
     </Routes>
