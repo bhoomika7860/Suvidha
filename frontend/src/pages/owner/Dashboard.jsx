@@ -59,12 +59,7 @@ const bouncedProducts = [
   { name: "Cetirizine 10mg", type: "Tablet", count: 5 },
 ];
 
-const pendingActions = [
-  { type: "Adjustment Request", detail: "Store Gamma — ₹4,200 mismatch", urgency: "high" },
-  { type: "Report Pending Lock", detail: "Store Echo — Day 3 report open", urgency: "medium" },
-  { type: "Target Approval", detail: "Sneha Patel — udhaar target revision", urgency: "low" },
-  { type: "Adjustment Request", detail: "Store Beta — ₹1,100 reconciliation", urgency: "medium" },
-];
+
 
 
 
@@ -402,7 +397,8 @@ if (loading) {
     </div>
   );
 }
-
+console.log("Sales Data:", salesData);
+console.log("Comparison Data:", comparisonData);
  return (
   <main
     className="flex-1 px-6 lg:px-8 py-8 space-y-10 overflow-x-hidden bg-[#F8FAFC]"
@@ -653,62 +649,7 @@ hover:-translate-y-1">
        
 
           
-          {/* ── Pending actions ─── */}
-<div className="w-full">
-  <Card className="overflow-hidden">
-
-    {/* Header */}
-    <div className="px-7 py-5 border-b border-[rgba(74,124,158,0.12)] flex items-center justify-between">
-      <h2 className="text-2xl font-bold text-[#0F172A] uppercase tracking-wide">
-        Pending Actions
-      </h2>
-
-      <span className="text-sm font-semibold text-[#2563eb] cursor-pointer hover:text-[#1d4ed8] flex items-center gap-1">
-        View all <ChevronRight size={14} />
-      </span>
-    </div>
-
-    {/* Action list */}
-    <div className="divide-y divide-[rgba(74,124,158,0.07)]">
-      {pendingActions.map((a, i) => (
-        <div
-          key={i}
-          className="flex items-start gap-5 px-7 py-6 hover:bg-slate-50 transition-colors group"
-        >
-          
-          {/* Urgency dot */}
-          <div
-            className={`w-3 h-3 rounded-full mt-2 flex-shrink-0 ${
-              a.urgency === "high"
-                ? "bg-red-500"
-                : a.urgency === "medium"
-                ? "bg-amber-500"
-                : "bg-[#2563eb]"
-            }`}
-          />
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <p className="text-lg font-semibold text-[#0F172A]">
-              {a.type}
-            </p>
-
-            <p className="text-sm font-medium text-[#475569] mt-1.5">
-              {a.detail}
-            </p>
-          </div>
-
-          {/* Review button */}
-          <button className="flex-shrink-0 text-sm font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors">
-            Review
-          </button>
-
-        </div>
-      ))}
-    </div>
-
-  </Card>
-</div>
+         
 
           {/* Bottom spacing */}
           <div className="h-4" />

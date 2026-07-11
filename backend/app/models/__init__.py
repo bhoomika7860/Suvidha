@@ -9,4 +9,4 @@ from app.models.adjustment_request import AdjustmentRequest
 from app.models.audit_log import AuditLog
 from app.models.product import Product
 from app.models.purchase import Purchase
-from app.models.task_target import TaskTarget
+from app.models.task import Task

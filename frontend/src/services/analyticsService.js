@@ -11,6 +11,20 @@ const analyticsService = {
     responseType: "blob",
   });
 
+  
+
+  return response.data;
+},
+
+exportPDF: async (period = "today", store = "all") => {
+  const response = await api.get("/analytics/export/pdf", {
+    params: {
+      period,
+      store_id: store,
+    },
+    responseType: "blob",
+  });
+
   return response.data;
 },
   getDashboardSummary: (period = "today", store = "all") =>

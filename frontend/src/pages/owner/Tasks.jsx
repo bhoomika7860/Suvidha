@@ -1,79 +1,111 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { taskService } from "../../services/taskService";
 
 import TasksHeader from "../../components/tasks/TasksHeader";
 import TasksToolbar from "../../components/tasks/TasksToolbar";
-import TaskCard from "../../components/tasks/TaskCard";
 import AssignTaskModal from "../../components/tasks/AssignTaskModal";
 import TaskTable from "../../components/tasks/TaskTable";
 
 export default function Tasks() {
-
   const [showModal, setShowModal] = useState(false);
+  const [tasks, setTasks] = useState([]);
 
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      employee: "Rahul Sharma",
-      role: "Store Manager",
-      store: "Sector 7",
-      task: "Today's Sales",
-      type: "sales",
-      target: "₹50,000",
-      progress: 72,
-      requiresPhoto: false,
-      due: "Today",
-    },
-    {
-      id: 2,
-      employee: "Amit Kumar",
-      role: "Staff",
-      store: "Sector 7",
-      task: "Clean Refrigerator",
-      type: "normal",
-      target: "-",
-      progress: 0,
-      requiresPhoto: true,
-      due: "Today",
-    },
-  ]);
+  const loadTasks = async () => {
+    try {
+      const data = await taskService.getTasks();
 
-  function addTask(task) {
+      const formattedTasks = data.map((task) => ({
+        id: task.id,
 
-    setTasks(prev => [
-      {
-        id: Date.now(),
-        progress: 0,
-        ...task,
-      },
-      ...prev,
-    ]);
+        task: task.task_title,
 
-    setShowModal(false);
+        employee:
+          task.employee_name ||
+          task.assigned_to_name ||
+          task.assigned_to,
 
-  }
+        role: task.role,
+
+        store:
+          task.store_name ||
+          task.store_id,
+
+        progress: Math.round(task.completion_percentage || 0),
+
+        due: task.due_date,
+
+        requiresPhoto: task.requires_photo,
+
+        target: task.target_quantity,
+
+        type: task.task_type,
+
+        status: task.status,
+      }));
+
+      setTasks(formattedTasks);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const addTask = async (task) => {
+    try {
+      await taskService.createTask({
+        store_id: Number(task.store),
+        assigned_to: Number(task.employee),
+
+        task_title: task.task,
+
+        task_type: task.type,
+
+        role:
+          task.role === "Store Manager"
+            ? "store_manager"
+            : task.role === "Delivery Boy"
+            ? "delivery"
+            : "staff",
+
+        target_quantity: Number(task.target || 0),
+
+        requires_photo: task.requiresPhoto,
+
+        due_date: task.due,
+      });
+
+      await loadTasks();
+
+      setShowModal(false);
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        err.response?.data?.detail ||
+          "Failed to create task."
+      );
+    }
+  };
 
   return (
-
     <div className="space-y-6">
-
       <TasksHeader />
 
       <TasksToolbar
         onAssign={() => setShowModal(true)}
       />
 
-      <TaskTable
-  tasks={tasks}
-/>
+      <TaskTable tasks={tasks} />
 
       <AssignTaskModal
         open={showModal}
         onClose={() => setShowModal(false)}
         onSave={addTask}
       />
-
     </div>
-
   );
-
 }

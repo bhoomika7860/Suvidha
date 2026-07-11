@@ -20,6 +20,7 @@ import {
   Key,
   ChevronDown,
   Info,
+  Truck,
   RotateCcw,
 } from "lucide-react";
 
@@ -71,7 +72,60 @@ function AddEmployeeModal({ onClose, storeOptions }) {
     fullName: "", username: "", password: "", confirmPassword: "",
     phone: "", email: "", store: "", role: "", status: "Active", notes: "",
   });
+const handleCreateEmployee = async () => {
+  try {
+    // Validation
+    if (
+      !form.fullName ||
+      !form.username ||
+      !form.password ||
+      !form.store ||
+      !form.role
+    ) {
+      alert("Please fill all required fields.");
+      return;
+    }
 
+    if (form.password !== form.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    // Create employee
+    await staffService.createUser({
+      full_name: form.fullName,
+      username: form.username,
+      password: form.password,
+      phone: form.phone,
+      email: form.email,
+      store_id: Number(form.store),
+      role:
+        form.role === "Manager"
+          ? "store_manager"
+          : form.role === "Delivery Boy"
+          ? "delivery"
+          : "staff",
+      is_active: form.status === "Active",
+    });
+
+    alert("Employee created successfully.");
+
+    // Close modal
+    onClose();
+
+    // Refresh page so new employee appears
+    window.location.reload();
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.detail ||
+      error.message ||
+      "Failed to create employee."
+    );
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
@@ -205,7 +259,8 @@ function AddEmployeeModal({ onClose, storeOptions }) {
                 >
                   <option value="">Select Role</option>
                   <option value="Manager">Manager</option>
-                  <option value="Staff">Staff</option>
+<option value="Staff">Staff</option>
+<option value="Delivery Boy">Delivery Boy</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
               </div>
@@ -250,7 +305,10 @@ function AddEmployeeModal({ onClose, storeOptions }) {
           <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-xl hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button className="px-5 py-2.5 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+          <button
+  onClick={handleCreateEmployee}
+  className="px-5 py-2.5 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+>
             Create Employee
           </button>
         </div>
@@ -522,6 +580,15 @@ console.log("Filtered:", filtered);
     { label: "Managers", value: employees.filter((e) => e.role === "store_manager").length, trend: "Across all stores", icon: <ShieldCheck size={18} className="text-emerald-600" />, iconBg: "bg-emerald-50" },
     { label: "Store Staff", value: employees.filter((e) => e.role === "staff").length, trend: "+2 this week", icon: <UserCheck size={18} className="text-purple-600" />, iconBg: "bg-purple-50" },
     { label: "Inactive Accounts", value: employees.filter((e) => !e.is_active || e.status === "Suspended").length, trend: "Needs review", icon: <UserX size={18} className="text-orange-500" />, iconBg: "bg-orange-50" },
+  {
+  label: "Delivery Boys",
+  value: employees.filter(
+    (e) => e.role === "delivery"
+  ).length,
+  trend: "Across all stores",
+  icon: <Truck size={18} className="text-orange-600" />,
+  iconBg: "bg-orange-50",
+}
   ];
 
   function resetFilters() {
@@ -604,10 +671,10 @@ console.log("Filtered:", filtered);
               value={roleFilter}
               onChange={setRoleFilter}
               options={[
-                { label: "All Roles", value: "all" },
-                { label: "Owner", value: "Owner" },
-                { label: "Manager", value: "Manager" },
-                { label: "Staff", value: "Staff" },
+                { label: "Owner", value: "owner" },
+{ label: "Manager", value: "store_manager" },
+{ label: "Staff", value: "staff" },
+{ label: "Delivery Boy", value: "delivery" },
               ]}
             />
             <Select

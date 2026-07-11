@@ -43,6 +43,23 @@ const MUTED = "#6B7280";
 const BORDER = "#E5E7EB";
 const ACCENT_COLORS = [BLUE, GREEN, PURPLE, ORANGE, RED];
 
+const PAYMENT_COLORS = {
+  Cash: "#16A34A",
+  UPI: "#7C3AED",
+  Card: "#0891B2",
+  Udhaar: "#D97706",
+};
+
+const EXPENSE_COLORS = [
+  "#2563EB",
+  "#16A34A",
+  "#7C3AED",
+  "#EA580C",
+  "#DC2626",
+  "#0EA5E9",
+  "#F59E0B",
+];
+
 
 
 const fmtCurrency = (value) =>
@@ -181,7 +198,7 @@ const [error, setError] = useState("");
   const loadAnalytics = async () => {
   try {
     setLoading(true);
-    setError(null);
+    setError("");
 
     const [
       dashboardData,
@@ -235,6 +252,16 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
   }
 };
 
+const handleRefresh = async () => {
+  setRefreshing(true);
+
+  try {
+    await loadAnalytics();
+  } finally {
+    setRefreshing(false);
+  }
+};
+
 const handleExportExcel = async () => {
   try {
     const blob = await analyticsService.exportExcel(
@@ -259,6 +286,34 @@ const handleExportExcel = async () => {
   } catch (error) {
     console.error(error);
     alert("Failed to export analytics.");
+  }
+};
+
+const handleExportPDF = async () => {
+  try {
+    const blob = await analyticsService.exportPDF(
+      selectedPeriod,
+      selectedStore
+    );
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "PharmaCore360_Analytics.pdf";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to export PDF");
   }
 };
 
@@ -342,21 +397,32 @@ console.log("Stores:", stores);
               <Download size={16} />
               Export Analytics
             </button>
-            <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <button 
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               <FileText size={16} />
               Download PDF
             </button>
             <button
-              onClick={async () => {
-                setRefreshing(true);
-                await loadAnalytics();
-              }}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: BLUE }}
-            >
-              <RefreshCw size={16} />
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
+  onClick={async () => {
+    setRefreshing(true);
+
+    try {
+      await loadAnalytics();
+    } finally {
+      setRefreshing(false);
+    }
+  }}
+  disabled={refreshing}
+  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+  style={{ background: BLUE }}
+>
+  <RefreshCw
+    size={16}
+    className={refreshing ? "animate-spin" : ""}
+  />
+  {refreshing ? "Refreshing..." : "Refresh"}
+</button>
           </div>
         </div>
 
@@ -541,7 +607,10 @@ console.log("Stores:", stores);
     stroke="none"
   >
     {paymentBreakdown.map((entry) => (
-      <Cell key={entry.name} fill={entry.color} />
+      <Cell
+  key={entry.name}
+  fill={PAYMENT_COLORS[entry.name] || "#2563EB"}
+/>
     ))}
   </Pie>
 
@@ -588,8 +657,11 @@ console.log("Stores:", stores);
     dataKey="amount"
     stroke="none"
   >
-    {expenseDistribution.map((entry) => (
-      <Cell key={entry.name} fill={entry.color} />
+    {expenseDistribution.map((entry, index) => (
+      <Cell
+  key={entry.name}
+  fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]}
+/>
     ))}
   </Pie>
 
@@ -733,6 +805,22 @@ console.log("Stores:", stores);
               {(performance || []).map((item, index) => {
                 const accent = [BLUE, GREEN, PURPLE, RED][index % 4];
                 const Icon = [BarChart2, TrendingUp, DollarSign, CreditCard][index % 4];
+                const PAYMENT_COLORS = {
+  Cash: "#16A34A",
+  UPI: "#7C3AED",
+  Card: "#0891B2",
+  Udhaar: "#D97706",
+};
+
+const EXPENSE_COLORS = [
+  "#2563EB",
+  "#16A34A",
+  "#7C3AED",
+  "#EA580C",
+  "#DC2626",
+  "#0EA5E9",
+  "#F59E0B",
+];
                 return (
                   <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" style={{ borderColor: BORDER }}>
                     <div className="mb-3 flex items-center justify-between">

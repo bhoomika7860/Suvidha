@@ -20,6 +20,12 @@ from openpyxl.styles import Font
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph
+from app.models.purchase import Purchase
+
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
@@ -210,23 +216,42 @@ def store_summary(
         store_totals[store_id_value]["history"].append(revenue)
 
     rows = []
+
     for store_id_value, values in sorted(store_totals.items()):
-        store = db.query(Store).filter(Store.id == store_id_value).first()
+        store = (
+            db.query(Store)
+            .filter(Store.id == store_id_value)
+            .first()
+        )
+
         history = sorted(values["history"])
+
         growth_rate = 0.0
         if len(history) >= 2 and history[0]:
-            growth_rate = ((history[-1] - history[0]) / history[0]) * 100
+            growth_rate = (
+                (history[-1] - history[0]) / history[0]
+            ) * 100
+
+        purchase_total = (
+            db.query(func.sum(Purchase.purchase_amount))
+            .filter(Purchase.store_id == store_id_value)
+            .scalar()
+            or 0
+        )
+
         rows.append(
             {
                 "store_id": store_id_value,
                 "store_name": store.name if store else f"Store {store_id_value}",
                 "total_sales": round(values["revenue"], 2),
-                "total_purchases": 0.0,
+                "total_purchases": round(purchase_total, 2),
                 "total_bills": values["bills"],
                 "total_expenses": round(values["expenses"], 2),
                 "growth_rate": round(growth_rate, 1),
             }
         )
+
+
 
     return rows
 
@@ -644,31 +669,164 @@ def export_analytics_excel(
 
     workbook = Workbook()
 
-    sheet = workbook.active
-    sheet.title = "Dashboard Summary"
+    # ================= Dashboard Summary =================
 
-    headers = ["Metric", "Value"]
+    dashboard_sheet = workbook.active
+    dashboard_sheet.title = "Dashboard Summary"
 
-    for column, header in enumerate(headers, start=1):
-        cell = sheet.cell(row=1, column=column)
-        cell.value = header
+    dashboard_sheet.append(["Metric", "Value"])
+
+    for cell in dashboard_sheet[1]:
         cell.font = Font(bold=True)
 
-    row = 2
-
     for key, value in overview["kpis"].items():
-        sheet.cell(row=row, column=1).value = key.replace("_", " ").title()
-        sheet.cell(row=row, column=2).value = value
-        row += 1
+        dashboard_sheet.append([
+            key.replace("_", " ").title(),
+            value
+        ])
+
+    # ================= Store Performance =================
 
     store_sheet = workbook.create_sheet("Store Performance")
 
-    headers = [
+    store_sheet.append([
         "Store",
         "Revenue",
         "Bills",
-        "Growth (%)",
-    ]
+        "Growth (%)"
+    ])
+
+    for cell in store_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for store in overview["store_comparison"]:
+        store_sheet.append([
+            store["store_name"],
+            store["revenue"],
+            store["bills"],
+            store["growth"]
+        ])
+
+    # ================= Payment Breakdown =================
+
+    payment_sheet = workbook.create_sheet("Payment Breakdown")
+
+    payment_sheet.append([
+        "Payment Method",
+        "Amount"
+    ])
+
+    for cell in payment_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for payment in overview["payment_breakdown"]:
+        payment_sheet.append([
+            payment["method"],
+            payment["amount"]
+        ])
+
+    # ================= Expense Distribution =================
+
+    expense_sheet = workbook.create_sheet("Expense Distribution")
+
+    expense_sheet.append([
+        "Category",
+        "Amount"
+    ])
+
+    for cell in expense_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for expense in overview["expense_distribution"]:
+        expense_sheet.append([
+            expense["category"],
+            expense["amount"]
+        ])
+
+    # ================= Sales Trend =================
+
+    trend_sheet = workbook.create_sheet("Sales Trend")
+
+    trend_sheet.append([
+        "Date",
+        "Sales"
+    ])
+
+    for cell in trend_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for item in overview["sales_trend"]:
+        trend_sheet.append([
+            item["date"],
+            item["sales"]
+        ])
+
+    # ================= Outstanding Udhaar =================
+
+    udhaar_sheet = workbook.create_sheet("Outstanding Udhaar")
+
+    udhaar_sheet.append([
+        "Customer",
+        "Store",
+        "Amount"
+    ])
+
+    for cell in udhaar_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for item in overview["outstanding_udhaar"]:
+        udhaar_sheet.append([
+            item["customer_name"],
+            item["store_name"],
+            item["amount"]
+        ])
+
+    # ================= Top Bounced Products =================
+
+    bounced_sheet = workbook.create_sheet("Top Bounced Products")
+
+    bounced_sheet.append([
+        "Medicine",
+        "Times Bounced"
+    ])
+
+    for cell in bounced_sheet[1]:
+        cell.font = Font(bold=True)
+
+    for item in overview["top_bounced_products"]:
+        bounced_sheet.append([
+            item["product_name"],
+            item["count"]
+        ])
+
+    # ================= Business Insights =================
+
+    insight_sheet = workbook.create_sheet("Business Insights")
+
+    insight_sheet.append(["Insight"])
+
+    insight_sheet["A1"].font = Font(bold=True)
+
+    for insight in overview["business_insights"]:
+        insight_sheet.append([insight])
+
+    # ================= Return Workbook =================
+
+    output = BytesIO()
+
+    workbook.save(output)
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition":
+            'attachment; filename="PharmaCore360_Analytics.xlsx"'
+        },
+    )
+
 
     for column, header in enumerate(headers, start=1):
         cell = store_sheet.cell(row=1, column=column)
@@ -676,25 +834,68 @@ def export_analytics_excel(
         cell.font = Font(bold=True)
 
     row = 2
+    
 
-    for store in overview["store_comparison"]:
-        store_sheet.cell(row=row, column=1).value = store["store_name"]
-        store_sheet.cell(row=row, column=2).value = store["revenue"]
-        store_sheet.cell(row=row, column=3).value = store["bills"]
-        store_sheet.cell(row=row, column=4).value = store["growth"]
-        row += 1
 
-    output = BytesIO()
-    workbook.save(output)
-    output.seek(0)
+
+@router.get("/export/pdf")
+def export_analytics_pdf(
+    period: str = "today",
+    store_id: str = "all",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    require_role(["owner"], current_user["role"])
+
+    overview = analytics_overview(period, store_id, current_user, db)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(buffer)
+
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    elements.append(
+        Paragraph("<b>PharmaCore360 Analytics Report</b>", styles["Heading1"])
+    )
+
+    data = [["Metric", "Value"]]
+
+    for key, value in overview["kpis"].items():
+        data.append([
+            key.replace("_", " ").title(),
+            str(value)
+        ])
+
+    table = Table(data)
+
+    table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#2563EB")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+            ("GRID",(0,0),(-1,-1),1,colors.grey),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("BOTTOMPADDING",(0,0),(-1,0),10),
+        ])
+    )
+
+    elements.append(table)
+
+    doc.build(elements)
+
+    buffer.seek(0)
 
     return StreamingResponse(
-        output,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        buffer,
+        media_type="application/pdf",
         headers={
-            "Content-Disposition": 'attachment; filename="PharmaCore360_Analytics.xlsx"'
+            "Content-Disposition":
+            'attachment; filename="PharmaCore360_Analytics.pdf"'
         },
     )
+
     return [
         {
             "title": "Most Profitable Store",

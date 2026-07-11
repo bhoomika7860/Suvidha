@@ -22,8 +22,8 @@ from app.routes import audit_logs
 from app.models.product import Product
 from app.routes import products
 from app.routes import analytics
-from app.models.task_target import TaskTarget
-from app.routes import task_targets
+from app.models.task import Task
+from app.routes import tasks
 from app.routes import export
 from app.models.purchase import Purchase
 from app.routes import purchase
@@ -41,7 +41,7 @@ app.include_router(adjustments.router)
 app.include_router(audit_logs.router)
 app.include_router(products.router)
 app.include_router(analytics.router)
-app.include_router(task_targets.router)
+app.include_router(tasks.router)
 app.include_router(export.router)
 Base.metadata.create_all(bind=engine)
 app.include_router(purchase.router)

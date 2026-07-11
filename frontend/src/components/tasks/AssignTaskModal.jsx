@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { staffService } from "../../services/staffService";
+import storeService from "../../services/storeService";
 
 export default function AssignTaskModal({
   open,
@@ -15,6 +17,46 @@ export default function AssignTaskModal({
     due: "",
     requiresPhoto: false,
   });
+
+  const [stores, setStores] = useState([]);
+const [employees, setEmployees] = useState([]);
+
+  useEffect(() => {
+  if (!open) return;
+
+  async function loadData() {
+    try {
+      const [storesData, usersData] = await Promise.all([
+        storeService.getStores(),
+        staffService.getUsers(),
+      ]);
+
+      setStores(storesData);
+      setEmployees(usersData);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadData();
+}, [open]);
+
+
+const filteredEmployees = useMemo(() => {
+  if (!form.role) return [];
+
+  const backendRole =
+    form.role === "Store Manager"
+      ? "store_manager"
+      : form.role === "Delivery Boy"
+      ? "delivery"
+      : "staff";
+
+
+
+  return employees.filter((emp) => emp.role === backendRole);
+}, [employees, form.role]);
+
 
   if (!open) return null;
 
@@ -74,18 +116,19 @@ export default function AssignTaskModal({
         <div className="space-y-4">
 
           <select
-            name="store"
-            className="w-full h-11 border rounded-xl px-4"
-            value={form.store}
-            onChange={handleChange}
-          >
-            <option value="">Select Store</option>
-            <option>Sector 7</option>
-            <option>Sector 18</option>
-            <option>Dwarka</option>
-            <option>Janakpuri</option>
-            <option>Uttam Nagar</option>
-          </select>
+  name="store"
+  className="w-full h-11 border rounded-xl px-4"
+  value={form.store}
+  onChange={handleChange}
+>
+  <option value="">Select Store</option>
+
+  {stores.map((store) => (
+    <option key={store.id} value={store.id}>
+      {store.name}
+    </option>
+  ))}
+</select>
 
           <select
             name="role"
@@ -106,9 +149,11 @@ export default function AssignTaskModal({
             onChange={handleChange}
           >
             <option value="">Select Employee</option>
-            <option>Rahul Sharma</option>
-            <option>Amit Kumar</option>
-            <option>Rakesh Singh</option>
+            {filteredEmployees.map((employee) => (
+  <option key={employee.id} value={employee.id}>
+    {employee.full_name}
+  </option>
+))}
           </select>
 
           <input
