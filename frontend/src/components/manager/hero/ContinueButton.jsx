@@ -1,8 +1,13 @@
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function ContinueButton() {
+
+  const navigate = useNavigate();
+
   return (
     <button
+      onClick={() => navigate("/manager/daily-report")}
       className="
       w-52
       h-10
@@ -20,7 +25,6 @@ export default function ContinueButton() {
       "
     >
       Continue Today's Report
-
       <ArrowRight size={14} />
     </button>
   );

@@ -1,4 +1,7 @@
-export default function ProgressSummary() {
+export default function ProgressSummary({
+  completed,
+  total,
+}) {
   return (
     <div className="text-center">
 
@@ -7,7 +10,7 @@ export default function ProgressSummary() {
       </p>
 
       <h2 className="text-2xl font-bold text-gray-900">
-        3/6 sections
+        {completed}/{total} sections
       </h2>
 
     </div>
