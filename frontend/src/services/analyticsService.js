@@ -100,6 +100,15 @@ exportPDF: async (period = "today", store = "all") => {
         store_id: store,
       },
     }).then((r) => r.data),
+
+getManagerHero: () =>
+  api.get("/analytics/manager-hero")
+     .then((r) => r.data),
+
+getManagerDashboard: () =>
+  api.get("/analytics/manager-dashboard")
+     .then((r) => r.data),
+     
 };
 
 export default analyticsService;

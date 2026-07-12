@@ -147,6 +147,17 @@ def _get_outstanding_entries(
 
     return query.all()
 
+def _today_report(db: Session, store_id: int):
+
+    return (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == store_id,
+            DailyReport.report_date == date.today(),
+        )
+        .first()
+    )
+
 
 @router.get("/dashboard-summary")
 def dashboard_summary(
@@ -700,6 +711,210 @@ def performance(
     }
 
 
+@router.get("/manager-hero")
+def manager_hero(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    require_role(
+        ["store_manager"],
+        current_user["role"],
+    )
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == current_user["store_id"]
+        )
+        .order_by(DailyReport.report_date.desc())
+        .first()
+    )
+
+    purchases_count = (
+        db.query(Purchase)
+        .filter(
+            Purchase.store_id == current_user["store_id"]
+        )
+        .count()
+    )
+
+    bounced_count = (
+        db.query(BouncedProduct)
+        .join(
+            DailyReport,
+            BouncedProduct.daily_report_id == DailyReport.id,
+        )
+        .filter(
+            DailyReport.store_id == current_user["store_id"]
+        )
+        .count()
+    )
+
+    if report is None:
+        return {
+            "user": {
+                "full_name": current_user["full_name"],
+                "role": current_user["role"],
+                "store_id": current_user["store_id"],
+            },
+            "report": {
+                "status": "Not Started",
+                "sales_completed": False,
+                "expenses_completed": False,
+                "purchases_completed": False,
+                "deliveries_completed": False,
+                "bounced_products_completed": False,
+                "notes_completed": False,
+            },
+        }
+
+    return {
+        "user": {
+            "full_name": current_user["full_name"],
+            "role": current_user["role"],
+            "store_id": current_user["store_id"],
+        },
+        "report": {
+            "status": "Locked" if report.is_locked else "In Progress",
+
+            "sales_completed": (
+                (report.cash_sales or 0)
+                + (report.upi_sales or 0)
+                + (report.card_sales or 0)
+                + (report.udhaar_sales or 0)
+            ) > 0,
+
+            "expenses_completed": (report.total_expenses or 0) > 0,
+
+            "purchases_completed": (
+                (report.total_purchases or 0) > 0
+                or purchases_count > 0
+            ),
+
+            "deliveries_completed": (report.deliveries or 0) > 0,
+
+            "bounced_products_completed": bounced_count > 0,
+
+            "notes_completed": bool(report.notes),
+        },
+    }
+
+@router.get("/manager-dashboard")
+def manager_dashboard(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    require_role(
+        ["store_manager"],
+        current_user["role"],
+    )
+
+    store_id = current_user["store_id"]
+    today = date.today()
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == store_id,
+            DailyReport.report_date == today,
+        )
+        .first()
+    )
+
+    purchases = (
+        db.query(Purchase)
+        .filter(
+            Purchase.store_id == store_id,
+            func.date(Purchase.purchase_date) == today,
+        )
+        .order_by(Purchase.purchase_date.desc())
+        .all()
+    )
+
+    expenses = []
+
+    if report:
+        expenses = (
+            db.query(Expense)
+            .filter(
+                Expense.daily_report_id == report.id,
+            )
+            .all()
+        )
+
+    bounced = []
+
+    if report:
+        bounced = (
+            db.query(BouncedProduct)
+            .filter(
+                BouncedProduct.daily_report_id == report.id,
+            )
+            .all()
+        )
+
+    payment_breakdown = {
+        "cash": report.cash_sales if report else 0,
+        "upi": report.upi_sales if report else 0,
+        "card": report.card_sales if report else 0,
+        "udhaar": report.udhaar_sales if report else 0,
+    }
+
+    progress = {
+        "sales_completed":
+            (
+                payment_breakdown["cash"]
+                + payment_breakdown["upi"]
+                + payment_breakdown["card"]
+                + payment_breakdown["udhaar"]
+            ) > 0,
+
+        "expenses_completed": len(expenses) > 0,
+
+        "purchases_completed": len(purchases) > 0,
+
+        "deliveries_completed":
+            report.deliveries > 0 if report else False,
+
+        "bounced_products_completed":
+            len(bounced) > 0,
+
+        "report_submitted":
+            report.is_locked if report else False,
+    }
+
+    return {
+
+        "progress": progress,
+
+        "payment_breakdown": payment_breakdown,
+
+        "purchases": [
+            {
+                "product_name": p.product_name,
+                "supplier_name": p.supplier_name,
+                "quantity": p.quantity,
+                "amount": p.purchase_amount,
+            }
+            for p in purchases
+        ],
+
+        "expenses": [
+            {
+                "title": e.title,
+                "amount": e.amount,
+            }
+            for e in expenses
+        ],
+
+        "bounced_products": [
+            {
+                "product_name": b.product_name,
+                "quantity": b.quantity,
+            }
+            for b in bounced
+        ],
+    }
 
 @router.get("/overview")
 def overview(

@@ -6,29 +6,37 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const actions = [
+import { useNavigate } from "react-router-dom";
+
+export default function QuickActions() {
+  const navigate = useNavigate();
+
+  const actions = [
   {
     icon: FileText,
     text: "Continue Daily Report",
     primary: true,
+    path: "/daily-report",
   },
   {
     icon: Plus,
     text: "Add Expense",
+    path: "/manager-expenses",
   },
   {
     icon: Package,
     text: "Add Purchase",
+    path: "/manager-purchases",
   },
   {
     icon: AlertTriangle,
     text: "Add Bounced Product",
+    path: "/daily-report",
   },
 ];
 
-export default function QuickActions() {
   return (
-    <div className="bg-white border-gray-200-gray-200 rounded-2xl p-5 shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
 
       <h2 className="text-lg font-semibold mb-6">
         Quick Actions
@@ -43,6 +51,7 @@ export default function QuickActions() {
           return (
             <button
               key={action.text}
+              onClick={() => navigate(action.path)}
               className={`w-full flex items-center justify-between rounded-xl px-4 h-12 transition ${
                 action.primary
                   ? "bg-blue-600 text-white"

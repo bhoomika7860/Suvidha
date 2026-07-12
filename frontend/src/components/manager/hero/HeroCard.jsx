@@ -1,10 +1,32 @@
+import { useEffect, useState } from "react";
 import ProgressRing from "./ProgressRing";
 import ReportInfo from "./ReportInfo";
 import ProgressSummary from "./ProgressSummary";
 import ContinueButton from "./ContinueButton";
+import analyticsService from "../../../services/analyticsService";
 
-export default function HeroCard({ report, user }) {
-  if (!report) return null;
+export default function HeroCard() {
+  const [report, setReport] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await analyticsService.getManagerHero();
+
+        setReport(data.report);
+        setUser(data.user);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (!report || !user) {
+    return <div>Loading...</div>;
+  }
 
   const completedSections = [
     report.sales_completed,
@@ -46,6 +68,7 @@ export default function HeroCard({ report, user }) {
           <ContinueButton />
 
         </div>
+
       </div>
     </div>
   );
