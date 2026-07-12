@@ -1,98 +1,161 @@
 from collections import defaultdict
 from datetime import date, timedelta
+from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.dependencies.auth import get_current_user
-from app.dependencies.roles import require_role
-from app.models.bounced_product import BouncedProduct
-from app.models.daily_report import DailyReport
-from app.models.expense import Expense
-from app.models.store import Store
-from app.models.udhaar_entry import UdhaarEntry
-
 from openpyxl import Workbook
 from openpyxl.styles import Font
-from fastapi.responses import StreamingResponse
-from io import BytesIO
 
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+)
+
+from app.database import get_db
+
+from app.dependencies.auth import get_current_user
+from app.dependencies.roles import require_role
+
+from app.models.daily_report import DailyReport
+from app.models.expense import Expense
 from app.models.purchase import Purchase
+from app.models.store import Store
+from app.models.udhaar_entry import UdhaarEntry
+from app.models.bounced_product import BouncedProduct
 
-router = APIRouter(prefix="/analytics", tags=["Analytics"])
+router = APIRouter(
+    prefix="/analytics",
+    tags=["Analytics"],
+)
 
 
-def _forecast(reports):
+def _safe_number(value):
 
-    history = _monthly_series(reports)
+    if value is None:
+        return 0
 
-    if not history:
-        return {
-            "projected_revenue": 0,
-            "projected_bills": 0,
-            "projected_expenses": 0,
-            "series": [],
-        }
+    return float(value)
 
-    avg_revenue = (
-        sum(i["revenue"] for i in history)
-        / len(history)
-    )
+def _get_period_bounds(
+    period: Optional[str],
+) -> Tuple[Optional[date], Optional[date]]:
 
-    growth = 8
+    today = date.today()
 
-    projected_revenue = avg_revenue * (
-        1 + growth / 100
-    )
+    if period == "today":
+        return today, today
 
-    projected_bills = int(projected_revenue / 600)
+    if period == "week":
+        start = today - timedelta(days=today.weekday())
+        return start, today
 
-    projected_expenses = projected_revenue * 0.11
+    if period == "month":
+        start = today.replace(day=1)
+        return start, today
 
-    series = history.copy()
+    if period == "year":
+        start = today.replace(month=1, day=1)
+        return start, today
 
-    for i in range(1, 7):
+    return None, None
 
-        series.append(
-            {
-                "month": f"F{i}",
-                "actual": None,
-                "forecast": round(
-                    projected_revenue
-                    * (1 + (growth * i / 100)),
-                    2,
-                ),
-            }
+
+def _get_reports(
+    db: Session,
+    period: Optional[str] = None,
+    store_id: Optional[str] = None,
+) -> List[DailyReport]:
+
+    query = db.query(DailyReport)
+
+    start_date, end_date = _get_period_bounds(period)
+
+    if start_date:
+        query = query.filter(
+            DailyReport.report_date >= start_date
         )
 
-    return {
-        "projected_revenue": round(
-            projected_revenue,
-            2,
-        ),
-        "projected_bills": projected_bills,
-        "projected_expenses": round(
-            projected_expenses,
-            2,
-        ),
-        "series": series,
-    }
+    if end_date:
+        query = query.filter(
+            DailyReport.report_date <= end_date
+        )
+
+    if (
+        store_id
+        and str(store_id).lower() != "all"
+    ):
+        query = query.filter(
+            DailyReport.store_id == int(store_id)
+        )
+
+    return query.all()
+
+def _monthly_series(
+    reports: List[DailyReport],
+):
+
+    monthly = defaultdict(float)
+
+    for report in reports:
+
+        if not report.report_date:
+            continue
+
+        month = report.report_date.strftime("%b")
+
+        revenue = (
+            _safe_number(report.cash_sales)
+            + _safe_number(report.upi_sales)
+            + _safe_number(report.card_sales)
+            + _safe_number(report.udhaar_sales)
+        )
+
+        monthly[month] += revenue
+
+    return [
+        {
+            "month": month,
+            "revenue": value,
+        }
+        for month, value in monthly.items()
+    ]
+
+def _get_outstanding_entries(
+    db: Session,
+    period=None,
+    store_id="all",
+):
+
+    query = db.query(UdhaarEntry)
+
+    if (
+        store_id
+        and str(store_id).lower() != "all"
+    ):
+        query = query.filter(
+            UdhaarEntry.store_id == int(store_id)
+        )
+
+    return query.all()
 
 
-@router.get("/store-summary")
-def store_summary(
+@router.get("/dashboard-summary")
+def dashboard_summary(
     period: str = "today",
     store_id: str = "all",
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -107,93 +170,216 @@ def store_summary(
         store_id,
     )
 
-    store_totals = defaultdict(
-        lambda: {
-            "revenue": 0,
-            "bills": 0,
-            "expenses": 0,
-            "history": [],
-        }
-    )
+    total_sales = 0
+    total_expenses = 0
+    total_bills = 0
+    total_deliveries = 0
+    total_udhaar = 0
 
     for report in reports:
 
-        revenue = (
+        total_sales += (
             _safe_number(report.cash_sales)
             + _safe_number(report.upi_sales)
             + _safe_number(report.card_sales)
             + _safe_number(report.udhaar_sales)
         )
 
-        store_totals[report.store_id]["revenue"] += revenue
-        store_totals[report.store_id]["bills"] += report.total_bills or 0
-        store_totals[report.store_id]["expenses"] += (
-            report.total_expenses or 0
+        total_expenses += _safe_number(
+            report.total_expenses
         )
 
-        store_totals[report.store_id]["history"].append(
-            revenue
+        total_bills += report.total_bills or 0
+
+        total_deliveries += report.deliveries or 0
+
+        total_udhaar += _safe_number(
+            report.udhaar_sales
         )
 
-    rows = []
-
-    for sid, values in store_totals.items():
-
-        store = (
-            db.query(Store)
-            .filter(Store.id == sid)
-            .first()
+    purchase_total = (
+        db.query(
+            func.sum(Purchase.purchase_amount)
         )
+        .filter(
+            Purchase.store_id == int(store_id)
+        )
+        .scalar()
+        if store_id != "all"
+        else db.query(
+            func.sum(Purchase.purchase_amount)
+        ).scalar()
+    )
 
-        purchase_total = (
-            db.query(
-                func.sum(Purchase.purchase_amount)
+    purchase_total = purchase_total or 0
+
+    average_bill = (
+        total_sales / total_bills
+        if total_bills
+        else 0
+    )
+
+    return {
+
+        "total_sales": round(total_sales, 2),
+
+        "total_revenue": round(total_sales, 2),
+
+        "total_purchases": round(
+            purchase_total,
+            2,
+        ),
+
+        "total_deliveries": total_deliveries,
+
+        "total_bills": total_bills,
+
+        "average_bill_value": round(
+            average_bill,
+            2,
+        ),
+
+        "average_bill": round(
+            average_bill,
+            2,
+        ),
+
+        "total_expenses": round(
+            total_expenses,
+            2,
+        ),
+
+        "total_udhaar": round(
+            total_udhaar,
+            2,
+        ),
+
+        "outstanding_udhaar": round(
+            total_udhaar,
+            2,
+        ),
+
+        "growth_rate": 0,
+
+        "submitted_reports": len(reports),
+    }
+
+@router.get("/store-summary")
+def store_summary(
+    period: str = "today",
+    store_id: str = "all",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    require_role(
+        ["owner", "store_manager"],
+        current_user["role"],
+    )
+
+    if current_user["role"] == "store_manager":
+        store_id = str(current_user["store_id"])
+
+    reports = _get_reports(
+        db,
+        period,
+        store_id,
+    )
+
+    stores = {}
+
+    for report in reports:
+
+        sid = report.store_id
+
+        if sid not in stores:
+
+            store = (
+                db.query(Store)
+                .filter(Store.id == sid)
+                .first()
             )
-            .filter(Purchase.store_id == sid)
-            .scalar()
-            or 0
-        )
 
-        growth = 0
+            stores[sid] = {
 
-        history = values["history"]
-
-        if len(history) >= 2 and history[0]:
-
-            growth = (
-                (history[-1] - history[0])
-                / history[0]
-            ) * 100
-
-        rows.append(
-            {
                 "store_id": sid,
+
                 "store_name": (
                     store.name
                     if store
                     else f"Store {sid}"
                 ),
-                "total_sales": round(
-                    values["revenue"],
-                    2,
-                ),
-                "total_purchases": round(
-                    purchase_total,
-                    2,
-                ),
-                "total_bills": values["bills"],
-                "total_expenses": round(
-                    values["expenses"],
-                    2,
-                ),
-                "growth_rate": round(
-                    growth,
-                    1,
-                ),
+
+                "total_sales": 0,
+
+                "total_bills": 0,
+
+                "total_expenses": 0,
+
+                "total_purchases": 0,
             }
+
+        stores[sid]["total_sales"] += (
+
+            _safe_number(report.cash_sales)
+
+            + _safe_number(report.upi_sales)
+
+            + _safe_number(report.card_sales)
+
+            + _safe_number(report.udhaar_sales)
+
         )
 
-    return rows
+        stores[sid]["total_bills"] += (
+            report.total_bills or 0
+        )
+
+        stores[sid]["total_expenses"] += (
+            _safe_number(
+                report.total_expenses
+            )
+        )
+
+    for sid in stores:
+
+        purchases = (
+
+            db.query(
+                func.sum(
+                    Purchase.purchase_amount
+                )
+            )
+
+            .filter(
+                Purchase.store_id == sid
+            )
+
+            .scalar()
+
+            or 0
+
+        )
+
+        stores[sid]["total_purchases"] = round(
+            purchases,
+            2,
+        )
+
+        stores[sid]["total_sales"] = round(
+            stores[sid]["total_sales"],
+            2,
+        )
+
+        stores[sid]["total_expenses"] = round(
+            stores[sid]["total_expenses"],
+            2,
+        )
+
+        stores[sid]["growth_rate"] = 0
+
+    return list(stores.values())
+
 
 @router.get("/payment-breakdown")
 def payment_breakdown(
@@ -217,36 +403,36 @@ def payment_breakdown(
         store_id,
     )
 
-    return {
-        "cash": round(
-            sum(
-                _safe_number(r.cash_sales)
-                for r in reports
-            ),
-            2,
-        ),
-        "upi": round(
-            sum(
-                _safe_number(r.upi_sales)
-                for r in reports
-            ),
-            2,
-        ),
-        "card": round(
-            sum(
-                _safe_number(r.card_sales)
-                for r in reports
-            ),
-            2,
-        ),
-        "udhaar": round(
-            sum(
-                _safe_number(r.udhaar_sales)
-                for r in reports
-            ),
-            2,
-        ),
-    }
+    cash = 0
+    upi = 0
+    card = 0
+    udhaar = 0
+
+    for report in reports:
+
+        cash += _safe_number(report.cash_sales)
+        upi += _safe_number(report.upi_sales)
+        card += _safe_number(report.card_sales)
+        udhaar += _safe_number(report.udhaar_sales)
+
+    return [
+        {
+            "name": "Cash",
+            "value": round(cash, 2),
+        },
+        {
+            "name": "UPI",
+            "value": round(upi, 2),
+        },
+        {
+            "name": "Card",
+            "value": round(card, 2),
+        },
+        {
+            "name": "Udhaar",
+            "value": round(udhaar, 2),
+        },
+    ]
 
 
 @router.get("/expense-distribution")
@@ -256,7 +442,6 @@ def expense_distribution(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -265,37 +450,32 @@ def expense_distribution(
     if current_user["role"] == "store_manager":
         store_id = str(current_user["store_id"])
 
-    reports = _get_reports(
-        db,
-        period,
-        store_id,
+    query = (
+        db.query(Expense)
+        .join(
+            DailyReport,
+            Expense.daily_report_id == DailyReport.id,
+        )
     )
+
+    if store_id != "all":
+        query = query.filter(
+            DailyReport.store_id == int(store_id)
+        )
+
+    expenses = query.all()
+
+    grouped = defaultdict(float)
+
+    for expense in expenses:
+        grouped[expense.title] += _safe_number(expense.amount)
 
     return [
         {
-            "name": "Expenses",
-            "value": round(
-                sum(
-                    _safe_number(
-                        r.total_expenses
-                    )
-                    for r in reports
-                ),
-                2,
-            ),
-        },
-        {
-            "name": "Purchases",
-            "value": round(
-                sum(
-                    _safe_number(
-                        r.total_purchases
-                    )
-                    for r in reports
-                ),
-                2,
-            ),
-        },
+            "name": name,
+            "value": round(amount, 2),
+        }
+        for name, amount in grouped.items()
     ]
 
 
@@ -330,7 +510,6 @@ def outstanding_udhaar(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -345,24 +524,65 @@ def outstanding_udhaar(
         store_id,
     )
 
-    total = sum(
-        max(
-            _safe_number(i.amount)
-            - _safe_number(i.paid_amount),
-            0,
-        )
-        for i in entries
+    grouped = defaultdict(
+        lambda: {
+            "pending": 0.0,
+            "recovered": 0.0,
+            "outstanding": 0.0,
+        }
     )
 
-    return {
-        "outstanding": round(
-            total,
-            2,
-        ),
-        "count": len(entries),
-    }
+    for entry in entries:
 
+        report = (
+            db.query(DailyReport)
+            .filter(DailyReport.id == entry.daily_report_id)
+            .first()
+        )
 
+        if not report:
+            continue
+
+        store = (
+            db.query(Store)
+            .filter(Store.id == report.store_id)
+            .first()
+        )
+
+        if not store:
+            continue
+
+        remaining = max(
+            _safe_number(entry.amount)
+            - _safe_number(entry.paid_amount),
+            0,
+        )
+
+        grouped[store.name]["pending"] += remaining
+        grouped[store.name]["recovered"] += _safe_number(entry.paid_amount)
+        grouped[store.name]["outstanding"] += _safe_number(entry.amount)
+
+    result = []
+
+    for store_name, values in grouped.items():
+
+        recovery_rate = (
+            values["recovered"] / values["outstanding"] * 100
+            if values["outstanding"] > 0
+            else 0
+        )
+
+        result.append(
+            {
+                "store_name": store_name,
+                "pending": round(values["pending"], 2),
+                "recovered": round(values["recovered"], 2),
+                "outstanding": round(values["outstanding"], 2),
+                "recovery_rate": round(recovery_rate, 1),
+            }
+        )
+
+    return result
 
 @router.get("/top-bounced-products")
 def top_bounced_products(
@@ -371,6 +591,7 @@ def top_bounced_products(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -388,27 +609,30 @@ def top_bounced_products(
 
     products = query.all()
 
-    counts = defaultdict(int)
+    grouped = defaultdict(int)
 
     for product in products:
-        counts[product.product_name] += 1
 
-    result = []
+        grouped[product.product_name] += (
+            product.quantity or 1
+        )
 
-    for name, count in sorted(
-        counts.items(),
+    rows = []
+
+    for name, qty in sorted(
+        grouped.items(),
         key=lambda x: x[1],
         reverse=True,
-    )[:10]:
+    ):
 
-        result.append(
+        rows.append(
             {
-                "product": name,
-                "count": count,
+                "product_name": name,
+                "count": qty,
             }
         )
 
-    return result
+    return rows
 
 
 @router.get("/performance")
@@ -434,29 +658,48 @@ def performance(
     )
 
     revenue = sum(
-        _safe_number(r.cash_sales)
-        + _safe_number(r.upi_sales)
-        + _safe_number(r.card_sales)
-        + _safe_number(r.udhaar_sales)
-        for r in reports
-    )
 
-    purchases = sum(
-        _safe_number(r.total_purchases)
-        for r in reports
+        _safe_number(report.cash_sales)
+
+        + _safe_number(report.upi_sales)
+
+        + _safe_number(report.card_sales)
+
+        + _safe_number(report.udhaar_sales)
+
+        for report in reports
+
     )
 
     expenses = sum(
-        _safe_number(r.total_expenses)
-        for r in reports
+        _safe_number(report.total_expenses)
+        for report in reports
+    )
+
+    profit = revenue - expenses
+
+    margin = (
+        (profit / revenue) * 100
+        if revenue
+        else 0
     )
 
     return {
-        "sales": revenue,
-        "expenses": expenses,
-        "purchases": purchases,
-        "net": revenue - expenses - purchases,
+
+        "revenue": round(revenue, 2),
+
+        "expenses": round(expenses, 2),
+
+        "profit": round(profit, 2),
+
+        "profit_margin": round(
+            margin,
+            1,
+        ),
+
     }
+
+
 
 @router.get("/overview")
 def overview(
@@ -480,12 +723,58 @@ def overview(
         store_id,
     )
 
-    return {
-        "reports": len(reports),
-        "forecast": _forecast(reports),
-        "sales_trend": _monthly_series(reports),
-    }
+    sales = sum(
 
+        _safe_number(report.cash_sales)
+
+        + _safe_number(report.upi_sales)
+
+        + _safe_number(report.card_sales)
+
+        + _safe_number(report.udhaar_sales)
+
+        for report in reports
+
+    )
+
+    expenses = sum(
+        _safe_number(report.total_expenses)
+        for report in reports
+    )
+
+    purchases = (
+        db.query(
+            func.sum(
+                Purchase.purchase_amount
+            )
+        )
+        .scalar()
+        or 0
+    )
+
+    bills = sum(
+        report.total_bills or 0
+        for report in reports
+    )
+
+    deliveries = sum(
+        report.deliveries or 0
+        for report in reports
+    )
+
+    return {
+
+        "sales": round(sales, 2),
+
+        "expenses": round(expenses, 2),
+
+        "purchases": round(purchases, 2),
+
+        "bills": bills,
+
+        "deliveries": deliveries,
+
+    }
 
 @router.get("/export/excel")
 def export_excel(
@@ -509,21 +798,25 @@ def export_excel(
         store_id,
     )
 
-    wb = Workbook()
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Analytics"
 
-    ws = wb.active
-    ws.title = "Analytics"
+    headers = [
+        "Store",
+        "Date",
+        "Bills",
+        "Sales",
+        "Expenses",
+        "Purchases",
+    ]
 
-    ws.append(
-        [
-            "Store",
-            "Date",
-            "Sales",
-            "Purchases",
-            "Expenses",
-            "Bills",
-        ]
-    )
+    for column, header in enumerate(headers, start=1):
+        cell = sheet.cell(row=1, column=column)
+        cell.value = header
+        cell.font = Font(bold=True)
+
+    row = 2
 
     for report in reports:
 
@@ -533,23 +826,51 @@ def export_excel(
             .first()
         )
 
-        ws.append(
-            [
-                store.name if store else "",
-                str(report.report_date),
-                report.cash_sales
-                + report.upi_sales
-                + report.card_sales
-                + report.udhaar_sales,
-                report.total_purchases,
-                report.total_expenses,
-                report.total_bills,
-            ]
+        purchases = (
+            db.query(
+                func.sum(
+                    Purchase.purchase_amount
+                )
+            )
+            .filter(
+                Purchase.store_id == report.store_id
+            )
+            .scalar()
+            or 0
         )
+
+        sales = (
+            _safe_number(report.cash_sales)
+            + _safe_number(report.upi_sales)
+            + _safe_number(report.card_sales)
+            + _safe_number(report.udhaar_sales)
+        )
+
+        sheet.cell(row=row, column=1).value = (
+            store.name if store else ""
+        )
+
+        sheet.cell(row=row, column=2).value = str(
+            report.report_date
+        )
+
+        sheet.cell(row=row, column=3).value = (
+            report.total_bills
+        )
+
+        sheet.cell(row=row, column=4).value = sales
+
+        sheet.cell(row=row, column=5).value = (
+            report.total_expenses
+        )
+
+        sheet.cell(row=row, column=6).value = purchases
+
+        row += 1
 
     stream = BytesIO()
 
-    wb.save(stream)
+    workbook.save(stream)
 
     stream.seek(0)
 
@@ -561,6 +882,7 @@ def export_excel(
             "attachment; filename=analytics.xlsx"
         },
     )
+
 
 @router.get("/export/pdf")
 def export_pdf(
@@ -586,21 +908,19 @@ def export_pdf(
 
     buffer = BytesIO()
 
-    doc = SimpleDocTemplate(
+    document = SimpleDocTemplate(
         buffer,
         pagesize=A4,
     )
 
-    table_data = [
-        [
-            "Store",
-            "Date",
-            "Sales",
-            "Purchases",
-            "Expenses",
-            "Bills",
-        ]
-    ]
+    table_data = [[
+        "Store",
+        "Date",
+        "Bills",
+        "Sales",
+        "Expenses",
+        "Purchases",
+    ]]
 
     for report in reports:
 
@@ -610,35 +930,79 @@ def export_pdf(
             .first()
         )
 
-        table_data.append(
-            [
-                store.name if store else "",
-                str(report.report_date),
-                report.cash_sales
-                + report.upi_sales
-                + report.card_sales
-                + report.udhaar_sales,
-                report.total_purchases,
-                report.total_expenses,
-                report.total_bills,
-            ]
+        purchases = (
+            db.query(
+                func.sum(
+                    Purchase.purchase_amount
+                )
+            )
+            .filter(
+                Purchase.store_id == report.store_id
+            )
+            .scalar()
+            or 0
         )
+
+        sales = (
+            _safe_number(report.cash_sales)
+            + _safe_number(report.upi_sales)
+            + _safe_number(report.card_sales)
+            + _safe_number(report.udhaar_sales)
+        )
+
+        table_data.append([
+            store.name if store else "",
+            str(report.report_date),
+            report.total_bills,
+            round(sales, 2),
+            round(
+                _safe_number(
+                    report.total_expenses
+                ),
+                2,
+            ),
+            round(purchases, 2),
+        ])
 
     table = Table(table_data)
 
     table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2563EB")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
-            ]
-        )
+        TableStyle([
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor("#2563EB"),
+            ),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.white,
+            ),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.5,
+                colors.grey,
+            ),
+            (
+                "FONTNAME",
+                (0, 0),
+                (-1, 0),
+                "Helvetica-Bold",
+            ),
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, 0),
+                10,
+            ),
+        ])
     )
 
-    doc.build([table])
+    document.build([table])
 
     buffer.seek(0)
 

@@ -83,13 +83,7 @@ exportPDF: async (period = "today", store = "all") => {
       },
     }).then((r) => r.data),
 
-  getBusinessInsights: (period = "today", store = "all") =>
-    api.get("/analytics/business-insights", {
-      params: {
-        period,
-        store_id: store,
-      },
-    }).then((r) => r.data),
+  
 
   getPerformance: (period = "today", store = "all") =>
     api.get("/analytics/performance", {

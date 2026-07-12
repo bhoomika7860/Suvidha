@@ -180,7 +180,7 @@ const [paymentBreakdown, setPaymentBreakdown] = useState([]);
 const [expenseDistribution, setExpenseDistribution] = useState([]);
 const [salesTrend, setSalesTrend] = useState([]);
 const [bouncedProducts, setBouncedProducts] = useState([]);
-const [insights, setInsights] = useState([]);
+
 const [performance, setPerformance] = useState([]);
 
 const [loading, setLoading] = useState(true);
@@ -208,7 +208,6 @@ const [error, setError] = useState("");
       expenseData,
       trendData,
       bouncedData,
-      insightsData,
       performanceData,
     ] = await Promise.all([
       analyticsService.getDashboardSummary(selectedPeriod, selectedStore),
@@ -218,7 +217,6 @@ analyticsService.getPaymentBreakdown(selectedPeriod, selectedStore),
 analyticsService.getExpenseDistribution(selectedPeriod, selectedStore),
 analyticsService.getSalesTrend(selectedPeriod, selectedStore),
 analyticsService.getTopBouncedProducts(selectedPeriod, selectedStore),
-analyticsService.getBusinessInsights(selectedPeriod, selectedStore),
 analyticsService.getPerformance(selectedPeriod, selectedStore),
     ]);
 
@@ -239,7 +237,7 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     setExpenseDistribution(expenseData);
     setSalesTrend(trendData);
     setBouncedProducts(bouncedData);
-    setInsights(insightsData);
+    
     setPerformance(performanceData);
 
     console.log("Stores from backend:", storeData);
@@ -383,14 +381,7 @@ console.log("Stores:", stores);
     <div style={{ background: "#F8FAFC", fontFamily: "Inter, sans-serif", minHeight: "100vh" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 24px 64px" }}>
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight" style={{ color: TEXT }}>
-              Analytics
-            </h1>
-            <p className="mt-2 text-base" style={{ color: MUTED }}>
-              Live business intelligence for revenue, stores, credit, and operations.
-            </p>
-          </div>
+          
           <div className="flex flex-wrap items-center gap-3">
             <button onClick={handleExportExcel}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
@@ -802,51 +793,12 @@ console.log("Stores:", stores);
             </div>
 
             <div className="mb-8 grid gap-4 xl:grid-cols-4">
-              {(performance || []).map((item, index) => {
-                const accent = [BLUE, GREEN, PURPLE, RED][index % 4];
-                const Icon = [BarChart2, TrendingUp, DollarSign, CreditCard][index % 4];
-                const PAYMENT_COLORS = {
-  Cash: "#16A34A",
-  UPI: "#7C3AED",
-  Card: "#0891B2",
-  Udhaar: "#D97706",
-};
-
-const EXPENSE_COLORS = [
-  "#2563EB",
-  "#16A34A",
-  "#7C3AED",
-  "#EA580C",
-  "#DC2626",
-  "#0EA5E9",
-  "#F59E0B",
-];
-                return (
-                  <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" style={{ borderColor: BORDER }}>
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>
-                        {item.title}
-                      </p>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${accent}16` }}>
-                        <Icon size={18} color={accent} />
-                      </div>
-                    </div>
-                    <p className="text-xl font-bold tracking-tight" style={{ color: TEXT }}>
-                      {item.value}
-                    </p>
-                  </div>
-                );
-              })}
+              
             </div>
 
             <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
               <SectionHeader title="Business Insights" subtitle="Generated from live analytics" />
-              <div className="grid gap-4 xl:grid-cols-2">
-                {(insights || []).map((insight, index) => {
-                  const Icon = [TrendingUp, Activity, Zap, Star, Package, Lightbulb][index % 6];
-                  return <InsightCard key={`${insight.text}-${index}`} icon={Icon} text={insight.text} accent={ACCENT_COLORS[index % ACCENT_COLORS.length]} />;
-                })}
-              </div>
+              
             </div>
           </>
         )}
