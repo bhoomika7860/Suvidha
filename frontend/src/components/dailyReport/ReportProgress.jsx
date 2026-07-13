@@ -1,37 +1,89 @@
+import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, Clock3 } from "lucide-react";
-
-const sections = [
-  {
-    title: "Sales",
-    status: "done",
-  },
-  {
-    title: "Expenses",
-    status: "done",
-  },
-  {
-    title: "Purchases",
-    status: "pending",
-  },
-  {
-    title: "Deliveries",
-    status: "todo",
-  },
-  {
-    title: "Bounced Products",
-    status: "todo",
-  },
-  {
-    title: "Notes",
-    status: "todo",
-  },
-];
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function ReportProgress() {
+  const [report, setReport] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await dailyReportsService.getTodayReport();
+        setReport(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    load();
+  }, []);
+
+  if (!report) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  const sections = [
+    {
+      title: "Sales",
+      status:
+        report.cash_sales +
+          report.upi_sales +
+          report.card_sales +
+          report.udhaar_sales >
+        0
+          ? "done"
+          : "todo",
+    },
+    {
+      title: "Expenses",
+      status:
+        report.total_expenses > 0
+          ? "done"
+          : "todo",
+    },
+    {
+      title: "Purchases",
+      status:
+        report.total_purchases > 0
+          ? "done"
+          : "todo",
+    },
+    {
+      title: "Deliveries",
+      status:
+        report.deliveries > 0
+          ? "done"
+          : "todo",
+    },
+    {
+      title: "Bounced Products",
+      status:
+        report.bounced_products?.length > 0
+          ? "done"
+          : "todo",
+    },
+    {
+      title: "Notes",
+      status:
+        report.notes
+          ? "done"
+          : "todo",
+    },
+  ];
+
+  const completed = sections.filter(
+    (s) => s.status === "done"
+  ).length;
+
+  const percentage = (completed / sections.length) * 100;
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
 
         <div>
@@ -41,25 +93,32 @@ export default function ReportProgress() {
           </h2>
 
           <p className="text-sm text-gray-500 mt-0.5">
-            2 of 6 sections completed
+            {completed} of {sections.length} sections completed
           </p>
 
         </div>
 
-        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">
-          Draft
+        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+          report.is_locked
+            ? "bg-green-100 text-green-700 border-green-200"
+            : "bg-amber-100 text-amber-700 border-amber-200"
+        }`}>
+          {report.is_locked ? "Locked" : "Draft"}
         </span>
 
       </div>
 
-      {/* Progress Bar */}
       <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
 
-        <div className="w-1/3 h-full rounded-full bg-blue-600"></div>
+        <div
+          className="h-full rounded-full bg-blue-600"
+          style={{
+            width: `${percentage}%`,
+          }}
+        />
 
       </div>
 
-      {/* Status Pills */}
       <div className="flex flex-wrap gap-3 mt-5">
 
         {sections.map((section) => {
@@ -68,39 +127,27 @@ export default function ReportProgress() {
           const isPending = section.status === "pending";
 
           return (
-
             <div
               key={section.title}
-              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition
-
-                ${
-                  isDone
-                    ? "bg-green-50 border-green-200 text-green-700"
-                    : isPending
-                    ? "bg-orange-50 border-orange-200 text-orange-700"
-                    : "bg-gray-50 border-gray-200 text-gray-500"
-                }
-              `}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${
+                isDone
+                  ? "bg-green-50 border-green-200 text-green-700"
+                  : isPending
+                  ? "bg-orange-50 border-orange-200 text-orange-700"
+                  : "bg-gray-50 border-gray-200 text-gray-500"
+              }`}
             >
-
-              {isDone && (
+              {isDone ? (
                 <CheckCircle2 size={15} />
-              )}
-
-              {isPending && (
+              ) : isPending ? (
                 <Clock3 size={15} />
-              )}
-
-              {!isDone && !isPending && (
+              ) : (
                 <Circle size={15} />
               )}
 
               {section.title}
-
             </div>
-
           );
-
         })}
 
       </div>

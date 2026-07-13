@@ -11,3 +11,13 @@ class DailyReportCreate(BaseModel):
     udhaar_sales: float
     total_expenses: float
     total_purchases: float = 0
+
+class SalesUpdate(BaseModel):
+    total_bills: int
+    cash_sales: float
+    upi_sales: float
+    card_sales: float
+    udhaar_sales: float
+
+class DeliveryUpdate(BaseModel):
+    deliveries: int

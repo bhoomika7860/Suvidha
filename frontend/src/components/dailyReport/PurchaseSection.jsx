@@ -1,12 +1,34 @@
 import { Eye, Package } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import SectionCard from "./SectionCard";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function PurchaseSection() {
+  const [purchases, setPurchases] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      const report =
+        await dailyReportsService.getTodayReport();
+
+      const data =
+        await dailyReportsService.getPurchases(report.id);
+
+      setPurchases(data);
+    }
+
+    load();
+  }, []);
+
+  const total = purchases.reduce(
+    (sum, purchase) =>
+      sum + Number(purchase.amount),
+    0
+  );
+
   return (
     <SectionCard title="Purchases">
-
-      {/* Header */}
 
       <div className="flex items-center justify-between mb-5">
 
@@ -23,12 +45,12 @@ export default function PurchaseSection() {
 
           <div>
 
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold">
               Today's Purchases
             </h3>
 
             <p className="text-sm text-gray-500">
-              Bills received today automatically appear here.
+              Automatically synced from the Purchase module.
             </p>
 
           </div>
@@ -37,7 +59,7 @@ export default function PurchaseSection() {
 
         <Link
           to="/manager-purchases"
-          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
         >
           <Eye size={17} />
           View Purchases
@@ -45,9 +67,7 @@ export default function PurchaseSection() {
 
       </div>
 
-      {/* Table */}
-
-      <div className="overflow-hidden rounded-xl border border-gray-200">
+      <div className="overflow-hidden rounded-xl border">
 
         <table className="w-full">
 
@@ -55,20 +75,16 @@ export default function PurchaseSection() {
 
             <tr>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
-                Party
+              <th className="px-5 py-3 text-left">
+                Product
               </th>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
-                Bill No.
+              <th className="px-5 py-3 text-left">
+                Supplier
               </th>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
+              <th className="px-5 py-3 text-left">
                 Amount
-              </th>
-
-              <th className="px-5 py-3 text-left text-sm font-semibold">
-                Stage
               </th>
 
             </tr>
@@ -77,65 +93,34 @@ export default function PurchaseSection() {
 
           <tbody>
 
-            <tr className="border-t hover:bg-gray-50">
+            {purchases.map((purchase) => (
 
-              <td className="px-5 py-3">
-                Sun Pharma
-              </td>
+              <tr
+                key={purchase.id}
+                className="border-t"
+              >
 
-              <td className="px-5 py-3">
-                SP1023
-              </td>
+                <td className="px-5 py-3">
+                  {purchase.product_name}
+                </td>
 
-              <td className="px-5 py-3 font-semibold">
-                ₹8,500
-              </td>
+                <td className="px-5 py-3">
+                  {purchase.supplier_name || "-"}
+                </td>
 
-              <td className="px-5 py-3">
+                <td className="px-5 py-3 font-medium">
+                  ₹{Number(purchase.amount).toLocaleString("en-IN")}
+                </td>
 
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+              </tr>
 
-                  Completed
-
-                </span>
-
-              </td>
-
-            </tr>
-
-            <tr className="border-t hover:bg-gray-50">
-
-              <td className="px-5 py-3">
-                Cipla
-              </td>
-
-              <td className="px-5 py-3">
-                CP871
-              </td>
-
-              <td className="px-5 py-3 font-semibold">
-                ₹6,700
-              </td>
-
-              <td className="px-5 py-3">
-
-                <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-medium">
-
-                  Waiting Check
-
-                </span>
-
-              </td>
-
-            </tr>
+            ))}
 
           </tbody>
 
         </table>
 
       </div>
-
-      {/* Footer */}
 
       <div className="mt-5 flex justify-end">
 
@@ -146,7 +131,7 @@ export default function PurchaseSection() {
           </p>
 
           <h2 className="text-2xl font-bold text-blue-600">
-            ₹15,200
+            ₹{total.toLocaleString("en-IN")}
           </h2>
 
         </div>

@@ -1,13 +1,46 @@
+import { useEffect, useState } from "react";
 import { Truck } from "lucide-react";
 import SectionCard from "./SectionCard";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function DeliverySection() {
+  const [report, setReport] = useState(null);
+
+  const [deliveries, setDeliveries] = useState(0);
+
+  const [remarks, setRemarks] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const today =
+        await dailyReportsService.getTodayReport();
+
+      setReport(today);
+      setDeliveries(today.deliveries || 0);
+    }
+
+    load();
+  }, []);
+
+  async function handleSave() {
+    try {
+      await dailyReportsService.updateDeliveries(
+        report.id,
+        Number(deliveries)
+      );
+
+      alert("Deliveries updated.");
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  if (!report) return null;
+
   return (
     <SectionCard title="Deliveries">
 
       <div className="grid grid-cols-3 gap-6">
-
-        {/* Delivery Count */}
 
         <div className="border rounded-2xl bg-gray-50 p-5">
 
@@ -30,7 +63,10 @@ export default function DeliverySection() {
 
           <input
             type="number"
-            placeholder="0"
+            value={deliveries}
+            onChange={(e) =>
+              setDeliveries(e.target.value)
+            }
             className="w-full h-11 rounded-xl border border-gray-200 px-4 outline-none focus:border-blue-500"
           />
 
@@ -41,14 +77,12 @@ export default function DeliverySection() {
             </p>
 
             <h2 className="text-2xl font-bold text-violet-600 mt-2">
-              12
+              {deliveries}
             </h2>
 
           </div>
 
         </div>
-
-        {/* Remarks */}
 
         <div className="col-span-2 border rounded-2xl bg-gray-50 p-5">
 
@@ -58,6 +92,10 @@ export default function DeliverySection() {
 
           <textarea
             rows={6}
+            value={remarks}
+            onChange={(e) =>
+              setRemarks(e.target.value)
+            }
             placeholder="Optional remarks about today's deliveries..."
             className="w-full rounded-xl border border-gray-200 p-4 resize-none outline-none focus:border-blue-500"
           />
@@ -68,10 +106,11 @@ export default function DeliverySection() {
 
       <div className="flex justify-end mt-6">
 
-        <button className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition">
-
+        <button
+          onClick={handleSave}
+          className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+        >
           Save Deliveries
-
         </button>
 
       </div>

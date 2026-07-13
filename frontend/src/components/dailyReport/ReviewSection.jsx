@@ -1,20 +1,105 @@
+import { useEffect, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
   Lock,
 } from "lucide-react";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function ReviewSection() {
+  const [report, setReport] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      const data =
+        await dailyReportsService.getTodayReport();
+
+      setReport(data);
+    }
+
+    load();
+  }, []);
+
+  if (!report) return null;
+
+  const completed = [];
+  const remaining = [];
+
+  function addSection(name, done) {
+    if (done) completed.push(name);
+    else remaining.push(name);
+  }
+
+  addSection(
+    "Sales",
+    report.cash_sales +
+      report.upi_sales +
+      report.card_sales +
+      report.udhaar_sales >
+      0
+  );
+
+  addSection(
+    "Expenses",
+    report.total_expenses > 0
+  );
+
+  addSection(
+    "Purchases",
+    report.total_purchases > 0
+  );
+
+  addSection(
+    "Deliveries",
+    report.deliveries > 0
+  );
+
+  addSection(
+    "Bounced Products",
+    report.bounced_products?.length > 0
+  );
+
+  addSection(
+    "Notes",
+    report.notes &&
+      report.notes.trim() !== ""
+  );
+
+  async function submitReport() {
+    if (remaining.length > 0) {
+      alert(
+        "Complete all sections before submitting."
+      );
+      return;
+    }
+
+    try {
+      await dailyReportsService.submitReport(
+        report.id
+      );
+
+      alert(
+        "Daily report submitted successfully."
+      );
+
+      const updated =
+        await dailyReportsService.getTodayReport();
+
+      setReport(updated);
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-
-      {/* Header */}
 
       <div className="flex items-center justify-between">
 
         <div>
 
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold">
             Review & Submit
           </h2>
 
@@ -34,11 +119,7 @@ export default function ReviewSection() {
 
       </div>
 
-      {/* Status */}
-
       <div className="grid grid-cols-2 gap-5 mt-6">
-
-        {/* Completed */}
 
         <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
 
@@ -50,24 +131,24 @@ export default function ReviewSection() {
             />
 
             <h3 className="font-semibold text-green-700">
-              Completed (3)
+              Completed ({completed.length})
             </h3>
 
           </div>
 
-          <ul className="space-y-2 text-sm text-gray-700">
+          <ul className="space-y-2 text-sm">
 
-            <li>✓ Sales</li>
+            {completed.map((item) => (
 
-            <li>✓ Expenses</li>
+              <li key={item}>
+                ✓ {item}
+              </li>
 
-            <li>✓ Purchases</li>
+            ))}
 
           </ul>
 
         </div>
-
-        {/* Remaining */}
 
         <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5">
 
@@ -79,18 +160,20 @@ export default function ReviewSection() {
             />
 
             <h3 className="font-semibold text-orange-700">
-              Remaining (3)
+              Remaining ({remaining.length})
             </h3>
 
           </div>
 
-          <ul className="space-y-2 text-sm text-gray-700">
+          <ul className="space-y-2 text-sm">
 
-            <li>• Deliveries</li>
+            {remaining.map((item) => (
 
-            <li>• Bounced Products</li>
+              <li key={item}>
+                • {item}
+              </li>
 
-            <li>• Notes</li>
+            ))}
 
           </ul>
 
@@ -98,26 +181,40 @@ export default function ReviewSection() {
 
       </div>
 
-      {/* Footer */}
-
       <div className="mt-8 flex items-center justify-between border-t pt-5">
 
         <p className="text-sm text-gray-500">
-          Complete all pending sections to enable report submission.
+
+          {remaining.length === 0
+            ? "Report is ready for submission."
+            : "Complete all pending sections to enable report submission."}
+
         </p>
 
         <div className="flex gap-3">
 
-          <button className="h-11 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition">
-
+          <button
+            className="h-11 px-6 rounded-xl border border-gray-200"
+          >
             Save Draft
-
           </button>
 
-          <button className="w-60 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
-
-            Submit Daily Report
-
+          <button
+            disabled={
+              remaining.length > 0 ||
+              report.is_locked
+            }
+            onClick={submitReport}
+            className={`w-60 h-11 rounded-xl font-semibold text-white ${
+              remaining.length > 0 ||
+              report.is_locked
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {report.is_locked
+              ? "Report Submitted"
+              : "Submit Daily Report"}
           </button>
 
         </div>

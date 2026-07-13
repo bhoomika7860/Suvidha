@@ -15,6 +15,14 @@ from sqlalchemy.orm import joinedload
 
 
 from app.models.user import User
+from datetime import date
+from app.models.store import Store
+
+from app.schemas.daily_report import SalesUpdate
+from app.models.purchase import Purchase
+from sqlalchemy import func
+from datetime import date
+from app.schemas.daily_report import DeliveryUpdate
 
 router = APIRouter(
     prefix="/daily-reports",
@@ -122,6 +130,280 @@ def update_daily_report(
     db.refresh(report)
 
     return report
+
+@router.get("/today")
+def get_today_report(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user["role"] != "store_manager":
+        raise HTTPException(
+        status_code=403,
+        detail="Only store managers can access today's report",
+    )
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == current_user["store_id"],
+            DailyReport.report_date == date.today(),
+        )
+        .first()
+    )
+
+    if report is None:
+        report = DailyReport(
+            store_id=current_user["store_id"],
+            submitted_by=current_user["user_id"],
+            report_date=date.today(),
+        )
+
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+
+    return report
+
+
+@router.get("/{report_id}/bounced-products")
+def get_report_bounced_products(
+    report_id: int,
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .options(joinedload(DailyReport.bounced_products))
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    return [
+        {
+            "id": product.id,
+            "product_name": product.product_name,
+            "quantity": product.quantity,
+        }
+        for product in report.bounced_products
+    ]
+
+@router.put("/{report_id}/sales")
+def update_sales(
+    report_id: int,
+    data: SalesUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
+
+    report.total_bills = data.total_bills
+    report.cash_sales = data.cash_sales
+    report.upi_sales = data.upi_sales
+    report.card_sales = data.card_sales
+    report.udhaar_sales = data.udhaar_sales
+
+    db.commit()
+    db.refresh(report)
+
+    return report
+
+@router.put("/{report_id}/notes")
+def update_notes(
+    report_id: int,
+    data: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
+
+    report.notes = data.get("notes", "")
+
+    db.commit()
+    db.refresh(report)
+
+    return report
+
+@router.put("/{report_id}/deliveries")
+def update_deliveries(
+    report_id: int,
+    data: DeliveryUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
+
+    report.deliveries = data.deliveries
+
+    db.commit()
+    db.refresh(report)
+
+    return report
+
+@router.post("/{report_id}/submit")
+def submit_report(
+    report_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report already submitted",
+        )
+
+    report.is_locked = True
+
+    db.commit()
+
+    create_audit_log(
+        db=db,
+        user_id=current_user["user_id"],
+        action="SUBMIT",
+        table_name="daily_reports",
+        record_id=report.id,
+        description="Submitted daily report",
+    )
+
+    return {
+        "message": "Daily report submitted successfully"
+    }
+
+
+@router.get("/{report_id}/expenses")
+def get_report_expenses(
+    report_id: int,
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .options(joinedload(DailyReport.expenses))
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    return [
+        {
+            "id": expense.id,
+            "title": expense.title,
+            "amount": expense.amount,
+            "created_by": (
+                expense.created_by_user.full_name
+                if hasattr(expense, "created_by_user")
+                and expense.created_by_user
+                else "-"
+            ),
+        }
+        for expense in report.expenses
+    ]
+
+
+@router.get("/{report_id}/purchases")
+def get_report_purchases(
+    report_id: int,
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    purchases = (
+    db.query(Purchase)
+    .filter(
+        Purchase.store_id == report.store_id,
+        func.date(Purchase.purchase_date) == date.today(),
+    )
+    .all()
+)
+
+    return [
+        {
+            "id": purchase.id,
+            "product_name": purchase.product_name,
+            "supplier_name": purchase.supplier_name,
+            "quantity": purchase.quantity,
+            "amount": purchase.purchase_amount,
+        }
+        for purchase in purchases
+    ]
 
 
 

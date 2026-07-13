@@ -1,12 +1,28 @@
+import { useEffect, useState } from "react";
 import { AlertTriangle, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import SectionCard from "./SectionCard";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function BouncedSection() {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      const report =
+        await dailyReportsService.getTodayReport();
+
+      const data =
+        await dailyReportsService.getBouncedProducts(report.id);
+
+      setProducts(data);
+    }
+
+    load();
+  }, []);
+
   return (
     <SectionCard title="Bounced Products">
-
-      {/* Header */}
 
       <div className="flex items-center justify-between mb-5">
 
@@ -23,7 +39,7 @@ export default function BouncedSection() {
 
           <div>
 
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold">
               Today's Bounced Products
             </h3>
 
@@ -37,15 +53,13 @@ export default function BouncedSection() {
 
         <Link
           to="/manager-bounced"
-          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
         >
           <Eye size={17} />
           View Products
         </Link>
 
       </div>
-
-      {/* Table */}
 
       <div className="overflow-hidden rounded-xl border border-gray-200">
 
@@ -55,12 +69,12 @@ export default function BouncedSection() {
 
             <tr>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
+              <th className="px-5 py-3 text-left">
                 Medicine
               </th>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
-                Reason
+              <th className="px-5 py-3 text-left">
+                Quantity
               </th>
 
             </tr>
@@ -69,37 +83,30 @@ export default function BouncedSection() {
 
           <tbody>
 
-            <tr className="border-t hover:bg-gray-50">
+            {products.map((product) => (
 
-              <td className="px-5 py-3">
-                Dolo 650
-              </td>
+              <tr
+                key={product.id}
+                className="border-t"
+              >
 
-              <td className="px-5 py-3">
-                Out of Stock
-              </td>
+                <td className="px-5 py-3">
+                  {product.product_name}
+                </td>
 
-            </tr>
+                <td className="px-5 py-3">
+                  {product.quantity}
+                </td>
 
-            <tr className="border-t hover:bg-gray-50">
+              </tr>
 
-              <td className="px-5 py-3">
-                Augmentin 625
-              </td>
-
-              <td className="px-5 py-3">
-                Supplier Delay
-              </td>
-
-            </tr>
+            ))}
 
           </tbody>
 
         </table>
 
       </div>
-
-      {/* Footer */}
 
       <div className="mt-5 flex justify-end">
 
@@ -110,7 +117,7 @@ export default function BouncedSection() {
           </p>
 
           <h2 className="text-2xl font-bold text-red-600">
-            2
+            {products.length}
           </h2>
 
         </div>

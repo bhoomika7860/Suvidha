@@ -1,12 +1,36 @@
+import { useEffect, useState } from "react";
 import { Eye, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import SectionCard from "./SectionCard";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function ExpenseSection() {
+  const [expenses, setExpenses] = useState([]);
+  const [reportId, setReportId] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      const report =
+        await dailyReportsService.getTodayReport();
+
+      setReportId(report.id);
+
+      const data =
+        await dailyReportsService.getExpenses(report.id);
+
+      setExpenses(data);
+    }
+
+    load();
+  }, []);
+
+  const total = expenses.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0
+  );
+
   return (
     <SectionCard title="Expenses">
-
-      {/* Header */}
 
       <div className="flex items-center justify-between mb-5">
 
@@ -23,7 +47,7 @@ export default function ExpenseSection() {
 
           <div>
 
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold">
               Today's Expenses
             </h3>
 
@@ -37,7 +61,7 @@ export default function ExpenseSection() {
 
         <Link
           to="/manager-expenses"
-          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
         >
           <Eye size={17} />
           View Expenses
@@ -45,9 +69,7 @@ export default function ExpenseSection() {
 
       </div>
 
-      {/* Table */}
-
-      <div className="overflow-hidden rounded-xl border border-gray-200">
+      <div className="overflow-hidden rounded-xl border">
 
         <table className="w-full">
 
@@ -55,15 +77,15 @@ export default function ExpenseSection() {
 
             <tr>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
+              <th className="px-5 py-3 text-left">
                 Expense
               </th>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
+              <th className="px-5 py-3 text-left">
                 Amount
               </th>
 
-              <th className="px-5 py-3 text-left text-sm font-semibold">
+              <th className="px-5 py-3 text-left">
                 Added By
               </th>
 
@@ -73,45 +95,34 @@ export default function ExpenseSection() {
 
           <tbody>
 
-            <tr className="border-t hover:bg-gray-50">
+            {expenses.map((expense) => (
 
-              <td className="px-5 py-3">
-                Electricity
-              </td>
+              <tr
+                key={expense.id}
+                className="border-t"
+              >
 
-              <td className="px-5 py-3 font-medium">
-                ₹1,200
-              </td>
+                <td className="px-5 py-3">
+                  {expense.title}
+                </td>
 
-              <td className="px-5 py-3">
-                Rahul
-              </td>
+                <td className="px-5 py-3 font-medium">
+                  ₹{expense.amount}
+                </td>
 
-            </tr>
+                <td className="px-5 py-3">
+                  {expense.created_by}
+                </td>
 
-            <tr className="border-t hover:bg-gray-50">
+              </tr>
 
-              <td className="px-5 py-3">
-                Tea & Snacks
-              </td>
-
-              <td className="px-5 py-3 font-medium">
-                ₹250
-              </td>
-
-              <td className="px-5 py-3">
-                Amit
-              </td>
-
-            </tr>
+            ))}
 
           </tbody>
 
         </table>
 
       </div>
-
-      {/* Footer */}
 
       <div className="mt-5 flex justify-end">
 
@@ -122,7 +133,7 @@ export default function ExpenseSection() {
           </p>
 
           <h2 className="text-2xl font-bold text-orange-600">
-            ₹1,450
+            ₹{total.toLocaleString("en-IN")}
           </h2>
 
         </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-
+import { useEffect } from "react";
+import purchaseService from "../../services/purchaseService";
 import PurchaseStats from "../../components/purchases/PurchaseStats";
 import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
 import PurchaseTable from "../../components/purchases/PurchaseTable";
@@ -18,60 +18,40 @@ const [activeTab, setActiveTab] = useState("orders");
 
 const [showOrderModal, setShowOrderModal] = useState(false);
 
-const [purchaseOrders, setPurchaseOrders] = useState([
-  {
-    id: 1,
-    party: "Sun Pharma",
-    items: 8,
-    expectedAmount: 12450,
-    expectedDate: "Today",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    party: "Cipla",
-    items: 15,
-    expectedAmount: 28300,
-    expectedDate: "Tomorrow",
-    status: "Completed",
-  },
-]);
-  const [purchases, setPurchases] = useState([
-    {
-      id: 1,
-      party: "Sun Pharma",
-      billNo: "SP1023",
-      amount: 8500,
-      receivedBy: "Rahul",
-      checkedBy: "-",
-      enteredBy: "-",
-      status: "received",
-    },
-    {
-      id: 2,
-      party: "Cipla",
-      billNo: "CP871",
-      amount: 6700,
-      receivedBy: "Amit",
-      checkedBy: "Rahul",
-      enteredBy: "-",
-      status: "waiting-check",
-    },
-  ]);
+const [purchaseOrders, setPurchaseOrders] = useState([]);
 
-  function addPurchase(purchase) {
+const [purchases, setPurchases] = useState([]);
 
-    setPurchases((prev) => [
-      {
-        id: Date.now(),
-        ...purchase,
-      },
-      ...prev,
+useEffect(() => {
+  loadData();
+}, []);
+
+async function loadData() {
+  try {
+    const [purchaseData, orderData] = await Promise.all([
+      purchaseService.getPurchases(),
+      purchaseService.getPurchaseOrders(),
     ]);
+
+    setPurchases(purchaseData);
+    setPurchaseOrders(orderData);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+  async function addPurchase(purchase) {
+  try {
+    await purchaseService.createPurchase(purchase);
+
+    await loadData();
 
     setShowReceiveModal(false);
 
+  } catch (err) {
+    console.error(err);
   }
+}
 
  const filteredPurchases = purchases.filter((purchase) => {
 
