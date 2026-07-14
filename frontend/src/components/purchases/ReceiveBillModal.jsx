@@ -10,36 +10,34 @@ export default function ReceiveBillModal({
   const [party, setParty] = useState("");
   const [billNo, setBillNo] = useState("");
   const [amount, setAmount] = useState("");
-
+  const [billImage, setBillImage] = useState(null);
+  
   if (!isOpen) return null;
 
   function handleSubmit() {
+  if (!party || !billNo || !amount) return;
 
-    if (!party || !billNo || !amount) return;
+  const user = JSON.parse(localStorage.getItem("user"));
 
-    onSave({
+  onSave({
+  store_id: user.store_id,
+  product_name: "Purchase Bill",
+  quantity: 1,
+  supplier_name: party,
+  purchase_amount: Number(amount),
+  created_by: user.user_id,
+  bill_number: billNo,
+  received_by: user.full_name,
+  checked_by: "",
+  entered_by: "",
+  status: "received",
+  bill_image: billImage,
+});
 
-      party,
-
-      billNo,
-
-      amount: Number(amount),
-
-      receivedBy: "Current User",
-
-      checkedBy: "-",
-
-      enteredBy: "-",
-
-      status: "received",
-
-    });
-
-    setParty("");
-    setBillNo("");
-    setAmount("");
-
-  }
+  setParty("");
+  setBillNo("");
+  setAmount("");
+}
 
   return (
     <>
@@ -139,26 +137,49 @@ export default function ReceiveBillModal({
 
             <div>
 
-              <label className="block text-sm font-medium mb-2">
+  <label className="block text-sm font-medium mb-2">
+    Upload Bill
+  </label>
 
-                Upload Bill
+  <label className="h-40 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition">
 
-              </label>
+    {billImage ? (
 
-              <div className="h-40 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center">
+      <img
+        src={URL.createObjectURL(billImage)}
+        alt="Bill"
+        className="h-full w-full object-contain rounded-2xl"
+      />
 
-                <Upload
-                  size={36}
-                  className="text-gray-400"
-                />
+    ) : (
 
-                <p className="text-sm text-gray-500 mt-3">
+      <>
 
-                  Image upload will be connected to the backend later
+        <Upload
+          size={36}
+          className="text-gray-400"
+        />
 
-                </p>
+        <p className="text-sm text-gray-500 mt-3">
+          Click to upload bill image
+        </p>
 
-              </div>
+      </>
+
+    )}
+
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) =>
+        setBillImage(e.target.files[0])
+      }
+    />
+
+  </label>
+
+</div>
 
             </div>
 
@@ -173,10 +194,9 @@ export default function ReceiveBillModal({
 
           </div>
 
-        </div>
+</div>
 
-      </div>
 
-    </>
-  );
+</>
+);
 }

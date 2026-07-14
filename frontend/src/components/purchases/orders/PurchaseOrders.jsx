@@ -1,5 +1,6 @@
 import PurchaseOrderTable from "./PurchaseOrderTable";
 import CreatePurchaseOrderModal from "./CreatePurchaseOrderModal";
+import purchaseService from "../../../services/purchaseService";
 
 export default function PurchaseOrders({
   purchaseOrders,
@@ -8,22 +9,26 @@ export default function PurchaseOrders({
   setShowModal,
 }) {
 
-  function addPurchaseOrder(order) {
+  async function addPurchaseOrder(order) {
+  try {
 
-    setPurchaseOrders(prev => [
+    await purchaseService.createPurchaseOrder(
+      order
+    );
 
-      {
-        id: Date.now(),
-        ...order,
-      },
+    const updated =
+      await purchaseService.getPurchaseOrders();
 
-      ...prev,
-
-    ]);
+    setPurchaseOrders(updated);
 
     setShowModal(false);
 
+  } catch (err) {
+
+    console.error(err);
+
   }
+}
 
   return (
 

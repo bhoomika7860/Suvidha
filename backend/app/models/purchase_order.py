@@ -3,15 +3,16 @@ from sqlalchemy import (
     Integer,
     String,
     Float,
+    Date,
     ForeignKey,
-    DateTime,
 )
-from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
-class Expense(Base):
-    __tablename__ = "expenses"
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -21,19 +22,24 @@ class Expense(Base):
         nullable=False,
     )
 
-    expense_type = Column(
+    supplier_name = Column(
         String,
         nullable=False,
     )
 
-    amount = Column(
+    expected_amount = Column(
         Float,
-        nullable=False,
+        default=0,
     )
 
-    remarks = Column(
-        String,
+    expected_date = Column(
+        Date,
         nullable=True,
+    )
+
+    status = Column(
+        String,
+        default="Pending",
     )
 
     created_by = Column(
@@ -42,7 +48,8 @@ class Expense(Base):
         nullable=False,
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
+    items = relationship(
+        "PurchaseOrderItem",
+        back_populates="purchase_order",
+        cascade="all, delete-orphan",
     )

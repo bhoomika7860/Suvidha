@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
 } from "lucide-react";
+import purchaseService from "../../services/purchaseService";
 
 export default function PurchaseDrawer({
   purchase,
@@ -17,49 +18,51 @@ export default function PurchaseDrawer({
   onClose,
 }) {
   if (!isOpen || !purchase) return null;
-  function moveToNextStage() {
+  async function moveToNextStage() {
+  try {
+    let payload = {};
 
-  const updatedPurchases = purchases.map((item) => {
-
-    if (item.id !== purchase.id) return item;
-
-    if (item.status === "received") {
-
-      return {
-        ...item,
+    if (purchase.status === "received") {
+      payload = {
         status: "waiting-check",
-        checkedBy: "Current User",
+        checked_by: "Current User",
       };
-
     }
 
-    if (item.status === "waiting-check") {
-
-      return {
-        ...item,
+    else if (purchase.status === "waiting-check") {
+      payload = {
         status: "waiting-entry",
-        enteredBy: "Current User",
+        entered_by: "Current User",
       };
-
     }
 
-    if (item.status === "waiting-entry") {
-
-      return {
-        ...item,
+    else if (purchase.status === "waiting-entry") {
+      payload = {
         status: "completed",
       };
-
     }
 
-    return item;
+    await purchaseService.updatePurchase(
+      purchase.id,
+      payload
+    );
 
-  });
+    const updatedPurchases = purchases.map((item) => {
+      if (item.id !== purchase.id) return item;
 
-  setPurchases(updatedPurchases);
+      return {
+        ...item,
+        ...payload,
+      };
+    });
 
-  onClose();
+    setPurchases(updatedPurchases);
 
+    onClose();
+
+  } catch (err) {
+    console.error(err);
+  }
 }
 
   return (
@@ -108,24 +111,36 @@ export default function PurchaseDrawer({
 
           <div>
 
-            <h3 className="font-semibold mb-3">
-              Bill Photo
-            </h3>
+  <h3 className="font-semibold mb-3">
+    Bill Photo
+  </h3>
 
-            <div className="h-60 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center">
+  {purchase.bill_image ? (
 
-              <Camera
-                size={40}
-                className="text-gray-400"
-              />
+    <img
+      src={`http://127.0.0.1:8000${purchase.bill_image}`}
+      alt="Bill"
+      className="w-full h-72 object-contain rounded-2xl border"
+    />
 
-              <p className="text-sm text-gray-500 mt-3">
-                Bill Preview
-              </p>
+  ) : (
 
-            </div>
+    <div className="h-60 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center">
 
-          </div>
+      <Camera
+        size={40}
+        className="text-gray-400"
+      />
+
+      <p className="text-sm text-gray-500 mt-3">
+        No Bill Uploaded
+      </p>
+
+    </div>
+
+  )}
+
+</div>
 
           {/* Information */}
 
@@ -142,7 +157,7 @@ export default function PurchaseDrawer({
                 </p>
 
                 <p className="font-medium">
-                  {purchase.party}
+                  {purchase.supplier_name}
                 </p>
 
               </div>
@@ -160,7 +175,7 @@ export default function PurchaseDrawer({
                 </p>
 
                 <p className="font-medium">
-                  {purchase.billNo}
+                  {purchase.bill_number}
                 </p>
 
               </div>
@@ -178,7 +193,7 @@ export default function PurchaseDrawer({
                 </p>
 
                 <p className="font-medium">
-                  ₹{purchase.amount.toLocaleString()}
+                  ₹{purchase.purchase_amount.toLocaleString()}
                 </p>
 
               </div>

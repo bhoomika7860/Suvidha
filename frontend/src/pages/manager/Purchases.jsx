@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import purchaseService from "../../services/purchaseService";
 import PurchaseStats from "../../components/purchases/PurchaseStats";
 import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
@@ -28,13 +28,18 @@ useEffect(() => {
 
 async function loadData() {
   try {
-    const [purchaseData, orderData] = await Promise.all([
+    const [
+      purchaseData,
+      purchaseOrderData,
+    ] = await Promise.all([
       purchaseService.getPurchases(),
       purchaseService.getPurchaseOrders(),
     ]);
 
     setPurchases(purchaseData);
-    setPurchaseOrders(orderData);
+
+    setPurchaseOrders(purchaseOrderData);
+
   } catch (err) {
     console.error(err);
   }
@@ -53,17 +58,34 @@ async function loadData() {
   }
 }
 
+async function addPurchaseOrder(order) {
+  try {
+    await purchaseService.createPurchaseOrder(order);
+
+    await loadData();
+
+    setShowOrderModal(false);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
  const filteredPurchases = purchases.filter((purchase) => {
 
   const matchesSearch =
-    purchase.party.toLowerCase().includes(search.toLowerCase()) ||
+  (purchase.supplier_name || "")
+    .toLowerCase()
+    .includes(search.toLowerCase()) ||
 
-    purchase.billNo.toLowerCase().includes(search.toLowerCase());
+  (purchase.bill_number || "")
+    .toLowerCase()
+    .includes(search.toLowerCase());
 
-  const matchesStatus =
-    purchase.status === activeFilter;
+const matchesStatus =
+  purchase.status === activeFilter;
 
-  return matchesSearch && matchesStatus;
+return matchesSearch && matchesStatus;
 
 });
   return (
@@ -102,12 +124,11 @@ async function loadData() {
 {activeTab === "orders" ? (
 
   <PurchaseOrders
-    purchaseOrders={purchaseOrders}
-    setPurchaseOrders={setPurchaseOrders}
-    showModal={showOrderModal}
-    setShowModal={setShowOrderModal}
-  />
-
+  purchaseOrders={purchaseOrders}
+  setPurchaseOrders={setPurchaseOrders}
+  showModal={showOrderModal}
+  setShowModal={setShowOrderModal}
+/>
 ) : (
 
   <PurchaseTable

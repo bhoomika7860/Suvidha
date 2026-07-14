@@ -27,6 +27,11 @@ from app.routes import tasks
 from app.routes import export
 from app.models.purchase import Purchase
 from app.routes import purchase
+from app.models.purchase_order import PurchaseOrder
+from app.models.purchase_order_item import PurchaseOrderItem
+from app.routes import purchase_orders
+from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI()
 app.include_router(auth_router)
@@ -45,6 +50,15 @@ app.include_router(tasks.router)
 app.include_router(export.router)
 Base.metadata.create_all(bind=engine)
 app.include_router(purchase.router)
+app.include_router(purchase_orders.router)
+
+os.makedirs("uploads/bills", exist_ok=True)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
+)
 
 origins = ["*"]
 

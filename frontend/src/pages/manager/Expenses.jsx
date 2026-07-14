@@ -1,9 +1,10 @@
-import { useState } from "react";
 
 import ExpenseStats from "../../components/expenses/ExpenseStats";
 import ExpenseToolbar from "../../components/expenses/ExpenseToolbar";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
 import AddExpenseModal from "../../components/expenses/AddExpenseModal";
+import { useEffect, useState } from "react";
+import expenseService from "../../services/expenseService";
 
 export default function Expenses() {
 
@@ -11,52 +12,54 @@ export default function Expenses() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      type: "Electricity",
-      amount: 1200,
-      addedBy: "Rahul",
-      time: "10:30 AM",
-      remarks: "Monthly bill",
-    },
-    {
-      id: 2,
-      type: "Tea & Snacks",
-      amount: 250,
-      addedBy: "Amit",
-      time: "12:15 PM",
-      remarks: "Staff refreshments",
-    },
-    {
-      id: 3,
-      type: "Packaging",
-      amount: 750,
-      addedBy: "Rahul",
-      time: "3:40 PM",
-      remarks: "Carry bags",
-    },
-  ]);
+  const [expenses, setExpenses] = useState([]);
 
-  function addExpense(expense) {
+  useEffect(() => {
+  loadExpenses();
+}, []);
 
-    setExpenses((prev) => [
-      {
-        id: Date.now(),
-        ...expense,
-      },
-      ...prev,
-    ]);
+async function loadExpenses() {
+  try {
+    const data =
+      await expenseService.getExpenses();
+
+    setExpenses(data);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+  async function addExpense(expense) {
+
+  try {
+
+    await expenseService.createExpense(
+      expense
+    );
+
+    await loadExpenses();
 
     setShowModal(false);
 
+  } catch (err) {
+
+    console.error(err);
+
   }
 
+}
+
   const filteredExpenses = expenses.filter(
-    (expense) =>
-      expense.type.toLowerCase().includes(search.toLowerCase()) ||
-      expense.addedBy.toLowerCase().includes(search.toLowerCase())
-  );
+  (expense) =>
+    expense.expense_type
+      .toLowerCase()
+      .includes(search.toLowerCase()) ||
+
+    expense.created_by_name
+      .toLowerCase()
+      .includes(search.toLowerCase())
+);
 
   return (
 

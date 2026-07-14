@@ -56,25 +56,25 @@ export default function PurchaseOrderTable({
 
                 <td className="px-6 py-5 font-medium">
 
-                  {order.party}
+                  {order.supplier_name}
 
                 </td>
 
                 <td className="px-6 py-5">
 
-                  {order.items}
+                  {order.items.length}
 
                 </td>
 
                 <td className="px-6 py-5">
 
-                  ₹{order.expectedAmount.toLocaleString()}
+                  ₹{order.expected_amount.toLocaleString()}
 
                 </td>
 
                 <td className="px-6 py-5">
 
-                  {order.expectedDate}
+                  {order.expected_date}
 
                 </td>
 

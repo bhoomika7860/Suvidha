@@ -334,38 +334,6 @@ def submit_report(
     }
 
 
-@router.get("/{report_id}/expenses")
-def get_report_expenses(
-    report_id: int,
-    db: Session = Depends(get_db),
-):
-    report = (
-        db.query(DailyReport)
-        .options(joinedload(DailyReport.expenses))
-        .filter(DailyReport.id == report_id)
-        .first()
-    )
-
-    if report is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Report not found",
-        )
-
-    return [
-        {
-            "id": expense.id,
-            "title": expense.title,
-            "amount": expense.amount,
-            "created_by": (
-                expense.created_by_user.full_name
-                if hasattr(expense, "created_by_user")
-                and expense.created_by_user
-                else "-"
-            ),
-        }
-        for expense in report.expenses
-    ]
 
 
 @router.get("/{report_id}/purchases")
@@ -468,12 +436,11 @@ def get_report(
     report = (
         db.query(DailyReport)
         .options(
-            joinedload(DailyReport.store),
-            joinedload(DailyReport.submitted_by_user),
-            joinedload(DailyReport.expenses),
-            joinedload(DailyReport.bounced_products),
-            joinedload(DailyReport.adjustment_requests)
-        )
+    joinedload(DailyReport.store),
+    joinedload(DailyReport.submitted_by_user),
+    joinedload(DailyReport.bounced_products),
+    joinedload(DailyReport.adjustment_requests)
+)
         .filter(DailyReport.id == report_id)
         .first()
     )
@@ -522,14 +489,7 @@ def get_report(
             "udhaar": report.udhaar_sales,
         },
 
-        "expenses": [
-            {
-                "id": expense.id,
-                "title": expense.title,
-                "amount": expense.amount,
-            }
-            for expense in report.expenses
-        ],
+       "expenses": [],
 
         "bounced_products": [
             {

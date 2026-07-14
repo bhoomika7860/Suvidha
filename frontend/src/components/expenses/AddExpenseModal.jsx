@@ -28,30 +28,29 @@ export default function AddExpenseModal({
 
   function handleSave() {
 
-    if (!amount) return;
+  if (!amount) return;
 
-    onSave({
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
-      type,
+  onSave({
+    store_id: user.store_id,
 
-      amount: Number(amount),
+    expense_type: type,
 
-      addedBy: "Current User",
+    amount: Number(amount),
 
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    remarks,
 
-      remarks,
+    created_by: user.user_id,
+  });
 
-    });
+  setAmount("");
+  setRemarks("");
+  setType("Electricity");
 
-    setAmount("");
-    setRemarks("");
-    setType("Electricity");
-
-  }
+}
 
   return (
     <>

@@ -38,11 +38,7 @@ class DailyReport(Base):
         back_populates="submitted_reports"
     )
 
-    expenses = relationship(
-        "Expense",
-        back_populates="daily_report",
-        cascade="all, delete-orphan"
-    )
+    
 
     bounced_products = relationship(
         "BouncedProduct",

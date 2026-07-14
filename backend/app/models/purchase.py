@@ -19,4 +19,64 @@ class Purchase(Base):
 
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    purchase_date = Column(DateTime(timezone=True), server_default=func.now())
+    purchase_date = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    purchase_order_id = Column(
+        Integer,
+        ForeignKey("purchase_orders.id"),
+        nullable=True,
+    )
+
+    status = Column(
+        String,
+        nullable=False,
+        default="received",
+    )
+
+    bill_number = Column(
+        String,
+        nullable=False,
+    )
+
+    received_by = Column(
+        String,
+        nullable=True,
+    )
+
+    checked_by = Column(
+        String,
+        nullable=True,
+    )
+
+    entered_by = Column(
+        String,
+        nullable=True,
+    )
+
+    bill_image = Column(
+        String,
+        nullable=True,
+    )
+
+received_by = Column(
+    String,
+    nullable=True,
+)
+
+checked_by = Column(
+    String,
+    nullable=True,
+)
+
+entered_by = Column(
+    String,
+    nullable=True,
+)
+
+bill_image = Column(
+    String,
+    nullable=True,
+)

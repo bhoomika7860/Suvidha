@@ -60,19 +60,19 @@ export default function PurchaseTable({
 
               <div className="font-medium text-gray-900">
 
-                {purchase.party}
+                {purchase.supplier_name}
 
               </div>
 
               <div className="text-gray-600">
 
-                {purchase.billNo}
+                {purchase.bill_number}
 
               </div>
 
               <div className="font-semibold">
 
-                ₹{purchase.amount.toLocaleString()}
+                ₹{purchase.purchase_amount.toLocaleString()}
 
               </div>
 
