@@ -3,6 +3,7 @@ import DeliveryDrawer from "./DeliveryDrawer";
 
 export default function DeliveryTable({
   deliveries,
+  reloadDeliveries,
 }) {
 
   const [selectedDelivery, setSelectedDelivery] = useState(null);
@@ -73,10 +74,11 @@ export default function DeliveryTable({
       </div>
 
       <DeliveryDrawer
-        delivery={selectedDelivery}
-        isOpen={selectedDelivery !== null}
-        onClose={() => setSelectedDelivery(null)}
-      />
+  delivery={selectedDelivery}
+  isOpen={selectedDelivery !== null}
+  onClose={() => setSelectedDelivery(null)}
+  reloadDeliveries={reloadDeliveries}
+/>
 
     </>
 

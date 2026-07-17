@@ -1,47 +1,57 @@
 import { useState } from "react";
-
+import { useEffect } from "react";
+import deliveryService from "../../services/deliveryService";
 import DeliveryHeader from "../../components/delivery/DeliveryHeader";
 import TargetCard from "../../components/delivery/TargetCard";
 import DeliveryToolbar from "../../components/delivery/DeliveryToolbar";
 import DeliveryTable from "../../components/delivery/DeliveryTable";
 import AddDeliveryModal from "../../components/delivery/AddDeliveryModal";
+import dailyReportsService from "../../services/dailyReportsService";
 
 export default function Delivery() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const [deliveries, setDeliveries] = useState([
-    {
-      id: 1,
-      customer: "Rahul Sharma",
-      billNo: "SP1023",
-      payment: 850,
-      paymentMethod: "Cash",
-      notes: "Delivered successfully.",
-    },
-    {
-      id: 2,
-      customer: "Amit Kumar",
-      billNo: "CP871",
-      payment: 620,
-      paymentMethod: "UPI",
-      notes: "Collected payment.",
-    },
-  ]);
+  const [deliveries, setDeliveries] = useState([]);
 
-  function addDelivery(delivery) {
+  const [reportId, setReportId] = useState(null);
 
-    setDeliveries(prev => [
-      {
-        id: Date.now(),
-        ...delivery,
-      },
-      ...prev,
-    ]);
+  async function loadDeliveries() {
+  try {
+    const report =
+      await dailyReportsService.getTodayReport();
+
+    setReportId(report.id);
+
+    const data =
+      await deliveryService.getDeliveries();
+
+    setDeliveries(data);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+useEffect(() => {
+  loadDeliveries();
+}, []);
+
+async function addDelivery(delivery) {
+  try {
+    await deliveryService.createDelivery({
+      ...delivery,
+      daily_report_id: reportId,
+    });
+
+    await loadDeliveries();
 
     setShowModal(false);
 
+  } catch (err) {
+    console.error(err);
   }
+}
 
   return (
 
@@ -58,8 +68,9 @@ export default function Delivery() {
         />
 
         <DeliveryTable
-          deliveries={deliveries}
-        />
+  deliveries={deliveries}
+  reloadDeliveries={loadDeliveries}
+/>
 
       </div>
 

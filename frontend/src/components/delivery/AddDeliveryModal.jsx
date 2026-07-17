@@ -8,28 +8,37 @@ export default function AddDeliveryModal({
 }) {
 
   const [form, setForm] = useState({
-    customer: "",
-    billNo: "",
-    payment: "",
-    paymentMethod: "Cash",
-    notes: "",
-  });
+  customer: "",
+  billNo: "",
+  payment: "",
+  paymentMethod: "Cash",
+  notes: "",
+  billImage: null,
+});
 
   if (!isOpen) return null;
 
   function handleSave() {
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
-    onSave(form);
+  onSave({
+    ...form,
 
-    setForm({
-      customer: "",
-      billNo: "",
-      payment: "",
-      paymentMethod: "Cash",
-      notes: "",
-    });
+    assigned_to: user.id,
 
-  }
+    status: "pending",
+  });
+
+  setForm({
+    customer_name: "",
+    bill_number: "",
+    payment_amount: "",
+    payment_method: "Cash",
+    notes: "",
+  });
+}
 
   return (
     <>
@@ -61,11 +70,11 @@ export default function AddDeliveryModal({
 
             <input
               placeholder="Customer Name"
-              value={form.customer}
+              value={form.customer_name}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  customer: e.target.value,
+                  customer_name: e.target.value,
                 })
               }
               className="w-full h-11 border rounded-xl px-4"
@@ -73,11 +82,11 @@ export default function AddDeliveryModal({
 
             <input
               placeholder="Bill Number"
-              value={form.billNo}
+              value={form.bill_number}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  billNo: e.target.value,
+                  bill_number: e.target.value,
                 })
               }
               className="w-full h-11 border rounded-xl px-4"
@@ -85,22 +94,22 @@ export default function AddDeliveryModal({
 
             <input
               placeholder="Payment"
-              value={form.payment}
+              value={form.payment_amount}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  payment: e.target.value,
+                  payment_amount: e.target.value,
                 })
               }
               className="w-full h-11 border rounded-xl px-4"
             />
 
             <select
-              value={form.paymentMethod}
+              value={form.payment_method}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  paymentMethod: e.target.value,
+                  payment_method: e.target.value,
                 })
               }
               className="w-full h-11 border rounded-xl px-4"
@@ -114,10 +123,34 @@ export default function AddDeliveryModal({
 
             <div className="border-2 border-dashed rounded-2xl h-36 flex flex-col items-center justify-center">
 
-              <Upload
-                size={34}
-                className="text-gray-400"
-              />
+              <label className="border-2 border-dashed rounded-2xl h-36 flex flex-col items-center justify-center cursor-pointer">
+
+  <Upload
+    size={34}
+    className="text-gray-400"
+  />
+
+  <p className="text-gray-500 mt-2 text-sm">
+
+    {form.billImage
+      ? form.billImage.name
+      : "Upload Bill Photo"}
+
+  </p>
+
+  <input
+    type="file"
+    accept="image/*"
+    className="hidden"
+    onChange={(e) =>
+      setForm({
+        ...form,
+        billImage: e.target.files[0],
+      })
+    }
+  />
+
+</label>
 
               <p className="text-gray-500 mt-2 text-sm">
                 Upload Bill Photo

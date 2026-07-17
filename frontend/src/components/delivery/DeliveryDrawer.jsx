@@ -6,11 +6,12 @@ import {
   CreditCard,
   FileText,
 } from "lucide-react";
-
+import deliveryService from "../../services/deliveryService";
 export default function DeliveryDrawer({
   delivery,
   isOpen,
   onClose,
+  reloadDeliveries,
 }) {
 
   if (!isOpen || !delivery) return null;
@@ -164,7 +165,29 @@ animate-[slideUp_.25s_ease-out]
             </div>
 
           </div>
+        {delivery.status !== "completed" && (
 
+  <button
+    onClick={async () => {
+      try {
+        await deliveryService.completeDelivery(
+  delivery.id
+);
+
+await reloadDeliveries();
+
+onClose();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }}
+    className="w-full h-11 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium mb-3"
+  >
+    Mark Delivered
+  </button>
+
+)}
           <button
             onClick={onClose}
             className="w-full h-11 rounded-xl border hover:bg-gray-50"

@@ -4,27 +4,124 @@ from app.models.delivery import Delivery
 from app.models.daily_report import DailyReport
 from app.schemas.delivery import DeliveryCreate
 from app.dependencies.auth import get_current_user
+import os
+import uuid
+
+from fastapi import (
+    UploadFile,
+    File,
+    Form,
+)
 
 router = APIRouter(prefix="/deliveries", tags=["Deliveries"])
 
 
 @router.post("/")
-def create_delivery(data: DeliveryCreate):
+async def create_delivery(
+    daily_report_id: int = Form(...),
+    customer_name: str = Form(...),
+    status: str = Form("completed"),
+
+    bill_number: str = Form(None),
+
+    payment: str = Form(None),
+
+    payment_method: str = Form(None),
+
+    notes: str = Form(None),
+
+    bill_image: UploadFile | None = File(None),
+):
     db = SessionLocal()
 
+    image_path = None
+
+    if bill_image:
+
+        extension = os.path.splitext(
+            bill_image.filename
+        )[1]
+
+        filename = f"{uuid.uuid4()}{extension}"
+
+        upload_dir = os.path.join(
+            "uploads",
+            "delivery_bills",
+        )
+
+        os.makedirs(
+            upload_dir,
+            exist_ok=True,
+        )
+
+        filepath = os.path.join(
+            upload_dir,
+            filename,
+        )
+
+        with open(filepath, "wb") as buffer:
+            buffer.write(
+                await bill_image.read()
+            )
+
+        image_path = (
+            f"/uploads/delivery_bills/{filename}"
+        )
+
     delivery = Delivery(
-        daily_report_id=data.daily_report_id,
-        customer_name=data.customer_name,
-        status=data.status
+        daily_report_id=daily_report_id,
+        customer_name=customer_name,
+        status=status,
+        bill_number=bill_number,
+        payment=payment,
+        payment_method=payment_method,
+        notes=notes,
+        bill_image=image_path,
     )
 
     db.add(delivery)
+
+    db.commit()
+
+    db.refresh(delivery)
+
+    db.close()
+
+    return delivery
+
+
+@router.put("/{delivery_id}")
+def update_delivery(
+    delivery_id: int,
+    data: DeliveryCreate,
+):
+    db = SessionLocal()
+
+    delivery = (
+        db.query(Delivery)
+        .filter(Delivery.id == delivery_id)
+        .first()
+    )
+
+    if not delivery:
+        db.close()
+        return {
+            "message": "Delivery not found"
+        }
+
+    delivery.assigned_to = data.assigned_to
+    delivery.customer_name = data.customer_name
+    delivery.bill_number = data.bill_number
+    delivery.payment_amount = data.payment_amount
+    delivery.payment_method = data.payment_method
+    delivery.notes = data.notes
+    delivery.status = data.status
+
     db.commit()
     db.refresh(delivery)
     db.close()
 
     return delivery
-
 
 @router.get("/")
 def get_all_deliveries(
@@ -81,3 +178,28 @@ def delete_delivery(delivery_id: int):
     db.close()
 
     return {"message": "Delivery deleted"}
+
+
+@router.put("/{delivery_id}/complete")
+def complete_delivery(delivery_id: int):
+    db = SessionLocal()
+
+    delivery = (
+        db.query(Delivery)
+        .filter(Delivery.id == delivery_id)
+        .first()
+    )
+
+    if not delivery:
+        db.close()
+        return {
+            "message": "Delivery not found"
+        }
+
+    delivery.status = "completed"
+
+    db.commit()
+    db.refresh(delivery)
+    db.close()
+
+    return delivery
