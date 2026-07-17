@@ -119,9 +119,7 @@ return matchesSearch && matchesStatus;
   setActiveTab={setActiveTab}
   onReceiveBill={() => setShowReceiveModal(true)}
   onCreatePO={() => setShowOrderModal(true)}
-  isStaff={user.role === "staff"}
 />
-
       
 {activeTab === "orders" ? (
 
