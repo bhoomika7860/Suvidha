@@ -22,6 +22,8 @@ import StaffLayout from "../components/layout/StaffLayout";
 // Staff Pages
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffTasks from "../pages/staff/StaffTasks";
+ import StaffPurchases from "../pages/staff/StaffPurchases";
+ import StaffExpenses from "../pages/staff/StaffExpenses";
 
 //Delivery
 import Delivery from "../pages/delivery/Delivery";
@@ -113,6 +115,11 @@ function AppRoutes() {
     path="/previous-reports"
     element={<PreviousReports />}
   />
+
+  <Route
+  path="/manager-tasks"
+  element={<StaffTasks />}
+/>
 </Route>
 
 {/* ================= STAFF ================= */}
@@ -134,15 +141,16 @@ function AppRoutes() {
     element={<StaffTasks />}
   />
 
+ 
   <Route
-    path="/staff-purchases"
-    element={<Purchases />}
-  />
+  path="/staff-purchases"
+  element={<StaffPurchases />}
+/>
 
   <Route
-    path="/staff-expenses"
-    element={<Expenses />}
-  />
+  path="/staff-expenses"
+  element={<StaffExpenses />}
+/>
 </Route>
 {/* ================= DELIVERY ================= */}
 <Route

@@ -7,36 +7,26 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const tasks = [
-  {
-    title: "Receive Purchase Bills",
-    count: 3,
-    color: "bg-blue-100 text-blue-600",
-    icon: Receipt,
-  },
-  {
-    title: "Add Daily Expenses",
-    count: 2,
-    color: "bg-green-100 text-green-600",
-    icon: Wallet,
-  },
-  {
-    title: "Check Purchase Bills",
-    count: 4,
-    color: "bg-orange-100 text-orange-600",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Enter Bills Into System",
-    count: 1,
-    color: "bg-violet-100 text-violet-600",
-    icon: Database,
-  },
-];
+import { useEffect, useState } from "react";
+import { taskService } from "../../services/taskService";
 
 
 export default function TaskCard() {
     const navigate = useNavigate();
+    const [tasks, setTasks] = useState([]);
+
+useEffect(() => {
+  loadTasks();
+}, []);
+
+async function loadTasks() {
+  try {
+    const data = await taskService.getMyTasks();
+    setTasks(data.filter(task => task.status !== "completed"));
+  } catch (err) {
+    console.error(err);
+  }
+}
   return (
     <div
   onClick={() => navigate("/staff-tasks")}
@@ -88,8 +78,8 @@ export default function TaskCard() {
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    {task.count} pending
-                  </p>
+  Pending
+</p>
 
                 </div>
 

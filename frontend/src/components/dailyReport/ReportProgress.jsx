@@ -66,13 +66,7 @@ export default function ReportProgress() {
           ? "done"
           : "todo",
     },
-    {
-      title: "Notes",
-      status:
-        report.notes
-          ? "done"
-          : "todo",
-    },
+    
   ];
 
   const completed = sections.filter(

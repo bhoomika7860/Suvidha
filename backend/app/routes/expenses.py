@@ -9,6 +9,8 @@ from app.schemas.expense import (
     ExpenseResponse,
 )
 from app.dependencies.auth import get_current_user
+from sqlalchemy import func
+from datetime import date
 
 router = APIRouter(
     prefix="/expenses",
@@ -24,8 +26,6 @@ def create_expense(
     data: ExpenseCreate,
     db: Session = Depends(get_db),
 ):
-    print(data.model_dump())
-
     expense = Expense(
         store_id=data.store_id,
         expense_type=data.expense_type,
@@ -38,12 +38,30 @@ def create_expense(
     db.commit()
     db.refresh(expense)
 
+    from datetime import date
+    from app.models.daily_report import DailyReport
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == expense.store_id,
+            DailyReport.report_date == date.today(),
+        )
+        .first()
+    )
+
+    if report:
+        report.total_expenses += expense.amount
+        db.commit()
+        db.refresh(report)
+
     return expense
+
 # -----------------------------
-# Get All Expenses
+# Get Today's Expenses
 # -----------------------------
 @router.get("/")
-def get_all_expenses(
+def get_expenses(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -56,12 +74,14 @@ def get_all_expenses(
             User,
             Expense.created_by == User.id,
         )
+        .filter(
+            func.date(Expense.created_at) == date.today()
+        )
     )
 
     if current_user["role"] != "owner":
         query = query.filter(
-            Expense.store_id ==
-            current_user["store_id"]
+            Expense.store_id == current_user["store_id"]
         )
 
     expenses = query.all()
@@ -79,6 +99,7 @@ def get_all_expenses(
         }
         for expense, created_by_name in expenses
     ]
+
 
 # -----------------------------
 # Get Single Expense

@@ -144,6 +144,7 @@ def get_today_report(
 
     report = (
         db.query(DailyReport)
+        .options(joinedload(DailyReport.bounced_products))
         .filter(
             DailyReport.store_id == current_user["store_id"],
             DailyReport.report_date == date.today(),
@@ -162,7 +163,34 @@ def get_today_report(
         db.commit()
         db.refresh(report)
 
-    return report
+    return {
+    "id": report.id,
+    "store_id": report.store_id,
+    "report_date": report.report_date,
+
+    "total_bills": report.total_bills,
+    "deliveries": report.deliveries,
+
+    "cash_sales": report.cash_sales,
+    "upi_sales": report.upi_sales,
+    "card_sales": report.card_sales,
+    "udhaar_sales": report.udhaar_sales,
+
+    "total_expenses": report.total_expenses,
+    "total_purchases": report.total_purchases,
+
+    "notes": report.notes,
+    "is_locked": report.is_locked,
+
+    "bounced_products": [
+        {
+            "id": product.id,
+            "product_name": product.product_name,
+            "quantity": product.quantity,
+        }
+        for product in report.bounced_products
+    ],
+}
 
 
 @router.get("/{report_id}/bounced-products")
@@ -170,27 +198,15 @@ def get_report_bounced_products(
     report_id: int,
     db: Session = Depends(get_db),
 ):
-    report = (
-        db.query(DailyReport)
-        .options(joinedload(DailyReport.bounced_products))
-        .filter(DailyReport.id == report_id)
-        .first()
+    products = (
+        db.query(BouncedProduct)
+        .filter(
+            BouncedProduct.daily_report_id == report_id
+        )
+        .all()
     )
 
-    if report is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Report not found",
-        )
-
-    return [
-        {
-            "id": product.id,
-            "product_name": product.product_name,
-            "quantity": product.quantity,
-        }
-        for product in report.bounced_products
-    ]
+    return products
 
 @router.put("/{report_id}/sales")
 def update_sales(
@@ -373,7 +389,49 @@ def get_report_purchases(
         for purchase in purchases
     ]
 
+@router.get("/{report_id}/expenses")
+def get_report_expenses(
+    report_id: int,
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(DailyReport.id == report_id)
+        .first()
+    )
 
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    expenses = (
+        db.query(
+            Expense,
+            User.full_name.label("created_by_name"),
+        )
+        .join(
+            User,
+            Expense.created_by == User.id,
+        )
+        .filter(
+            Expense.store_id == report.store_id,
+            func.date(Expense.created_at) == report.report_date,
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": expense.id,
+            "expense_type": expense.expense_type,
+            "amount": expense.amount,
+            "remarks": expense.remarks,
+            "created_by": created_by_name,
+        }
+        for expense, created_by_name in expenses
+    ]
 
 
 # Get all reports
@@ -383,13 +441,22 @@ from datetime import date
 from sqlalchemy.orm import joinedload
 
 @router.get("/")
-def get_all_reports(db: Session = Depends(get_db)):
-    today = date.today()
-
-    reports = (
+def get_all_reports(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = (
         db.query(DailyReport)
         .options(joinedload(DailyReport.store))
-        .filter(func.date(DailyReport.report_date) == today)
+    )
+
+    if current_user["role"] != "owner":
+        query = query.filter(
+            DailyReport.store_id == current_user["store_id"]
+        )
+
+    reports = (
+        query.order_by(DailyReport.report_date.desc())
         .all()
     )
 
@@ -397,7 +464,7 @@ def get_all_reports(db: Session = Depends(get_db)):
         {
             "id": report.id,
             "store_id": report.store_id,
-            "store_name": report.store.name,      # <-- this is the important part
+            "store_name": report.store.name,
             "report_date": report.report_date,
 
             "total_bills": report.total_bills,
@@ -415,15 +482,22 @@ def get_all_reports(db: Session = Depends(get_db)):
         }
         for report in reports
     ]
+
+
 # Get reports by store
 @router.get("/store/{store_id}")
 def get_store_reports(
     store_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    reports = db.query(DailyReport).filter(
-        DailyReport.store_id == store_id
-    ).all()
+    reports = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == store_id
+        )
+        .order_by(DailyReport.report_date.desc())
+        .all()
+    )
 
     return reports
 
@@ -514,5 +588,6 @@ def get_report(
 
         "notes": report.notes,
     }
+
 
     

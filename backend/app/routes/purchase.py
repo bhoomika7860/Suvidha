@@ -96,6 +96,7 @@ async def create_purchase(
     db.commit()
     db.refresh(purchase)
 
+
     return purchase
 
 @router.put("/{purchase_id}")
@@ -116,6 +117,10 @@ def update_purchase(
             detail="Purchase not found",
         )
 
+    was_completed = (
+        purchase.status == "completed"
+    )
+
     purchase.status = data.status
 
     if data.checked_by is not None:
@@ -124,6 +129,24 @@ def update_purchase(
     if data.entered_by is not None:
         purchase.entered_by = data.entered_by
 
+    if (
+        not was_completed
+        and purchase.status == "completed"
+    ):
+        from app.models.daily_report import DailyReport
+
+        report = (
+            db.query(DailyReport)
+            .filter(
+                DailyReport.store_id == purchase.store_id,
+                DailyReport.report_date == date.today(),
+            )
+            .first()
+        )
+
+        if report:
+            report.total_purchases += purchase.purchase_amount
+
     db.commit()
     db.refresh(purchase)
 
@@ -131,8 +154,18 @@ def update_purchase(
 
 # Get all purchases
 @router.get("/", response_model=List[PurchaseResponse])
-def get_all_purchases(db: Session = Depends(get_db)):
-    purchases = db.query(Purchase).all()
+def get_all_purchases(
+    db: Session = Depends(get_db),
+):
+    purchases = (
+        db.query(Purchase)
+        .filter(
+            func.date(Purchase.purchase_date)
+            == date.today()
+        )
+        .all()
+    )
+
     return purchases
 
 

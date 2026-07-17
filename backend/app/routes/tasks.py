@@ -61,9 +61,28 @@ def get_my_tasks(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return db.query(Task).filter(
+    tasks = (
+    db.query(Task)
+    .filter(
         Task.assigned_to == current_user["user_id"]
-    ).all()
+    )
+    .all()
+)
+
+    return [
+    {
+        "id": task.id,
+        "title": task.task_title,
+        "type": task.task_type,
+        "requiresPhoto": task.requires_photo,
+        "photoUploaded": task.photo_url is not None,
+        "target_quantity": task.target_quantity,
+        "completed_quantity": task.completed_quantity,
+        "status": task.status,
+        "due_date": task.due_date,
+    }
+    for task in tasks
+]
 
 
 # Employee completes task

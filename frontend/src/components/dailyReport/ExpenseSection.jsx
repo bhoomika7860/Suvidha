@@ -103,8 +103,8 @@ export default function ExpenseSection() {
               >
 
                 <td className="px-5 py-3">
-                  {expense.title}
-                </td>
+  {expense.expense_type}
+</td>
 
                 <td className="px-5 py-3 font-medium">
                   ₹{expense.amount}

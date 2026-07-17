@@ -99,11 +99,15 @@ export default function ReportsTable({
 
               <td className="px-6 py-4">
 
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-
-                  {report.status}
-
-                </span>
+                <span
+  className={`px-3 py-1 rounded-full text-xs font-medium ${
+    report.status === "Locked"
+      ? "bg-green-100 text-green-700"
+      : "bg-yellow-100 text-yellow-700"
+  }`}
+>
+  {report.status}
+</span>
 
               </td>
 

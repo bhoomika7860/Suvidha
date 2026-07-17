@@ -1,3 +1,5 @@
+import Expenses from "../manager/Expenses";
+
 export default function StaffExpenses() {
-  return <h1>Staff Expenses</h1>;
+  return <Expenses />;
 }

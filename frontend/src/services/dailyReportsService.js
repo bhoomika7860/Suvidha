@@ -4,35 +4,36 @@ const formatReports = (reports) => {
   return reports.map((r) => ({
     id: r.id,
 
+    date: new Date(r.report_date).toLocaleDateString(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    ),
+
+    bills: r.total_bills,
+
+    sales:
+      (r.cash_sales || 0) +
+      (r.upi_sales || 0) +
+      (r.card_sales || 0) +
+      (r.udhaar_sales || 0),
+
+    expenses: r.total_expenses,
+
+    purchases: r.total_purchases,
+
+    deliveries: r.deliveries,
+
+    status: r.is_locked
+      ? "Locked"
+      : "Open",
+
     store: r.store_name,
-
-    payment: {
-      cash: r.cash_sales,
-      upi: r.upi_sales,
-      card: r.card_sales,
-      udhaar: r.udhaar_sales,
-    },
-
-    deliveries: r.deliveries ?? 0,
-
-    totalSales:
-      (r.cash_sales ?? 0) +
-      (r.upi_sales ?? 0) +
-      (r.card_sales ?? 0) +
-      (r.udhaar_sales ?? 0),
-
-    purchases: r.total_purchases ?? 0,
-
-    expenses: r.total_expenses ?? 0,
-
-    bills: r.total_bills ?? 0,
-
-    bouncedProducts: r.bounced_products ?? [],
-
-    status: r.is_locked ? "Locked" : "Open",
   }));
 };
-
 const dailyReportsService = {
   getAllReports: async () => {
     const response = await api.get("/daily-reports/");

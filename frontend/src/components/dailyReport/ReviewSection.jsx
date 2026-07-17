@@ -59,12 +59,7 @@ export default function ReviewSection() {
     report.bounced_products?.length > 0
   );
 
-  addSection(
-    "Notes",
-    report.notes &&
-      report.notes.trim() !== ""
-  );
-
+  
   async function submitReport() {
     if (remaining.length > 0) {
       alert(

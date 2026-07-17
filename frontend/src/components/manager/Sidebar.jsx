@@ -1,9 +1,10 @@
 import {
   LayoutDashboard,
   ClipboardList,
-  FileText,
   Package,
   Wallet,
+  FileText,
+  ClipboardCheck,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -29,6 +30,11 @@ const menuItems = [
     icon: Wallet,
     path: "/manager-expenses",
   },
+  {
+  title: "Tasks",
+  icon: ClipboardCheck,
+  path: "/manager-tasks",
+},
   {
     title: "Previous Reports",
     icon: FileText,

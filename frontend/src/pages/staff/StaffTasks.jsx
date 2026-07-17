@@ -1,60 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { taskService } from "../../services/taskService";
 
 import ProgressCard from "../../components/staff/tasks/ProgressCard";
 import PendingTasks from "../../components/staff/tasks/PendingTasks";
 import CompletedTasks from "../../components/staff/tasks/CompletedTasks";
 
+
+
 export default function StaffTasks() {
+  const [pendingTasks, setPendingTasks] = useState([]);
 
-  const [pendingTasks, setPendingTasks] = useState([
-  {
-    id: 1,
-    title: "Arrange OTC Shelf",
-    type: "checklist",
-    requiresPhoto: false,
-    photoUploaded: false,
-  },
-  {
-    id: 2,
-    title: "Clean Refrigerator",
-    type: "photo",
-    requiresPhoto: true,
-    photoUploaded: false,
-  },
-  {
-    id: 3,
-    title: "Decorate Front Counter",
-    type: "checklist",
-    requiresPhoto: false,
-    photoUploaded: false,
-  },
-  {
-    id: 4,
-    title: "Take Store Front Photo",
-    type: "photo",
-    requiresPhoto: true,
-    photoUploaded: false,
-  },
-]);
-  const [completedTasks, setCompletedTasks] = useState([]);
+const [completedTasks, setCompletedTasks] = useState([]);
+  
+useEffect(() => {
+  loadTasks();
+}, []);
 
-  function completeTask(task) {
+async function loadTasks() {
+  try {
+    const tasks = await taskService.getMyTasks();
 
-    setPendingTasks(prev => prev.filter(t => t.id !== task.id));
+    setPendingTasks(
+      tasks.filter((t) => t.status !== "completed")
+    );
 
-    setCompletedTasks(prev => [
-      {
-        ...task,
-        completedAt: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-      ...prev,
-    ]);
+    setCompletedTasks(
+      tasks.filter((t) => t.status === "completed")
+    );
 
+  } catch (err) {
+    console.error(err);
   }
+}
+async function completeTask(task) {
+  try {
 
+    await taskService.completeTask(
+  task.id,
+  {
+    completed_quantity:
+      task.target_quantity > 0
+        ? task.target_quantity
+        : 1,
+  }
+);
+
+await loadTasks();
+
+    loadTasks();
+
+  } catch (err) {
+    console.error(err);
+  }
+}
   return (
 
     <div className="space-y-6">

@@ -56,20 +56,28 @@ def create_bounced_product(
   
 
 
+from sqlalchemy import func
+from datetime import date
 @router.get("/")
 def get_bounced_products(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    if current_user["role"] == "owner":
-        return db.query(BouncedProduct).all()
+    query = (
+        db.query(BouncedProduct)
+        .join(DailyReport)
+        .filter(
+            DailyReport.report_date == date.today()
+        )
+    )
 
-    return db.query(BouncedProduct).join(
-        DailyReport
-    ).filter(
-        DailyReport.store_id == current_user["store_id"]
-    ).all()
+    if current_user["role"] != "owner":
+        query = query.filter(
+            DailyReport.store_id ==
+            current_user["store_id"]
+        )
 
+    return query.all()
 
 @router.get("/{product_id}")
 def get_bounced_product(
@@ -92,16 +100,20 @@ def get_bounced_product(
 @router.delete("/{product_id}")
 def delete_bounced_product(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session =Depends(get_db),
 ):
-    product = db.query(BouncedProduct).filter(
-        BouncedProduct.id == product_id
-    ).first()
+    product = (
+        db.query(BouncedProduct)
+        .filter(
+            BouncedProduct.id == product_id
+        )
+        .first()
+    )
 
     if not product:
         raise HTTPException(
             status_code=404,
-            detail="Product not found"
+            detail="Product not found",
         )
 
     db.delete(product)

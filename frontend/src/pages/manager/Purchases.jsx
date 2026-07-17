@@ -10,6 +10,7 @@ import PurchaseOrders from "../../components/purchases/orders/PurchaseOrders";
 
 export default function Purchases() {
 
+  const user = JSON.parse(localStorage.getItem("user"));
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("received");
 
@@ -118,6 +119,7 @@ return matchesSearch && matchesStatus;
   setActiveTab={setActiveTab}
   onReceiveBill={() => setShowReceiveModal(true)}
   onCreatePO={() => setShowOrderModal(true)}
+  isStaff={user.role === "staff"}
 />
 
       
