@@ -45,13 +45,13 @@ export default function DeliveryTable({
 
         <p className="font-medium">
 
-          {delivery.customer}
+          {delivery.customer_name}
 
         </p>
 
         <p className="text-xs text-gray-500 mt-1">
 
-          {delivery.billNo}
+          {delivery.bill_number}
 
         </p>
 
@@ -59,7 +59,7 @@ export default function DeliveryTable({
 
       <td className="px-4 py-4 font-semibold">
 
-        ₹{Number(delivery.payment).toLocaleString()}
+        ₹{delivery.payment || 0}
 
       </td>
 

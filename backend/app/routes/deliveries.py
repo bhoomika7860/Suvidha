@@ -32,6 +32,12 @@ async def create_delivery(
 
     bill_image: UploadFile | None = File(None),
 ):
+    
+    print(
+    daily_report_id,
+    customer_name,
+    status,
+)
     db = SessionLocal()
 
     image_path = None

@@ -136,10 +136,10 @@ def get_today_report(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user["role"] != "store_manager":
+    if current_user["role"] not in ["store_manager", "delivery"]:
         raise HTTPException(
         status_code=403,
-        detail="Only store managers can access today's report",
+        detail="Not allowed",
     )
 
     report = (

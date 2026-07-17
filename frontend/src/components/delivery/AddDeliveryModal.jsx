@@ -8,10 +8,10 @@ export default function AddDeliveryModal({
 }) {
 
   const [form, setForm] = useState({
-  customer: "",
-  billNo: "",
-  payment: "",
-  paymentMethod: "Cash",
+  customer_name: "",
+  bill_number: "",
+  payment_amount: "",
+  payment_method: "Cash",
   notes: "",
   billImage: null,
 });
@@ -32,12 +32,13 @@ export default function AddDeliveryModal({
   });
 
   setForm({
-    customer_name: "",
-    bill_number: "",
-    payment_amount: "",
-    payment_method: "Cash",
-    notes: "",
-  });
+  customer_name: "",
+  bill_number: "",
+  payment_amount: "",
+  payment_method: "Cash",
+  notes: "",
+  billImage: null,
+});
 }
 
   return (

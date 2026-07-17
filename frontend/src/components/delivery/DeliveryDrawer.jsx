@@ -87,7 +87,7 @@ animate-[slideUp_.25s_ease-out]
               </p>
 
               <p className="font-medium">
-                {delivery.customer}
+                {delivery.customer_name}
               </p>
 
             </div>
@@ -105,7 +105,7 @@ animate-[slideUp_.25s_ease-out]
               </p>
 
               <p className="font-medium">
-                {delivery.billNo}
+                {delivery.bill_number}
               </p>
 
             </div>
@@ -141,7 +141,7 @@ animate-[slideUp_.25s_ease-out]
               </p>
 
               <p className="font-medium">
-                {delivery.paymentMethod}
+                {delivery.payment_method}
               </p>
 
             </div>

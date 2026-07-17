@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import deliveryService from "../../services/deliveryService";
+import { taskService } from "../../services/taskService";
 
 export default function TargetCard() {
   const [completed, setCompleted] = useState(0);
@@ -11,18 +11,28 @@ export default function TargetCard() {
 
   async function loadTarget() {
     try {
-      const deliveries =
-        await deliveryService.getDeliveries();
+      const tasks = await taskService.getMyTasks();
 
-      const total = deliveries.length;
+      // Find today's delivery task
+      const deliveryTask = tasks.find(
+        (task) =>
+          task.type === "delivery" ||
+          task.role === "delivery"
+      );
 
-      const completedCount = deliveries.filter(
-        (delivery) =>
-          delivery.status === "completed"
-      ).length;
+      if (!deliveryTask) {
+        setCompleted(0);
+        setTarget(0);
+        return;
+      }
 
-      setTarget(total);
-      setCompleted(completedCount);
+      setCompleted(
+        deliveryTask.completed_quantity || 0
+      );
+
+      setTarget(
+        deliveryTask.target_quantity || 0
+      );
 
     } catch (err) {
       console.error(err);
@@ -30,9 +40,9 @@ export default function TargetCard() {
   }
 
   const percent =
-    target === 0
-      ? 0
-      : (completed / target) * 100;
+    target > 0
+      ? (completed / target) * 100
+      : 0;
 
   return (
     <div className="bg-white rounded-2xl border shadow-sm p-5">

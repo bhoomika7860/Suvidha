@@ -40,9 +40,16 @@ useEffect(() => {
 async function addDelivery(delivery) {
   try {
     await deliveryService.createDelivery({
-      ...delivery,
-      daily_report_id: reportId,
-    });
+  daily_report_id: reportId,
+  customer_name: delivery.customer_name,
+  status: "completed",
+
+  bill_number: delivery.bill_number,
+  payment_amount: delivery.payment_amount,
+  payment_method: delivery.payment_method,
+  notes: delivery.notes,
+  billImage: delivery.billImage,
+});
 
     await loadDeliveries();
 
