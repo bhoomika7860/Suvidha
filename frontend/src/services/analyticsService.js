@@ -15,6 +15,51 @@ const analyticsService = {
 
   return response.data;
 },
+exportAnalyticsExcel: async (
+    period,
+    store,
+    fromDate,
+    toDate
+) => {
+
+    const response = await api.get(
+        "/analytics/export/excel",
+        {
+            params: {
+                period,
+                store_id: store,
+                from_date: fromDate,
+                to_date: toDate,
+            },
+            responseType: "blob",
+        }
+    );
+
+    return response.data;
+},
+
+exportAnalyticsPDF: async (
+    period,
+    store,
+    fromDate,
+    toDate
+) => {
+
+    const response = await api.get(
+        "/analytics/export/pdf",
+        {
+            params: {
+                period,
+                store_id: store,
+                from_date: fromDate,
+                to_date: toDate,
+            },
+            responseType: "blob",
+        }
+    );
+
+    return response.data;
+},
 
 exportPDF: async (period = "today", store = "all") => {
   const response = await api.get("/analytics/export/pdf", {
@@ -108,7 +153,53 @@ getManagerHero: () =>
 getManagerDashboard: () =>
   api.get("/analytics/manager-dashboard")
      .then((r) => r.data),
-     
+
+exportReportsExcel: async (
+  period,
+  store,
+  fromDate,
+  toDate
+) => {
+
+  const response = await api.get(
+    "/export/daily-reports/excel",
+    {
+      params: {
+        period,
+        store_id: store,
+        from_date: fromDate,
+        to_date: toDate,
+      },
+      responseType: "blob",
+    }
+  );
+
+  return response.data;
+},
+
+exportReportsPDF: async (
+  period,
+  store,
+  fromDate,
+  toDate
+) => {
+
+  const response = await api.get(
+    "/export/daily-reports/pdf",
+    {
+      params: {
+        period,
+        store_id: store,
+        from_date: fromDate,
+        to_date: toDate,
+      },
+      responseType: "blob",
+    }
+  );
+
+  return response.data;
+},
+
 };
 
 export default analyticsService;

@@ -35,8 +35,26 @@ export default function PurchaseOrders({
     <>
 
       <PurchaseOrderTable
-        purchaseOrders={purchaseOrders}
-      />
+  purchaseOrders={purchaseOrders}
+  onSavePurchase={async (purchase) => {
+    await purchaseService.createPurchase(purchase);
+
+    await purchaseService.updatePurchaseOrderStatus(
+      purchase.purchase_order_id,
+      "Completed"
+    );
+
+    const [
+      purchases,
+      orders,
+    ] = await Promise.all([
+      purchaseService.getPurchases(),
+      purchaseService.getPurchaseOrders(),
+    ]);
+
+    setPurchaseOrders(orders);
+  }}
+/>
 
       <CreatePurchaseOrderModal
         open={showModal}

@@ -32,6 +32,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import analyticsService from "../../services/analyticsService";
+import ExportReportsModal from "../../components/reports/ExportReportsModal";
 
 const BLUE = "#2563EB";
 const GREEN = "#16A34A";
@@ -192,7 +193,7 @@ const [selectedPeriod, setSelectedPeriod] = useState("today");
 
 
 const [error, setError] = useState("");
-
+const [showExport, setShowExport] = useState(false);
 
 
   const loadAnalytics = async () => {
@@ -233,6 +234,7 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     );
 
     setUdhaar(udhaarData);
+    console.log("UDHAAR DATA:", udhaarData);
     setPaymentBreakdown(paymentData);
     setExpenseDistribution(expenseData);
     setSalesTrend(trendData);
@@ -383,17 +385,12 @@ console.log("Stores:", stores);
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           
           <div className="flex flex-wrap items-center gap-3">
-            <button onClick={handleExportExcel}
+            <button onClick={() => setShowExport(true)}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               <Download size={16} />
               Export Analytics
             </button>
-            <button 
-            onClick={handleExportPDF}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-              <FileText size={16} />
-              Download PDF
-            </button>
+            
             <button
   onClick={async () => {
     setRefreshing(true);
@@ -801,8 +798,15 @@ console.log("Stores:", stores);
               
             </div>
           </>
-        )}
+                )}
       </div>
+
+      <ExportReportsModal
+          open={showExport}
+          onClose={() => setShowExport(false)}
+          type="analytics"
+      />
+
     </div>
   );
 }

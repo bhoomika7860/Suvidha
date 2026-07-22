@@ -2,7 +2,13 @@ import { Store, Eye } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { useNavigate } from "react-router-dom";
 
-const fmt = (n) => (n === 0 ? "–" : "₹" + n.toLocaleString("en-IN"));
+const fmt = (n) => {
+  const value = Number(n || 0);
+
+  return value === 0
+    ? "–"
+    : "₹" + value.toLocaleString("en-IN");
+};
 
 export default function ReportTable({ filteredReports, onSelectReport }) {
   const navigate = useNavigate();
@@ -43,9 +49,6 @@ export default function ReportTable({ filteredReports, onSelectReport }) {
     <tr
       key={r.id}
       onClick={() => {
-  console.log("Clicked report:", r);
-  navigate(`/daily-reports/report/${r.id}`);
-}}onClick={() => {
   console.log("Clicked report:", r);
   navigate(`/daily-reports/report/${r.id}`);
 }}

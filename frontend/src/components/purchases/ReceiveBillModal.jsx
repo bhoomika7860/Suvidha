@@ -5,6 +5,7 @@ export default function ReceiveBillModal({
   isOpen,
   onClose,
   onSave,
+  purchaseOrder,
 }) {
 
   const [party, setParty] = useState("");
@@ -31,6 +32,7 @@ export default function ReceiveBillModal({
   checked_by: "",
   entered_by: "",
   status: "received",
+  purchase_order_id: purchaseOrder?.id,
   bill_image: billImage,
 });
 

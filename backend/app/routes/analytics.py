@@ -8,7 +8,10 @@ from fastapi.responses import StreamingResponse
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
+from sqlalchemy import extract
+from datetime import date, timedelta
+from app.models.daily_report import DailyReport
+from app.models.store import Store
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
@@ -45,39 +48,71 @@ def _safe_number(value):
 
     return float(value)
 
-def _get_period_bounds(
-    period: Optional[str],
-) -> Tuple[Optional[date], Optional[date]]:
+from datetime import datetime
 
+def _get_period_bounds(
+    period,
+    from_date=None,
+    to_date=None,
+):
     today = date.today()
 
     if period == "today":
         return today, today
 
-    if period == "week":
-        start = today - timedelta(days=today.weekday())
-        return start, today
+    elif period in ["7days", "last7"]:
+        return today - timedelta(days=7), today
 
-    if period == "month":
-        start = today.replace(day=1)
-        return start, today
+    elif period in ["30days", "last30"]:
+        return today - timedelta(days=30), today
 
-    if period == "year":
-        start = today.replace(month=1, day=1)
-        return start, today
+    elif period == "90days":
+        return today - timedelta(days=90), today
+
+    elif period in ["month", "thisMonth"]:
+        return today.replace(day=1), today
+
+    elif period == "last_month":
+        first_this_month = today.replace(day=1)
+        last_day_prev = first_this_month - timedelta(days=1)
+        first_prev = last_day_prev.replace(day=1)
+        return first_prev, last_day_prev
+
+    elif period in ["year", "thisYear"]:
+        return date(today.year, 1, 1), today
+
+    elif period == "custom":
+        start = (
+            datetime.strptime(from_date, "%Y-%m-%d").date()
+            if from_date else None
+        )
+
+        end = (
+            datetime.strptime(to_date, "%Y-%m-%d").date()
+            if to_date else None
+        )
+
+        return start, end
 
     return None, None
 
 
 def _get_reports(
-    db: Session,
-    period: Optional[str] = None,
-    store_id: Optional[str] = None,
+    db,
+    period=None,
+    store_id=None,
+    from_date=None,
+    to_date=None,
+
 ) -> List[DailyReport]:
 
     query = db.query(DailyReport)
 
-    start_date, end_date = _get_period_bounds(period)
+    start_date, end_date = _get_period_bounds(
+    period,
+    from_date,
+    to_date,
+)
 
     if start_date:
         query = query.filter(
@@ -186,6 +221,7 @@ def dashboard_summary(
     total_bills = 0
     total_deliveries = 0
     total_udhaar = 0
+    total_purchases = 0
 
     for report in reports:
 
@@ -200,6 +236,10 @@ def dashboard_summary(
             report.total_expenses
         )
 
+        total_purchases += _safe_number(
+    report.total_purchases
+        )
+
         total_bills += report.total_bills or 0
 
         total_deliveries += report.deliveries or 0
@@ -208,21 +248,7 @@ def dashboard_summary(
             report.udhaar_sales
         )
 
-    purchase_total = (
-        db.query(
-            func.sum(Purchase.purchase_amount)
-        )
-        .filter(
-            Purchase.store_id == int(store_id)
-        )
-        .scalar()
-        if store_id != "all"
-        else db.query(
-            func.sum(Purchase.purchase_amount)
-        ).scalar()
-    )
-
-    purchase_total = purchase_total or 0
+    
 
     average_bill = (
         total_sales / total_bills
@@ -236,10 +262,7 @@ def dashboard_summary(
 
         "total_revenue": round(total_sales, 2),
 
-        "total_purchases": round(
-            purchase_total,
-            2,
-        ),
+        "total_purchases": round(total_purchases,2,),
 
         "total_deliveries": total_deliveries,
 
@@ -461,17 +484,11 @@ def expense_distribution(
     if current_user["role"] == "store_manager":
         store_id = str(current_user["store_id"])
 
-    query = (
-        db.query(Expense)
-        .join(
-            DailyReport,
-            Expense.daily_report_id == DailyReport.id,
-        )
-    )
+    query = db.query(Expense)
 
     if store_id != "all":
         query = query.filter(
-            DailyReport.store_id == int(store_id)
+            Expense.store_id == int(store_id)
         )
 
     expenses = query.all()
@@ -479,7 +496,7 @@ def expense_distribution(
     grouped = defaultdict(float)
 
     for expense in expenses:
-        grouped[expense.title] += _safe_number(expense.amount)
+        grouped[expense.expense_type] += _safe_number(expense.amount)
 
     return [
         {
@@ -488,7 +505,6 @@ def expense_distribution(
         }
         for name, amount in grouped.items()
     ]
-
 
 @router.get("/sales-trend")
 def sales_trend(
@@ -529,71 +545,64 @@ def outstanding_udhaar(
     if current_user["role"] == "store_manager":
         store_id = str(current_user["store_id"])
 
-    entries = _get_outstanding_entries(
-        db,
-        period,
-        store_id,
+    query = db.query(
+        Store.name.label("store_name"),
+        func.sum(DailyReport.udhaar_sales).label("outstanding"),
+    ).join(
+        DailyReport,
+        DailyReport.store_id == Store.id,
     )
 
-    grouped = defaultdict(
-        lambda: {
-            "pending": 0.0,
-            "recovered": 0.0,
-            "outstanding": 0.0,
+    # ---------- Store Filter ----------
+    if store_id != "all":
+        query = query.filter(
+            DailyReport.store_id == int(store_id)
+        )
+
+    # ---------- Period Filter ----------
+    today = date.today()
+
+    if period == "today":
+        query = query.filter(
+            DailyReport.report_date == today
+        )
+
+    elif period == "last7":
+        query = query.filter(
+            DailyReport.report_date >= today - timedelta(days=7)
+        )
+
+    elif period == "last30":
+        query = query.filter(
+            DailyReport.report_date >= today - timedelta(days=30)
+        )
+
+    elif period == "thisMonth":
+        query = query.filter(
+            extract("month", DailyReport.report_date) == today.month,
+            extract("year", DailyReport.report_date) == today.year,
+        )
+
+    elif period == "thisYear":
+        query = query.filter(
+            extract("year", DailyReport.report_date) == today.year,
+        )
+
+    rows = (
+        query.group_by(Store.name)
+        .all()
+    )
+
+    return [
+        {
+            "store_name": row.store_name,
+            "pending": float(row.outstanding or 0),
+            "recovered": 0,
+            "outstanding": float(row.outstanding or 0),
+            "recovery_rate": 0,
         }
-    )
-
-    for entry in entries:
-
-        report = (
-            db.query(DailyReport)
-            .filter(DailyReport.id == entry.daily_report_id)
-            .first()
-        )
-
-        if not report:
-            continue
-
-        store = (
-            db.query(Store)
-            .filter(Store.id == report.store_id)
-            .first()
-        )
-
-        if not store:
-            continue
-
-        remaining = max(
-            _safe_number(entry.amount)
-            - _safe_number(entry.paid_amount),
-            0,
-        )
-
-        grouped[store.name]["pending"] += remaining
-        grouped[store.name]["recovered"] += _safe_number(entry.paid_amount)
-        grouped[store.name]["outstanding"] += _safe_number(entry.amount)
-
-    result = []
-
-    for store_name, values in grouped.items():
-
-        recovery_rate = (
-            values["recovered"] / values["outstanding"] * 100
-            if values["outstanding"] > 0
-            else 0
-        )
-
-        result.append(
-            {
-                "store_name": store_name,
-                "pending": round(values["pending"], 2),
-                "recovered": round(values["recovered"], 2),
-                "outstanding": round(values["outstanding"], 2),
-                "recovery_rate": round(recovery_rate, 1),
-            }
-        )
-
-    return result
+        for row in rows
+    ]
 
 @router.get("/top-bounced-products")
 def top_bounced_products(
@@ -710,7 +719,6 @@ def performance(
 
     }
 
-
 @router.get("/manager-hero")
 def manager_hero(
     current_user: dict = Depends(get_current_user),
@@ -721,19 +729,33 @@ def manager_hero(
         current_user["role"],
     )
 
+    today = date.today()
+
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.store_id == current_user["store_id"]
+            DailyReport.store_id == current_user["store_id"],
+            DailyReport.report_date == today,
         )
-        .order_by(DailyReport.report_date.desc())
         .first()
     )
+
+    if report is None:
+        report = DailyReport(
+            store_id=current_user["store_id"],
+            submitted_by=current_user["user_id"],
+            report_date=today,
+        )
+
+        db.add(report)
+        db.commit()
+        db.refresh(report)
 
     purchases_count = (
         db.query(Purchase)
         .filter(
-            Purchase.store_id == current_user["store_id"]
+            Purchase.store_id == current_user["store_id"],
+            func.date(Purchase.purchase_date) == report.report_date,
         )
         .count()
     )
@@ -745,28 +767,11 @@ def manager_hero(
             BouncedProduct.daily_report_id == DailyReport.id,
         )
         .filter(
-            DailyReport.store_id == current_user["store_id"]
+            DailyReport.store_id == current_user["store_id"],
+            DailyReport.report_date == report.report_date,
         )
         .count()
     )
-
-    if report is None:
-        return {
-            "user": {
-                "full_name": current_user["full_name"],
-                "role": current_user["role"],
-                "store_id": current_user["store_id"],
-            },
-            "report": {
-                "status": "Not Started",
-                "sales_completed": False,
-                "expenses_completed": False,
-                "purchases_completed": False,
-                "deliveries_completed": False,
-                "bounced_products_completed": False,
-                "notes_completed": False,
-            },
-        }
 
     return {
         "user": {
@@ -831,17 +836,15 @@ def manager_dashboard(
         .all()
     )
 
-    expenses = []
-
-    if report:
-        expenses = (
-            db.query(Expense)
-            .filter(
-                Expense.daily_report_id == report.id,
-            )
-            .all()
-        )
-
+    expenses = (
+    db.query(Expense)
+    .filter(
+        Expense.store_id == store_id,
+        func.date(Expense.created_at) == today,
+    )
+    .order_by(Expense.created_at.desc())
+    .all()
+)
     bounced = []
 
     if report:
@@ -901,7 +904,7 @@ def manager_dashboard(
 
         "expenses": [
             {
-                "title": e.title,
+                "expense_type": e.expense_type,
                 "amount": e.amount,
             }
             for e in expenses
@@ -995,6 +998,8 @@ def overview(
 def export_excel(
     period: str = "today",
     store_id: str = "all",
+    from_date: str | None = None,
+    to_date: str | None = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -1008,10 +1013,12 @@ def export_excel(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db,
+    period,
+    store_id,
+    from_date,
+    to_date,
+)
 
     workbook = Workbook()
     sheet = workbook.active
@@ -1103,6 +1110,8 @@ def export_excel(
 def export_pdf(
     period: str = "today",
     store_id: str = "all",
+    from_date: str | None = None,
+to_date: str | None = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -1116,10 +1125,12 @@ def export_pdf(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db,
+    period,
+    store_id,
+    from_date,
+    to_date,
+)
 
     buffer = BytesIO()
 

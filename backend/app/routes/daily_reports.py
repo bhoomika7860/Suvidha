@@ -442,6 +442,7 @@ from sqlalchemy.orm import joinedload
 
 @router.get("/")
 def get_all_reports(
+    period: str = "today",
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -454,6 +455,11 @@ def get_all_reports(
         query = query.filter(
             DailyReport.store_id == current_user["store_id"]
         )
+
+    if period == "today":
+        query = query.filter(
+        func.date(DailyReport.report_date) == date.today()
+    )
 
     reports = (
         query.order_by(DailyReport.report_date.desc())

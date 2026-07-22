@@ -1,4 +1,6 @@
-import { Search, ChevronDown, Calendar } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import storeService from "../../services/storeService";
 
 export default function ReportFilters({
   searchQuery,
@@ -7,17 +9,32 @@ export default function ReportFilters({
   setStoreFilter,
   statusFilter,
   setStatusFilter,
-  reports,
 }) {
+  const [stores, setStores] = useState([]);
+
+  useEffect(() => {
+    loadStores();
+  }, []);
+
+  async function loadStores() {
+    try {
+      const data = await storesService.getStores();
+      setStores(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 mb-5 flex items-center gap-3 flex-wrap">
-      
+
       {/* Search */}
       <div className="relative flex-1 min-w-[180px] max-w-xs">
         <Search
           size={14}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
+
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -33,9 +50,17 @@ export default function ReportFilters({
           onChange={(e) => setStoreFilter(e.target.value)}
           className="appearance-none pl-3 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-gray-700 cursor-pointer"
         >
-          <option>All Stores</option>
-          {reports.map((r) => (
-            <option key={r.store}>{r.store}</option>
+          <option value="All Stores">
+            All Stores
+          </option>
+
+          {stores.map((store) => (
+            <option
+              key={store.id}
+              value={store.id}
+            >
+              {store.name}
+            </option>
           ))}
         </select>
 
@@ -52,10 +77,21 @@ export default function ReportFilters({
           onChange={(e) => setStatusFilter(e.target.value)}
           className="appearance-none pl-3 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-gray-700 cursor-pointer"
         >
-          <option>All Status</option>
-          <option>Locked</option>
-          <option>Pending</option>
-          <option>Adjustment Requested</option>
+          <option value="All Status">
+            All Status
+          </option>
+
+          <option value="Locked">
+            Locked
+          </option>
+
+          <option value="Pending">
+            Pending
+          </option>
+
+          <option value="Adjustment Requested">
+            Adjustment Requested
+          </option>
         </select>
 
         <ChevronDown
@@ -64,7 +100,6 @@ export default function ReportFilters({
         />
       </div>
 
-      
     </div>
   );
 }

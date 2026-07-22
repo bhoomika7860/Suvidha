@@ -8,6 +8,7 @@ from sqlalchemy import func
 from datetime import date
 from app.schemas.purchase import PurchaseUpdate
 from fastapi import HTTPException
+from app.models.purchase_order import PurchaseOrder
 import os
 import uuid
 
@@ -40,7 +41,7 @@ async def create_purchase(
     checked_by: str = Form(None),
     entered_by: str = Form(None),
     status: str = Form("received"),
-    purchase_order_id: int = Form(None),
+    purchase_order_id: int | None = Form(None),
     bill_image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -93,9 +94,22 @@ async def create_purchase(
     )
 
     db.add(purchase)
+
+    if purchase.purchase_order_id:
+
+        purchase_order = (
+            db.query(PurchaseOrder)
+            .filter(
+                PurchaseOrder.id == purchase.purchase_order_id
+            )
+            .first()
+        )
+
+        if purchase_order:
+            purchase_order.status = "Completed"
+
     db.commit()
     db.refresh(purchase)
-
 
     return purchase
 

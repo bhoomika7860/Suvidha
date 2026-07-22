@@ -1,10 +1,10 @@
 import api from "../api/api";
 
-export const storeService = {
+const storesService = {
   getStores: async () => {
-    const response = await api.get("/stores/");
+    const response = await api.get("/stores");
     return response.data;
   },
 };
 
-export default storeService;
+export default storesService;

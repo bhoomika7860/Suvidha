@@ -40,7 +40,7 @@ import ReportTable from "../../components/reports/ReportTable";
 import { useEffect } from "react";
 import dailyReportsService from "../../services/dailyReportsService";
 import { useParams } from "react-router-dom";
-
+import ExportReportsModal from "../../components/reports/ExportReportsModal";
 
 // ── Nav Items ────────────────────────────────────────────────────────────────
 
@@ -77,11 +77,7 @@ function TopBar({ searchQuery, onSearchChange }) {
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
-        <button className="flex items-center gap-2 bg-[#1e3a6e] hover:bg-[#1D4ED8] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          <Download size={14} />
-          Export Reports
-          <ChevronDown size={13} />
-        </button>
+        
         <button className="relative w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
           <Bell size={16} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
@@ -108,7 +104,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [storeFilter, setStoreFilter] = useState("All Stores");
   const [statusFilter, setStatusFilter] = useState("All Status");
-
+  const [showExportModal, setShowExportModal] = useState(false);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,7 +154,9 @@ console.log("FORMATTED REPORTS", formattedReports);
     const matchSearch =
       searchQuery === "" ||
       r.store.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStore = storeFilter === "All Stores" || r.store === storeFilter;
+    const matchStore =
+  storeFilter === "All Stores" ||
+  r.store_id === Number(storeFilter);
     const matchStatus = statusFilter === "All Status" || r.status === statusFilter;
     return matchSearch && matchStore && matchStatus;
   });
@@ -210,10 +208,13 @@ if (error) {
                 Track and review store-wise daily reports
               </p>
             </div>
-            <button className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#1e3a6e] text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors">
-              <Download size={14} />
-              Export Reports
-            </button>
+            <button
+  onClick={() => setShowExportModal(true)}
+  className="flex items-center gap-2 bg-[#1D4ED8] hover:bg-[#1e3a6e] text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+>
+  <Download size={14} />
+  Export Reports
+</button>
           </div>
 
           {/* Filter Row */}
@@ -250,8 +251,11 @@ if (error) {
 
           
 
-      {/* Drawer */}
-      
+     
+      <ExportReportsModal
+  open={showExportModal}
+  onClose={() => setShowExportModal(false)}
+/>
 </main>
 </div>
 </div>

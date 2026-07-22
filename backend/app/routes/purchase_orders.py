@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-
+from datetime import date
+from sqlalchemy import func
 from app.database import get_db
 from app.models.purchase_order import PurchaseOrder
 from app.models.purchase_order_item import PurchaseOrderItem
+from datetime import datetime
 from app.schemas.purchase_order import (
     PurchaseOrderCreate,
 )
@@ -13,11 +15,12 @@ router = APIRouter(
     tags=["Purchase Orders"],
 )
 
+from app.dependencies.auth import get_current_user
+
 
 # -----------------------------
 # Create Purchase Order
 # -----------------------------
-
 @router.post("/")
 def create_purchase_order(
     data: PurchaseOrderCreate,
@@ -37,7 +40,6 @@ def create_purchase_order(
     db.refresh(order)
 
     for item in data.items or []:
-
         db.add(
             PurchaseOrderItem(
                 purchase_order_id=order.id,
@@ -55,29 +57,37 @@ def create_purchase_order(
 
 
 # -----------------------------
-# Get All Purchase Orders
+# Get Today's Purchase Orders
 # -----------------------------
-
 @router.get("/")
 def get_purchase_orders(
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    today = date.today()
+
+    print("TODAY:", today)
+
     orders = (
         db.query(PurchaseOrder)
-        .options(
-            joinedload(PurchaseOrder.items)
+        .options(joinedload(PurchaseOrder.items))
+        .filter(
+            PurchaseOrder.store_id == current_user["store_id"],
+            PurchaseOrder.expected_date == today,
+            PurchaseOrder.status == "Pending",
         )
         .all()
     )
 
+    print("Orders returned:", len(orders))
+
     return orders
-
-
 # -----------------------------
 # Get Single Purchase Order
 # -----------------------------
 
 @router.get("/{order_id}")
+
 def get_purchase_order(
     order_id: int,
     db: Session = Depends(get_db),
