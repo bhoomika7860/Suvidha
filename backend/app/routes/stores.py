@@ -4,6 +4,7 @@ from app.models.store import Store
 from app.schemas.store import StoreCreate, StoreUpdate
 from app.dependencies.auth import get_current_user
 from app.dependencies.roles import require_role
+from app.models.user import User
 
 router = APIRouter(prefix="/stores", tags=["Stores"])
 
@@ -81,7 +82,7 @@ def update_store(
 
 
 @router.delete("/{store_id}")
-def deactivate_store(
+def delete_store(
     store_id: int,
     current_user: dict = Depends(get_current_user)
 ):
@@ -89,26 +90,53 @@ def deactivate_store(
 
     db = SessionLocal()
 
-    store = db.query(Store).filter(
-        Store.id == store_id
-    ).first()
+    store = (
+        db.query(Store)
+        .filter(Store.id == store_id)
+        .first()
+    )
 
     if not store:
         db.close()
-        return {"message": "Store not found"}
+        return {
+            "message": "Store not found"
+        }
 
-    store.is_active = False
-
+    db.delete(store)
     db.commit()
     db.close()
 
-    return {"message": "Store deactivated"}
+    return {
+        "message": "Store deleted"
+    }
 
 @router.get("/")
 def get_stores(current_user: dict = Depends(get_current_user)):
     db = SessionLocal()
 
     stores = db.query(Store).all()
+
+    results = []
+
+    for store in stores:
+        manager = (
+            db.query(User)
+            .filter(
+                User.store_id == store.id,
+                User.role == "store_manager"
+            )
+            .first()
+        )
+
+        results.append({
+            "id": store.id,
+            "name": store.name,
+            "code": store.code,
+            "address": store.address,
+            "is_active": store.is_active,
+            "manager_name": manager.full_name if manager else "Not Assigned",
+        })
+
     db.close()
 
-    return stores
+    return results

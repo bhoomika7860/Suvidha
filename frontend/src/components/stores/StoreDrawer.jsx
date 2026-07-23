@@ -5,6 +5,7 @@ import {
   MapPin,
   Hash,
   CheckCircle2,
+  User,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -150,7 +151,11 @@ onClose();
                 title="Store Code"
                 value={store.code}
               />
-
+                <InfoRow
+    icon={<User size={22} />}
+    title="Store Manager"
+    value={store.manager_name}
+/>
               <InfoRow
                 icon={<MapPin size={20}/>}
                 title="Address"

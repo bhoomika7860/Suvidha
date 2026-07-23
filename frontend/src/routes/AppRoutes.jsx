@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../pages/owner/Dashboard";
 import DailyReportView from "../pages/DailyReportView/DailyReportView";
-
+import Stores from "../pages/owner/Stores";
 import LoginScreen from "../pages/auth/LoginScreen";
 import OwnerLayout from "../components/layout/OwnerLayout";
 import DailyReports from "../pages/owner/DailyReports";

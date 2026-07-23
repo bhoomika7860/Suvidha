@@ -27,7 +27,7 @@ export default function StoreTable({
               </th>
 
               <th className="text-left px-6 py-4">
-                Address
+                Store Manager
               </th>
 
               <th className="text-left px-6 py-4">
@@ -72,7 +72,7 @@ export default function StoreTable({
                   </td>
 
                   <td className="px-6 py-5">
-                    {store.address}
+                    {store.manager_name}
                   </td>
 
                   <td className="px-6 py-5">
