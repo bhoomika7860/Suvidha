@@ -1,16 +1,14 @@
 import {
   LayoutDashboard,
   FileText,
-  Package,
   Target,
-  SlidersHorizontal,
   BarChart3,
-  ClipboardList,
-  Settings,
   Users,
+  Building2,
   X,
-  LogOut
+  LogOut,
 } from "lucide-react";
+
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -23,6 +21,11 @@ const navItems = [
     label: "Daily Reports",
     icon: FileText,
     path: "/daily-reports",
+  },
+  {
+    label: "Stores",
+    icon: Building2,
+    path: "/stores",
   },
   {
     label: "Staff",
@@ -45,6 +48,11 @@ export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  function logout() {
+    localStorage.removeItem("token");
+    navigate("/");
+  }
+
   return (
     <>
       {open && (
@@ -55,69 +63,108 @@ export default function Sidebar({ open, onClose }) {
       )}
 
       <aside className="fixed top-0 left-0 z-50 h-screen w-64 flex flex-col bg-white border-r border-[#E2E8F0]">
-        {/* Brand */}
+
+        {/* Logo */}
+
         <div className="flex items-center gap-3 px-6 py-6 border-b border-[#E2E8F0]">
+
           <div className="w-10 h-10 rounded-lg bg-[#2563EB] flex items-center justify-center text-white font-bold">
             H
           </div>
 
           <div>
+
             <h1 className="text-lg font-bold text-[#0F172A]">
               PharmaCore360
             </h1>
+
             <p className="text-[11px] font-semibold uppercase text-[#1E3A8A]">
               Owner Portal
             </p>
+
           </div>
 
           <button
             className="ml-auto lg:hidden"
             onClick={onClose}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
+
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 py-5 px-3 space-y-1">
+        {/* Navigation */}
+
+        <nav className="flex-1 px-3 py-5 space-y-1">
+
           {navItems.map(({ label, icon: Icon, path }) => {
-            const active = location.pathname.startsWith(path);
+
+            const active =
+              location.pathname.startsWith(path);
 
             return (
               <button
                 key={label}
                 onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[17px] font-medium ${
-                  active
-                    ? "bg-[#DBEAFE] text-[#1E3A8A]"
-                    : "text-[#475569] hover:bg-[#F8FAFC]"
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium text-[16px]
+                  ${
+                    active
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }
+                `}
               >
-                <Icon size={18} />
+
+                <Icon size={20} />
+
                 <span>{label}</span>
+
               </button>
             );
+
           })}
+
         </nav>
 
-        {/* User */}
-        <div className="px-3 pb-4 pt-4 border-t border-[#E2E8F0]">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#F8FAFC]">
-            <div className="w-9 h-9 rounded-full bg-[#DBEAFE] flex items-center justify-center">
-              <span className="text-xs font-bold text-[#1E3A8A]">RA</span>
+        {/* Footer */}
+
+        <div className="border-t border-gray-200 p-4">
+
+          <div className="flex items-center gap-3 mb-4">
+
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
+              RA
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-[#0F172A]">
+
+              <p className="font-semibold">
                 Rajesh Agarwal
               </p>
-              <p className="text-[11px] text-[#64748B]">Owner</p>
+
+              <p className="text-sm text-gray-500">
+                Owner
+              </p>
+
             </div>
 
-            <LogOut size={16} className="ml-auto text-[#64748B]" />
           </div>
+
+          <button
+            onClick={logout}
+            className="w-full h-11 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+          >
+
+            <LogOut size={18} />
+
+            Logout
+
+          </button>
+
         </div>
+
       </aside>
+
     </>
   );
 }
