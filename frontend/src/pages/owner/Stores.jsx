@@ -45,6 +45,7 @@ export default function Stores() {
 
       <StoreTable
         stores={stores}
+        refreshStores={loadStores}
       />
 
       <AddStoreModal
