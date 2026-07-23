@@ -5,14 +5,11 @@ export default function PurchaseToolbar({
   setSearch,
   activeTab,
   setActiveTab,
-  onReceiveBill,
   onCreatePO,
+  onReceiveBill,
 }) {
   return (
     <div className="space-y-5">
-
-      {/* Tabs */}
-
       <div className="flex gap-3">
 
         <button
@@ -39,8 +36,6 @@ export default function PurchaseToolbar({
 
       </div>
 
-      {/* Toolbar */}
-
       <div className="flex items-center justify-between">
 
         <div className="relative">
@@ -56,7 +51,7 @@ export default function PurchaseToolbar({
             placeholder={
               activeTab === "orders"
                 ? "Search Purchase Orders..."
-                : "Search Party or Bill Number..."
+                : "Search Received Bills..."
             }
             className="w-80 h-11 pl-10 pr-4 rounded-xl border border-gray-200 outline-none focus:border-blue-500"
           />
@@ -64,29 +59,24 @@ export default function PurchaseToolbar({
         </div>
 
         {activeTab === "orders" ? (
-
-          <button
-            onClick={onCreatePO}
-            className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition"
-          >
-            <Plus size={18} />
-            Create Purchase Order
-          </button>
-
-        ) : (
-
-          <button
-            onClick={onReceiveBill}
-            className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition"
-          >
-            <Plus size={18} />
-            Receive New Bill
-          </button>
-
-        )}
+  <button
+    onClick={onCreatePO}
+    className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+  >
+    <Plus size={18} />
+    Create Purchase Order
+  </button>
+) : (
+  <button
+    onClick={onReceiveBill}
+    className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+  >
+    <Plus size={18} />
+    Receive New Bill
+  </button>
+)}
 
       </div>
-
     </div>
   );
 }

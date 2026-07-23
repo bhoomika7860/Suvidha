@@ -27,16 +27,12 @@ export default function PurchaseDrawer({
         status: "waiting-check",
         checked_by: "Current User",
       };
-    }
-
-    else if (purchase.status === "waiting-check") {
+    } else if (purchase.status === "waiting-check") {
       payload = {
         status: "waiting-entry",
         entered_by: "Current User",
       };
-    }
-
-    else if (purchase.status === "waiting-entry") {
+    } else if (purchase.status === "waiting-entry") {
       payload = {
         status: "completed",
       };
@@ -46,6 +42,15 @@ export default function PurchaseDrawer({
       purchase.id,
       payload
     );
+
+    // When the purchase is fully completed,
+    // also complete the linked Purchase Order.
+    if (payload.status === "completed" && purchase.purchase_order_id) {
+      await purchaseService.updatePurchaseOrderStatus(
+        purchase.purchase_order_id,
+        "Completed"
+      );
+    }
 
     const updatedPurchases = purchases.map((item) => {
       if (item.id !== purchase.id) return item;
@@ -89,7 +94,7 @@ export default function PurchaseDrawer({
             </h2>
 
             <p className="text-gray-500 text-sm mt-1">
-              {purchase.billNo}
+              {purchase.bill_number}
             </p>
 
           </div>
@@ -226,7 +231,7 @@ export default function PurchaseDrawer({
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {purchase.receivedBy}
+                    {purchase.received_by}
                   </p>
 
                 </div>
@@ -235,7 +240,7 @@ export default function PurchaseDrawer({
 
               <div className="flex gap-3">
 
-                {purchase.checkedBy === "-" ? (
+                {!purchase.checked_by ? (
 
                   <Clock3
                     className="text-orange-500 mt-1"
@@ -258,7 +263,7 @@ export default function PurchaseDrawer({
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {purchase.checkedBy}
+                    {purchase.checked_by || "-"}
                   </p>
 
                 </div>
@@ -267,7 +272,7 @@ export default function PurchaseDrawer({
 
               <div className="flex gap-3">
 
-                {purchase.enteredBy === "-" ? (
+                {!purchase.entered_by ? (
 
                   <Clock3
                     className="text-gray-400 mt-1"
@@ -290,8 +295,8 @@ export default function PurchaseDrawer({
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    {purchase.enteredBy}
-                  </p>
+  {purchase.entered_by || "-"}
+</p>
 
                 </div>
 

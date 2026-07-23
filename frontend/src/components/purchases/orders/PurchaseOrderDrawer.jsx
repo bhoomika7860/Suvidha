@@ -14,6 +14,10 @@ export default function PurchaseOrderDrawer({
 }) {
   if (!isOpen || !order) return null;
 
+  async function handleReceiveBill() {
+    await onReceiveBill(order);
+    onClose();
+}
   return (
     <>
       <div
@@ -96,7 +100,13 @@ export default function PurchaseOrderDrawer({
               Status
             </p>
 
-            <span className="px-4 py-2 rounded-full bg-yellow-100 text-yellow-700">
+            <span
+              className={`px-4 py-2 rounded-full text-sm ${
+                order.status === "Completed"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
               {order.status}
             </span>
           </div>
@@ -113,11 +123,18 @@ export default function PurchaseOrderDrawer({
           </button>
 
           <button
-            onClick={() => onReceiveBill(order)}
-            className="flex-1 h-11 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Receive Bill
-          </button>
+  onClick={() => {
+    console.log("Receive Bill clicked");
+    handleReceiveBill();
+  }}
+  className={`flex-1 h-11 rounded-xl text-white transition ${
+    order.status === "Completed"
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-blue-600 hover:bg-blue-700"
+  }`}
+>
+  Receive Bill
+</button>
 
         </div>
 

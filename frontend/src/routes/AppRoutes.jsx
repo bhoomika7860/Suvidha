@@ -46,6 +46,7 @@ function AppRoutes() {
     </ProtectedRoute>
   }
 >
+  
   <Route
     path="/owner-dashboard"
     element={<Dashboard />}
@@ -75,6 +76,10 @@ function AppRoutes() {
     path="/tasks"
     element={<Tasks />}
   />
+  <Route
+  path="/stores"
+  element={<Stores />}
+/>
 
   <Route
     path="/daily-reports/report/:id"

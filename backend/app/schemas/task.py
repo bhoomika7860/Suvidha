@@ -21,3 +21,5 @@ class TaskComplete(BaseModel):
     completed_quantity: int
 
     photo_url: str | None = None
+
+    note: str | None = None

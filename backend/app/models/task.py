@@ -8,7 +8,7 @@ from sqlalchemy import (
     ForeignKey,
 )
 from datetime import date
-
+from sqlalchemy import Text
 from app.database import Base
 
 
@@ -34,7 +34,7 @@ class Task(Base):
     # Photo Proof
     requires_photo = Column(Boolean, default=False)
     photo_url = Column(String, nullable=True)
-
+    note = Column(Text, nullable=True)
     # Dates
     task_date = Column(Date, default=date.today)
     due_date = Column(Date)

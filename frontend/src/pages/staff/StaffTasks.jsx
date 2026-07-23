@@ -17,6 +17,13 @@ useEffect(() => {
 }, []);
 
 async function loadTasks() {
+  const tasks = await taskService.getMyTasks();
+
+console.log(tasks);
+
+setPendingTasks(
+  tasks.filter((t) => t.status !== "completed")
+);
   try {
     const tasks = await taskService.getMyTasks();
 
@@ -35,15 +42,13 @@ async function loadTasks() {
 async function completeTask(task) {
   try {
 
-    await taskService.completeTask(
-  task.id,
-  {
-    completed_quantity:
-      task.target_quantity > 0
-        ? task.target_quantity
-        : 1,
-  }
-);
+    await taskService.completeTask(task.id, {
+  completed_quantity: task.completed_quantity,
+
+  photo_url: task.photo || null,
+
+  note: task.note || "",
+});
 
 await loadTasks();
 

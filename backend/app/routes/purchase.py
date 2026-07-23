@@ -77,6 +77,11 @@ async def create_purchase(
 
         image_path = f"/uploads/bills/{filename}"
 
+    print("===================================")
+    print("purchase_order_id =", purchase_order_id)
+    print("status =", status)
+    print("===================================")
+
     purchase = Purchase(
         store_id=store_id,
         product_name=product_name,

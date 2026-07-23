@@ -87,6 +87,10 @@ export default function TaskTable({ tasks = [] }) {
         isOpen={selectedTask !== null}
         onClose={() => setSelectedTask(null)}
       />
+
+      
+
+      
     </>
   );
 }

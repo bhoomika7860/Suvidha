@@ -1,14 +1,12 @@
 import { useState } from "react";
 
 import PurchaseOrderDrawer from "./PurchaseOrderDrawer";
-import ReceiveBillModal from "../ReceiveBillModal";
 
 export default function PurchaseOrderTable({
   purchaseOrders,
-  onSavePurchase,
+  onReceiveBill,
 }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showReceiveModal, setShowReceiveModal] = useState(false);
 
   return (
     <>
@@ -76,22 +74,11 @@ export default function PurchaseOrderTable({
         order={selectedOrder}
         isOpen={selectedOrder !== null}
         onClose={() => setSelectedOrder(null)}
-        onReceiveBill={() => {
-          setShowReceiveModal(true);
+        onReceiveBill={(order) => {
+          setSelectedOrder(null);
+          onReceiveBill(order);
         }}
       />
-
-      <ReceiveBillModal
-    isOpen={showReceiveModal}
-    onClose={() => {
-        setShowReceiveModal(false);
-        setSelectedOrder(null);
-    }}
-    purchaseOrder={selectedOrder}
-    onSave={(purchase) => {
-        onSavePurchase(purchase);
-    }}
-/>
     </>
   );
 }

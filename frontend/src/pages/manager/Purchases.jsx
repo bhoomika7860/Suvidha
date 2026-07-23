@@ -1,100 +1,93 @@
 import { useEffect, useState } from "react";
+
 import purchaseService from "../../services/purchaseService";
+
 import PurchaseStats from "../../components/purchases/PurchaseStats";
 import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
 import PurchaseTable from "../../components/purchases/PurchaseTable";
+import PurchaseOrders from "../../components/purchases/orders/PurchaseOrders";
 import ReceiveBillModal from "../../components/purchases/ReceiveBillModal";
 
-
-import PurchaseOrders from "../../components/purchases/orders/PurchaseOrders";
-
 export default function Purchases() {
-
-  const user = JSON.parse(localStorage.getItem("user"));
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState("received");
 
-  const [showReceiveModal, setShowReceiveModal] = useState(false);
-const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("orders");
 
-const [showOrderModal, setShowOrderModal] = useState(false);
+  const [activeFilter, setActiveFilter] =
+    useState("received");
 
-const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [showOrderModal, setShowOrderModal] =
+    useState(false);
 
-const [purchases, setPurchases] = useState([]);
+  const [showReceiveModal, setShowReceiveModal] =
+    useState(false);
 
-useEffect(() => {
-  loadData();
-}, []);
+  const [purchaseOrders, setPurchaseOrders] =
+    useState([]);
 
-async function loadData() {
-  try {
-    const [
-      purchaseData,
-      purchaseOrderData,
-    ] = await Promise.all([
-      purchaseService.getPurchases(),
-      purchaseService.getPurchaseOrders(),
-    ]);
+  const [purchases, setPurchases] =
+    useState([]);
 
-    setPurchases(purchaseData);
+  useEffect(() => {
+    loadData();
+  }, []);
 
-    setPurchaseOrders(purchaseOrderData);
+  async function loadData() {
+    try {
+      const [
+        purchaseData,
+        purchaseOrderData,
+      ] = await Promise.all([
+        purchaseService.getPurchases(),
+        purchaseService.getPurchaseOrders(),
+      ]);
 
-  } catch (err) {
-    console.error(err);
+      setPurchases(purchaseData);
+      setPurchaseOrders(purchaseOrderData);
+
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
 
   async function addPurchase(purchase) {
-  try {
-    await purchaseService.createPurchase(purchase);
+    try {
+      await purchaseService.createPurchase(purchase);
 
-    await loadData();
+      await loadData();
 
-    setShowReceiveModal(false);
+      setShowReceiveModal(false);
 
-  } catch (err) {
-    console.error(err);
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
 
-async function addPurchaseOrder(order) {
-  try {
-    await purchaseService.createPurchaseOrder(order);
+  const filteredPurchases =
+    purchases.filter((purchase) => {
 
-    await loadData();
+      const matchesSearch =
+        (purchase.supplier_name || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
 
-    setShowOrderModal(false);
+        (purchase.bill_number || "")
+          .toLowerCase()
+          .includes(search.toLowerCase());
 
-  } catch (err) {
-    console.error(err);
-  }
-}
+      const matchesStatus =
+        purchase.status === activeFilter;
 
- const filteredPurchases = purchases.filter((purchase) => {
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+    });
 
-  const matchesSearch =
-  (purchase.supplier_name || "")
-    .toLowerCase()
-    .includes(search.toLowerCase()) ||
-
-  (purchase.bill_number || "")
-    .toLowerCase()
-    .includes(search.toLowerCase());
-
-const matchesStatus =
-  purchase.status === activeFilter;
-
-return matchesSearch && matchesStatus;
-
-});
   return (
-
     <div className="space-y-6">
 
       <div>
-
         <h1 className="text-3xl font-bold">
           Purchase Workflow
         </h1>
@@ -102,51 +95,49 @@ return matchesSearch && matchesStatus;
         <p className="text-gray-500 mt-1">
           Manage supplier purchase bills.
         </p>
-
       </div>
 
       <PurchaseStats
-  purchases={purchases}
-  purchaseOrders={purchaseOrders}
-  activeFilter={activeFilter}
-  setActiveFilter={setActiveFilter}
-  activeTab={activeTab}
-/>
-      <PurchaseToolbar
-  search={search}
-  setSearch={setSearch}
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  onReceiveBill={() => setShowReceiveModal(true)}
-  onCreatePO={() => setShowOrderModal(true)}
-/>
-      
-{activeTab === "orders" ? (
-
-  <PurchaseOrders
-  purchaseOrders={purchaseOrders}
-  setPurchaseOrders={setPurchaseOrders}
-  showModal={showOrderModal}
-  setShowModal={setShowOrderModal}
-/>
-) : (
-
-  <PurchaseTable
-    purchases={filteredPurchases}
-    allPurchases={purchases}
-    setPurchases={setPurchases}
-  />
-
-)}
-
-      <ReceiveBillModal
-        isOpen={showReceiveModal}
-        onClose={() => setShowReceiveModal(false)}
-        onSave={addPurchase}
+        purchases={purchases}
+        purchaseOrders={purchaseOrders}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
+        activeTab={activeTab}
       />
 
+      <PurchaseToolbar
+        search={search}
+        setSearch={setSearch}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onCreatePO={() => setShowOrderModal(true)}
+        onReceiveBill={() => setShowReceiveModal(true)}
+      />
+
+      {activeTab === "orders" ? (
+        <PurchaseOrders
+          purchaseOrders={purchaseOrders}
+          setPurchaseOrders={setPurchaseOrders}
+          showModal={showOrderModal}
+          setShowModal={setShowOrderModal}
+          setActiveTab={setActiveTab}
+        />
+      ) : (
+        <>
+          <PurchaseTable
+            purchases={filteredPurchases}
+            allPurchases={purchases}
+            setPurchases={setPurchases}
+          />
+
+          <ReceiveBillModal
+            isOpen={showReceiveModal}
+            onClose={() => setShowReceiveModal(false)}
+            onSave={addPurchase}
+          />
+        </>
+      )}
+
     </div>
-
   );
-
 }

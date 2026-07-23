@@ -24,9 +24,13 @@ router = APIRouter(
 def create_task(
     data: TaskCreate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
+    print("CURRENT USER:", current_user)
+
     require_role(["owner"], current_user["role"])
+
+  
 
     task = Task(
         store_id=data.store_id,
@@ -54,37 +58,68 @@ def create_task(
 
     return task
 
-
 # Employee views own tasks
 @router.get("/my")
 def get_my_tasks(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    from datetime import date
+
+    today = date.today()
+
     tasks = (
-    db.query(Task)
-    .filter(
-        Task.assigned_to == current_user["user_id"]
+        db.query(Task)
+        .filter(
+            Task.assigned_to == current_user["user_id"]
+        )
+        .filter(
+            (Task.status != "completed") |
+            (Task.due_date == today)
+        )
+        .all()
     )
-    .all()
-)
 
-    return [
-    {
-        "id": task.id,
-        "title": task.task_title,
-        "type": task.task_type,
-        "requiresPhoto": task.requires_photo,
-        "photoUploaded": task.photo_url is not None,
-        "target_quantity": task.target_quantity,
-        "completed_quantity": task.completed_quantity,
-        "status": task.status,
-        "due_date": task.due_date,
-    }
-    for task in tasks
-]
+    results = []
 
+    for task in tasks:
+        store = (
+            db.query(Store)
+            .filter(Store.id == task.store_id)
+            .first()
+        )
 
+        results.append({
+            "id": task.id,
+            "title": task.task_title,
+
+            "employee": current_user["username"],
+
+            "role": task.role,
+
+            "store": store.name if store else "",
+
+            "type": task.task_type,
+
+            "requiresPhoto": task.requires_photo,
+
+            "photoUploaded": task.photo_url is not None,
+
+            "target_quantity": task.target_quantity,
+
+            "completed_quantity": task.completed_quantity,
+
+            "status": task.status,
+
+            "due_date": task.due_date,
+            "completion_percentage": task.completion_percentage,
+
+"photo_url": task.photo_url,
+
+"note": task.note,
+        })
+
+    return results
 # Employee completes task
 @router.put("/{task_id}/complete")
 def complete_task(
@@ -93,9 +128,11 @@ def complete_task(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    task = db.query(Task).filter(
-        Task.id == task_id
-    ).first()
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_id)
+        .first()
+    )
 
     if not task:
         raise HTTPException(
@@ -109,8 +146,10 @@ def complete_task(
             detail="Not allowed"
         )
 
+    # Save actual work completed
     task.completed_quantity = data.completed_quantity
 
+    # Calculate target achieved percentage
     if task.target_quantity > 0:
         percentage = (
             data.completed_quantity / task.target_quantity
@@ -119,6 +158,12 @@ def complete_task(
         percentage = 100
 
     task.completion_percentage = min(percentage, 100)
+
+    # Save photo and remarks
+    task.photo_url = data.photo_url
+    task.note = data.note
+
+    # Mark task as completed
     task.status = "completed"
 
     db.commit()
@@ -144,7 +189,18 @@ def get_all_tasks(
 ):
     require_role(["owner"], current_user["role"])
 
-    tasks = db.query(Task).all()
+    from datetime import date
+
+    today = date.today()
+
+    tasks = (
+        db.query(Task)
+        .filter(
+            (Task.status != "completed") |
+            (Task.due_date == today)
+        )
+        .all()
+    )
 
     results = []
 
@@ -163,30 +219,29 @@ def get_all_tasks(
 
         results.append({
             "id": task.id,
-
             "task_title": task.task_title,
-
             "task_type": task.task_type,
-
             "role": task.role,
-
             "store_id": task.store_id,
             "store_name": store.name if store else "",
-
             "assigned_to": task.assigned_to,
             "employee_name": employee.full_name if employee else "",
-
             "target_quantity": task.target_quantity,
-
             "completed_quantity": task.completed_quantity,
-
             "completion_percentage": task.completion_percentage,
-
             "requires_photo": task.requires_photo,
 
-            "status": task.status,
+"completed_quantity": task.completed_quantity,
 
-            "due_date": task.due_date,
+"completion_percentage": task.completion_percentage,
+
+"photo_url": task.photo_url,
+
+"note": task.note,
+
+"status": task.status,
+
+"due_date": task.due_date,
         })
 
     return results

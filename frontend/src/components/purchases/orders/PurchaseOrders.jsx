@@ -7,63 +7,64 @@ export default function PurchaseOrders({
   setPurchaseOrders,
   showModal,
   setShowModal,
+  setActiveTab,
 }) {
 
   async function addPurchaseOrder(order) {
-  try {
+    try {
 
-    await purchaseService.createPurchaseOrder(
-      order
-    );
+      await purchaseService.createPurchaseOrder(order);
 
-    const updated =
-      await purchaseService.getPurchaseOrders();
+      const orders =
+        await purchaseService.getPurchaseOrders();
 
-    setPurchaseOrders(updated);
+      setPurchaseOrders(orders);
 
-    setShowModal(false);
+      setShowModal(false);
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err);
+      console.error(err);
+
+    }
+  }
+
+  async function receivePurchaseOrder(order) {
+
+    try {
+
+      await purchaseService.updatePurchaseOrderStatus(
+        order.id,
+        "Received"
+      );
+
+      const orders =
+        await purchaseService.getPurchaseOrders();
+
+      setPurchaseOrders(orders);
+
+      setActiveTab("received");
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
 
   }
-}
 
   return (
-
     <>
-
       <PurchaseOrderTable
-  purchaseOrders={purchaseOrders}
-  onSavePurchase={async (purchase) => {
-    await purchaseService.createPurchase(purchase);
-
-    await purchaseService.updatePurchaseOrderStatus(
-      purchase.purchase_order_id,
-      "Completed"
-    );
-
-    const [
-      purchases,
-      orders,
-    ] = await Promise.all([
-      purchaseService.getPurchases(),
-      purchaseService.getPurchaseOrders(),
-    ]);
-
-    setPurchaseOrders(orders);
-  }}
-/>
+        purchaseOrders={purchaseOrders}
+        onReceiveBill={receivePurchaseOrder}
+      />
 
       <CreatePurchaseOrderModal
         open={showModal}
         onClose={() => setShowModal(false)}
         onSave={addPurchaseOrder}
       />
-
     </>
-
   );
-
 }
