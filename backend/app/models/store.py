@@ -1,18 +1,30 @@
 from sqlalchemy import Column, Integer, String, Boolean
-from app.database import Base
 from sqlalchemy.orm import relationship
+
+from app.database import Base
 
 
 class Store(Base):
     __tablename__ = "stores"
 
     id = Column(Integer, primary_key=True, index=True)
+
     name = Column(String, nullable=False)
     code = Column(String, unique=True, nullable=False)
+
     address = Column(String)
+
+    # Display name of the current Store Manager
+    manager_name = Column(String, nullable=True)
+
     is_active = Column(Boolean, default=True)
-    reports = relationship("DailyReport", back_populates="store")
+
+    reports = relationship(
+        "DailyReport",
+        back_populates="store"
+    )
+
     users = relationship(
-    "User",
-    back_populates="store"
-)
+        "User",
+        back_populates="store"
+    )

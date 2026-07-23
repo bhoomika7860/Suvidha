@@ -1,16 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { staffService } from "../../services/staffService";
 
 export default function AddStoreModal({
   open,
   onClose,
   onSave,
 }) {
+  const [staff, setStaff] = useState([]);
+
   const [form, setForm] = useState({
     name: "",
     code: "",
     address: "",
+    manager_id: "",
   });
+
+  useEffect(() => {
+    async function loadManagers() {
+      try {
+        const users = await staffService.getUsers();
+
+        setStaff(
+          users.filter(
+            (user) => user.role === "store_manager"
+          )
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (open) {
+      loadManagers();
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -19,7 +43,10 @@ export default function AddStoreModal({
 
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]:
+        name === "manager_id"
+          ? Number(value)
+          : value,
     }));
   }
 
@@ -27,7 +54,8 @@ export default function AddStoreModal({
     if (
       !form.name ||
       !form.code ||
-      !form.address
+      !form.address ||
+      !form.manager_id
     ) {
       alert("Please fill all fields.");
       return;
@@ -39,6 +67,7 @@ export default function AddStoreModal({
       name: "",
       code: "",
       address: "",
+      manager_id: "",
     });
   }
 
@@ -52,6 +81,8 @@ export default function AddStoreModal({
       <div className="fixed inset-0 flex justify-center items-center z-50">
 
         <div className="w-[520px] bg-white rounded-2xl shadow-xl">
+
+          {/* Header */}
 
           <div className="flex justify-between items-center px-6 py-5 border-b">
 
@@ -67,6 +98,8 @@ export default function AddStoreModal({
             </button>
 
           </div>
+
+          {/* Body */}
 
           <div className="p-6 space-y-5">
 
@@ -95,7 +128,29 @@ export default function AddStoreModal({
               className="w-full border rounded-xl p-3 resize-none"
             />
 
+            <select
+              name="manager_id"
+              value={form.manager_id}
+              onChange={handleChange}
+              className="w-full h-11 border rounded-xl px-4"
+            >
+              <option value="">
+                Select Store Manager
+              </option>
+
+              {staff.map((manager) => (
+                <option
+                  key={manager.id}
+                  value={manager.id}
+                >
+                  {manager.full_name}
+                </option>
+              ))}
+            </select>
+
           </div>
+
+          {/* Footer */}
 
           <div className="border-t p-5 flex justify-end gap-3">
 

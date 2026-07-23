@@ -18,10 +18,11 @@ def create_store(
     db = SessionLocal()
 
     store = Store(
-        name=data.name,
-        code=data.code,
-        address=data.address
-    )
+    name=data.name,
+    code=data.code,
+    address=data.address,
+    manager_id=data.manager_name,
+)
 
     db.add(store)
     db.commit()

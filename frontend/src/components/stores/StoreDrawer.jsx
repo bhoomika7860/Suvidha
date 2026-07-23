@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
- Building2,
+  Building2,
   MapPin,
   Hash,
   CheckCircle2,
@@ -21,11 +21,22 @@ export default function StoreDrawer({
   const [editing, setEditing] = useState(false);
 
   const [form, setForm] = useState({
-    name: store?.name || "",
-    code: store?.code || "",
-    address: store?.address || "",
-    is_active: store?.is_active ?? true,
+    name: "",
+    code: "",
+    address: "",
+    is_active: true,
   });
+
+  useEffect(() => {
+    if (store) {
+      setForm({
+        name: store.name || "",
+        code: store.code || "",
+        address: store.address || "",
+        is_active: store.is_active ?? true,
+      });
+    }
+  }, [store]);
 
   if (!isOpen || !store) return null;
 
@@ -38,32 +49,33 @@ export default function StoreDrawer({
 
       await refreshStores();
 
-onClose();
-
+      setEditing(false);
+      onClose();
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function deactivateStore() {
-    if (
-      !window.confirm(
-        "Deactivate this store?"
-      )
-    )
-      return;
+  async function deleteStore() {
+    const confirmDelete = window.confirm(
+      "Delete this store permanently?\n\nThis action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
 
     try {
-      await storesService.deactivateStore(
-        store.id
-      );
+      await storesService.deleteStore(store.id);
 
       await refreshStores();
 
-onClose();
-
+      onClose();
     } catch (err) {
       console.error(err);
+
+      alert(
+        err.response?.data?.detail ||
+          "Unable to delete store."
+      );
     }
   }
 
@@ -76,28 +88,30 @@ onClose();
 
       <div className="fixed right-0 top-0 h-screen w-[500px] bg-white shadow-2xl z-50 flex flex-col">
 
-        <div className="flex justify-between items-center border-b px-6 py-5">
+        {/* Header */}
+
+        <div className="flex items-center justify-between border-b px-6 py-5">
 
           <div>
-
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-3xl font-bold">
               Store Details
             </h2>
 
             <p className="text-gray-500 mt-1">
               {store.name}
             </p>
-
           </div>
 
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100"
           >
-            <X size={22}/>
+            <X size={22} />
           </button>
 
         </div>
+
+        {/* Body */}
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
@@ -106,64 +120,68 @@ onClose();
               <input
                 className="w-full h-11 border rounded-xl px-4"
                 value={form.name}
-                onChange={(e)=>
+                onChange={(e) =>
                   setForm({
                     ...form,
-                    name:e.target.value
+                    name: e.target.value,
                   })
                 }
+                placeholder="Store Name"
               />
 
               <input
                 className="w-full h-11 border rounded-xl px-4"
                 value={form.code}
-                onChange={(e)=>
+                onChange={(e) =>
                   setForm({
                     ...form,
-                    code:e.target.value
+                    code: e.target.value,
                   })
                 }
+                placeholder="Store Code"
               />
 
               <textarea
                 rows={4}
                 className="w-full border rounded-xl p-3"
                 value={form.address}
-                onChange={(e)=>
+                onChange={(e) =>
                   setForm({
                     ...form,
-                    address:e.target.value
+                    address: e.target.value,
                   })
                 }
+                placeholder="Address"
               />
-
             </>
           ) : (
             <>
               <InfoRow
-                icon={<Building2 size={20}/>}
+                icon={<Building2 size={20} />}
                 title="Store Name"
                 value={store.name}
               />
 
               <InfoRow
-                icon={<Hash size={20}/>}
+                icon={<Hash size={20} />}
                 title="Store Code"
                 value={store.code}
               />
-                <InfoRow
-    icon={<User size={22} />}
-    title="Store Manager"
-    value={store.manager_name}
-/>
+
               <InfoRow
-                icon={<MapPin size={20}/>}
+                icon={<User size={20} />}
+                title="Store Manager"
+                value={store.manager_name}
+              />
+
+              <InfoRow
+                icon={<MapPin size={20} />}
                 title="Address"
                 value={store.address}
               />
 
               <InfoRow
-                icon={<CheckCircle2 size={20}/>}
+                icon={<CheckCircle2 size={20} />}
                 title="Status"
                 value={
                   store.is_active
@@ -176,46 +194,38 @@ onClose();
 
         </div>
 
+        {/* Footer */}
+
         <div className="border-t p-5 space-y-3">
 
           {editing ? (
-
             <button
               onClick={saveChanges}
               className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
             >
               Save Changes
             </button>
-
           ) : (
-
             <button
-              onClick={() =>
-                setEditing(true)
-              }
-              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex justify-center items-center gap-2"
+              onClick={() => setEditing(true)}
+              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
             >
-              <Pencil size={18}/>
-
+              <Pencil size={18} />
               Edit Store
-
             </button>
-
           )}
 
           <button
-            onClick={deactivateStore}
-            className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white flex justify-center items-center gap-2"
+            onClick={deleteStore}
+            className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
           >
-            <Trash2 size={18}/>
-
-            Deactivate Store
-
+            <Trash2 size={18} />
+            Delete Store
           </button>
 
           <button
             onClick={onClose}
-            className="w-full h-11 rounded-xl border"
+            className="w-full h-11 rounded-xl border hover:bg-gray-50"
           >
             Close
           </button>
@@ -223,7 +233,6 @@ onClose();
         </div>
 
       </div>
-
     </>
   );
 }
@@ -241,15 +250,13 @@ function InfoRow({
       </div>
 
       <div>
-
         <p className="text-sm text-gray-500">
           {title}
         </p>
 
-        <p className="text-lg font-semibold">
+        <p className="text-lg font-semibold break-words">
           {value || "-"}
         </p>
-
       </div>
 
     </div>

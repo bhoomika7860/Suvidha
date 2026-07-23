@@ -5,7 +5,10 @@ const storesService = {
     const response = await api.get("/stores/");
     return response.data;
   },
-
+deleteStore: async (id) => {
+  const response = await api.delete(`/stores/${id}`);
+  return response.data;
+},
   getStore: async (id) => {
     const response = await api.get(
       `/stores/${id}`
