@@ -24,6 +24,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+import storesService from "../../services/storeService";
 import { staffService } from "../../services/staffService";
 import {
   RoleBadge,
@@ -503,6 +504,7 @@ function EmployeeDrawer({ employee, onClose }) {
 export default function App() {
 
   const [employees, setEmployees] = useState([]);
+  const [stores, setStores] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
 
@@ -524,20 +526,27 @@ console.log("Users from backend:", data);
   }
 };
 
+const loadStores = async () => {
+  try {
+    const data = await storesService.getStores();
+    setStores(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 useEffect(() => {
   loadUsers();
+  loadStores();
 }, []);
 
-const storeOptions = [
-  { id: "", name: "All Stores" },
-  ...[
-    ...new Map(
-      employees
-        .filter((e) => e.store_id)
-        .map((e) => [e.store_id, { id: e.store_id, name: e.store_name }])
-    ).values(),
-  ],
-];
+
+const storeOptions = stores.map((store) => ({
+  id: store.id,
+  name: store.name,
+}));
+
+
 console.log("Employees:", employees);
 console.log("Store Options:", storeOptions);
   const [searchQuery, setSearchQuery] = useState("");

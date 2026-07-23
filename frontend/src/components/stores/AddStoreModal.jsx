@@ -13,7 +13,7 @@ export default function AddStoreModal({
     name: "",
     code: "",
     address: "",
-    manager_id: "",
+    manager_name: "",
   });
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function AddStoreModal({
       !form.name ||
       !form.code ||
       !form.address ||
-      !form.manager_id
+      !form.manager_name
     ) {
       alert("Please fill all fields.");
       return;
@@ -67,7 +67,7 @@ export default function AddStoreModal({
       name: "",
       code: "",
       address: "",
-      manager_id: "",
+      manager_name: "",
     });
   }
 
@@ -128,25 +128,13 @@ export default function AddStoreModal({
               className="w-full border rounded-xl p-3 resize-none"
             />
 
-            <select
-              name="manager_id"
-              value={form.manager_id}
-              onChange={handleChange}
-              className="w-full h-11 border rounded-xl px-4"
-            >
-              <option value="">
-                Select Store Manager
-              </option>
-
-              {staff.map((manager) => (
-                <option
-                  key={manager.id}
-                  value={manager.id}
-                >
-                  {manager.full_name}
-                </option>
-              ))}
-            </select>
+            <input
+  name="manager_name"
+  placeholder="Store Manager Name"
+  value={form.manager_name}
+  onChange={handleChange}
+  className="w-full h-11 border rounded-xl px-4"
+/>
 
           </div>
 

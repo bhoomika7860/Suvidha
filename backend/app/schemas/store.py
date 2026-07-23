@@ -4,12 +4,12 @@ class StoreCreate(BaseModel):
     name: str
     code: str
     address: str
-    manager_id: str
+    manager_name: str
 
 
 class StoreUpdate(BaseModel):
     name: str
     code: str
     address: str
+    manager_name: str
     is_active: bool
-    

@@ -21,11 +21,12 @@ export default function StoreDrawer({
   const [editing, setEditing] = useState(false);
 
   const [form, setForm] = useState({
-    name: "",
-    code: "",
-    address: "",
-    is_active: true,
-  });
+  name: store?.name || "",
+  code: store?.code || "",
+  address: store?.address || "",
+  manager_name: store?.manager_name || "",
+  is_active: store?.is_active ?? true,
+});
 
   useEffect(() => {
     if (store) {
@@ -153,6 +154,18 @@ export default function StoreDrawer({
                 }
                 placeholder="Address"
               />
+
+              <input
+  className="w-full h-11 border rounded-xl px-4"
+  placeholder="Store Manager"
+  value={form.manager_name}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      manager_name: e.target.value,
+    })
+  }
+/>
             </>
           ) : (
             <>
