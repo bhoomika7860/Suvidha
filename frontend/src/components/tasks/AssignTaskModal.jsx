@@ -14,49 +14,46 @@ export default function AssignTaskModal({
     task: "",
     type: "normal",
     target: "",
-    due: "",
     requiresPhoto: false,
   });
 
   const [stores, setStores] = useState([]);
-const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  async function loadData() {
-    try {
-      const [storesData, usersData] = await Promise.all([
-        storeService.getStores(),
-        staffService.getUsers(),
-      ]);
+    async function loadData() {
+      try {
+        const [storesData, usersData] = await Promise.all([
+          storeService.getStores(),
+          staffService.getUsers(),
+        ]);
 
-      setStores(storesData);
-      setEmployees(usersData);
-    } catch (err) {
-      console.error(err);
+        setStores(storesData);
+        setEmployees(usersData);
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }
 
-  loadData();
-}, [open]);
+    loadData();
+  }, [open]);
 
+  const filteredEmployees = useMemo(() => {
+    if (!form.role) return [];
 
-const filteredEmployees = useMemo(() => {
-  if (!form.role) return [];
+    const backendRole =
+      form.role === "Store Manager"
+        ? "store_manager"
+        : form.role === "Delivery Boy"
+        ? "delivery"
+        : "staff";
 
-  const backendRole =
-    form.role === "Store Manager"
-      ? "store_manager"
-      : form.role === "Delivery Boy"
-      ? "delivery"
-      : "staff";
-
-
-
-  return employees.filter((emp) => emp.role === backendRole);
-}, [employees, form.role]);
-
+    return employees.filter(
+      (emp) => emp.role === backendRole
+    );
+  }, [employees, form.role]);
 
   if (!open) return null;
 
@@ -65,7 +62,10 @@ const filteredEmployees = useMemo(() => {
 
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     }));
   }
 
@@ -97,7 +97,6 @@ const filteredEmployees = useMemo(() => {
       task: "",
       type: "normal",
       target: "",
-      due: "",
       requiresPhoto: false,
     });
 
@@ -116,19 +115,22 @@ const filteredEmployees = useMemo(() => {
         <div className="space-y-4">
 
           <select
-  name="store"
-  className="w-full h-11 border rounded-xl px-4"
-  value={form.store}
-  onChange={handleChange}
->
-  <option value="">Select Store</option>
+            name="store"
+            className="w-full h-11 border rounded-xl px-4"
+            value={form.store}
+            onChange={handleChange}
+          >
+            <option value="">Select Store</option>
 
-  {stores.map((store) => (
-    <option key={store.id} value={store.id}>
-      {store.name}
-    </option>
-  ))}
-</select>
+            {stores.map((store) => (
+              <option
+                key={store.id}
+                value={store.id}
+              >
+                {store.name}
+              </option>
+            ))}
+          </select>
 
           <select
             name="role"
@@ -149,11 +151,17 @@ const filteredEmployees = useMemo(() => {
             onChange={handleChange}
           >
             <option value="">Select Employee</option>
-            {filteredEmployees.map((employee) => (
-  <option key={employee.id} value={employee.id}>
-    {employee.full_name}
-  </option>
-))}
+
+            {filteredEmployees.map(
+              (employee) => (
+                <option
+                  key={employee.id}
+                  value={employee.id}
+                >
+                  {employee.full_name}
+                </option>
+              )
+            )}
           </select>
 
           <input
@@ -233,14 +241,6 @@ const filteredEmployees = useMemo(() => {
             />
           )}
 
-          <input
-            type="date"
-            name="due"
-            className="w-full h-11 border rounded-xl px-4"
-            value={form.due}
-            onChange={handleChange}
-          />
-
           <label className="flex items-center gap-3">
 
             <input
@@ -250,7 +250,9 @@ const filteredEmployees = useMemo(() => {
               onChange={handleChange}
             />
 
-            <span>Require Photo Proof</span>
+            <span>
+              Require Photo Proof
+            </span>
 
           </label>
 

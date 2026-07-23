@@ -75,20 +75,23 @@ export default function Tasks() {
 
         requires_photo: task.requiresPhoto,
 
-        due_date: task.due,
+        
       });
 
       await loadTasks();
 
       setShowModal(false);
     } catch (err) {
-      console.error(err);
+  console.error(err);
 
-      alert(
-        err.response?.data?.detail ||
-          "Failed to create task."
-      );
-    }
+  console.log("FULL ERROR:", err);
+  console.log("RESPONSE:", err.response);
+  console.log("DATA:", err.response?.data);
+
+  alert(
+    JSON.stringify(err.response?.data, null, 2)
+  );
+}
   };
 
   return (

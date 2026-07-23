@@ -139,7 +139,7 @@ export default function Sidebar({ open, onClose }) {
             <div>
 
               <p className="font-semibold">
-                Rajesh Agarwal
+                Mukesh Sindhu
               </p>
 
               <p className="text-sm text-gray-500">
