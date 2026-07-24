@@ -1,47 +1,55 @@
-from app.models.user import User
-from app.models.store import Store
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from datetime import date
-from app.database import get_db
-from app.models.task import Task
-from app.schemas.task import (
-    TaskCreate,
-    TaskComplete,
+import os
+import shutil
+import uuid
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
 )
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.roles import require_role
+from app.models.store import Store
+from app.models.task import Task
+from app.models.user import User
+from app.schemas.task import TaskCreate
 from app.utils.audit import create_audit_log
 
 router = APIRouter(
     prefix="/tasks",
-    tags=["Tasks"]
+    tags=["Tasks"],
 )
 
 
-# Owner creates a task
+# -------------------------------------------------------------------
+# Owner creates task
+# -------------------------------------------------------------------
 @router.post("/")
 def create_task(
     data: TaskCreate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    print("CURRENT USER:", current_user)
-
     require_role(["owner"], current_user["role"])
 
-  
-
     task = Task(
-    store_id=data.store_id,
-    assigned_to=data.assigned_to,
-    task_title=data.task_title,
-    task_type=data.task_type,
-    role=data.role,
-    target_quantity=data.target_quantity,
-    requires_photo=data.requires_photo,
-    due_date=date.today(),
-)
+        store_id=data.store_id,
+        assigned_to=data.assigned_to,
+        task_title=data.task_title,
+        task_type=data.task_type,
+        role=data.role,
+        target_quantity=data.target_quantity,
+        requires_photo=data.requires_photo,
+        due_date=date.today(),
+    )
+
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -52,29 +60,28 @@ def create_task(
         action="CREATE",
         table_name="task_targets",
         record_id=task.id,
-        description="Created task"
+        description="Created task",
     )
 
     return task
 
+
+# -------------------------------------------------------------------
 # Employee views own tasks
+# -------------------------------------------------------------------
 @router.get("/my")
 def get_my_tasks(
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    from datetime import date
-
     today = date.today()
 
     tasks = (
         db.query(Task)
+        .filter(Task.assigned_to == current_user["user_id"])
         .filter(
-            Task.assigned_to == current_user["user_id"]
-        )
-        .filter(
-            (Task.status != "completed") |
-            (Task.due_date == today)
+            (Task.status != "completed")
+            | (Task.due_date == today)
         )
         .all()
     )
@@ -82,51 +89,48 @@ def get_my_tasks(
     results = []
 
     for task in tasks:
+
         store = (
             db.query(Store)
             .filter(Store.id == task.store_id)
             .first()
         )
 
-        results.append({
-            "id": task.id,
-            "title": task.task_title,
-
-            "employee": current_user["username"],
-
-            "role": task.role,
-
-            "store": store.name if store else "",
-
-            "type": task.task_type,
-
-            "requiresPhoto": task.requires_photo,
-
-            "photoUploaded": task.photo_url is not None,
-
-            "target_quantity": task.target_quantity,
-
-            "completed_quantity": task.completed_quantity,
-
-            "status": task.status,
-
-            "due_date": task.due_date,
-            "completion_percentage": task.completion_percentage,
-
-"photo_url": task.photo_url,
-
-"note": task.note,
-        })
+        results.append(
+            {
+                "id": task.id,
+                "title": task.task_title,
+                "employee": current_user["username"],
+                "role": task.role,
+                "store": store.name if store else "",
+                "type": task.task_type,
+                "target_quantity": task.target_quantity,
+                "completed_quantity": task.completed_quantity,
+                "completion_percentage": task.completion_percentage,
+                "requiresPhoto": task.requires_photo,
+                "photo_url": task.photo_url,
+                "note": task.note,
+                "status": task.status,
+                "due_date": task.due_date,
+            }
+        )
 
     return results
+
+
+# -------------------------------------------------------------------
 # Employee completes task
+# -------------------------------------------------------------------
 @router.put("/{task_id}/complete")
 def complete_task(
     task_id: int,
-    data: TaskComplete,
+    completed_quantity: int = Form(...),
+    note: str = Form(""),
+    photo: UploadFile | None = File(None),
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
+
     task = (
         db.query(Task)
         .filter(Task.id == task_id)
@@ -136,33 +140,58 @@ def complete_task(
     if not task:
         raise HTTPException(
             status_code=404,
-            detail="Task not found"
+            detail="Task not found",
         )
 
     if task.assigned_to != current_user["user_id"]:
         raise HTTPException(
             status_code=403,
-            detail="Not allowed"
+            detail="Not allowed",
         )
 
-    # Save actual work completed
-    task.completed_quantity = data.completed_quantity
+    task.completed_quantity = completed_quantity
 
-    # Calculate target achieved percentage
     if task.target_quantity > 0:
         percentage = (
-            data.completed_quantity / task.target_quantity
+            completed_quantity / task.target_quantity
         ) * 100
     else:
         percentage = 100
 
-    task.completion_percentage = min(percentage, 100)
+    task.completion_percentage = min(
+        percentage,
+        100,
+    )
 
-    # Save photo and remarks
-    task.photo_url = data.photo_url
-    task.note = data.note
+    task.note = note
 
-    # Mark task as completed
+    if photo:
+
+        os.makedirs(
+            "uploads/tasks",
+            exist_ok=True,
+        )
+
+        filename = (
+            f"{uuid.uuid4()}_{photo.filename}"
+        )
+
+        filepath = os.path.join(
+            "uploads",
+            "tasks",
+            filename,
+        )
+
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(
+                photo.file,
+                buffer,
+            )
+
+        task.photo_url = (
+            f"http://127.0.0.1:8000/uploads/tasks/{filename}"
+        )
+
     task.status = "completed"
 
     db.commit()
@@ -174,17 +203,19 @@ def complete_task(
         action="UPDATE",
         table_name="task_targets",
         record_id=task.id,
-        description="Completed task"
+        description="Completed task",
     )
 
     return task
 
 
+# -------------------------------------------------------------------
 # Owner views all tasks
+# -------------------------------------------------------------------
 @router.get("/")
 def get_all_tasks(
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     require_role(["owner"], current_user["role"])
 
@@ -193,8 +224,8 @@ def get_all_tasks(
     tasks = (
         db.query(Task)
         .filter(
-            (Task.status != "completed") |
-            (Task.due_date == today)
+            (Task.status != "completed")
+            | (Task.due_date == today)
         )
         .all()
     )
@@ -215,29 +246,23 @@ def get_all_tasks(
             .first()
         )
 
-        results.append({
-            "id": task.id,
-
-            # ---------- names used by frontend ----------
-            "title": task.task_title,
-            "employee": employee.full_name if employee else "",
-            "role": task.role,
-            "store": store.name if store else "",
-            "type": task.task_type,
-
-            # ---------- task data ----------
-            "target_quantity": task.target_quantity,
-            "completed_quantity": task.completed_quantity,
-            "completion_percentage": task.completion_percentage,
-
-            # ---------- proof ----------
-            "requiresPhoto": task.requires_photo,
-            "photo_url": task.photo_url,
-            "note": task.note,
-
-            # ---------- status ----------
-            "status": task.status,
-            "due_date": task.due_date,
-        })
+        results.append(
+            {
+                "id": task.id,
+                "title": task.task_title,
+                "employee": employee.full_name if employee else "",
+                "role": task.role,
+                "store": store.name if store else "",
+                "type": task.task_type,
+                "target_quantity": task.target_quantity,
+                "completed_quantity": task.completed_quantity,
+                "completion_percentage": task.completion_percentage,
+                "requiresPhoto": task.requires_photo,
+                "photo_url": task.photo_url,
+                "note": task.note,
+                "status": task.status,
+                "due_date": task.due_date,
+            }
+        )
 
     return results

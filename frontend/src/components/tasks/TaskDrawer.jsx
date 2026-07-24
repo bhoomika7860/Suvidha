@@ -60,6 +60,7 @@ export default function TaskDrawer({
     task.photo ??
     task.photo_url ??
     null;
+console.log("PHOTO URL:", photo);
 
   const note =
     task.note || "";
@@ -68,7 +69,7 @@ export default function TaskDrawer({
     task.due ??
     task.due_date ??
     "-";
-
+console.log("Photo URL:", photo);
   return (
     <>
       <div
@@ -191,32 +192,31 @@ export default function TaskDrawer({
           />
 
           {requiresPhoto && (
+  <div>
 
-            <div>
+    <p className="text-sm text-gray-500 mb-3">
+      Photo Proof
+    </p>
 
-              <p className="text-sm text-gray-500 mb-3">
-                Photo Proof
-              </p>
+    <div className="w-full h-72 rounded-2xl border overflow-hidden bg-gray-100 flex items-center justify-center">
 
-              {photo ? (
+      {photo ? (
+        <img
+          src={photo}
+          alt="Task Proof"
+          className="w-full h-full object-contain"
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center text-gray-500">
+          <Camera size={48} className="mb-3" />
+          <p>No photo uploaded.</p>
+        </div>
+      )}
 
-                <img
-                  src={photo}
-                  alt="Task Proof"
-                  className="rounded-xl border w-full max-h-72 object-cover"
-                />
+    </div>
 
-              ) : (
-
-                <div className="border rounded-xl p-5 bg-gray-50 text-gray-500">
-                  No photo uploaded.
-                </div>
-
-              )}
-
-            </div>
-
-          )}
+  </div>
+)}
 
           <div>
 

@@ -16,11 +16,36 @@ export const taskService = {
     return response.data;
   },
 
-  completeTask: async (id, data) => {
-    const response = await api.put(
-      `/tasks/${id}/complete`,
-      data
+  completeTask: async (id, task) => {
+  const formData = new FormData();
+
+  formData.append(
+    "completed_quantity",
+    task.completed_quantity
+  );
+
+  formData.append(
+    "note",
+    task.note || ""
+  );
+
+  if (task.photo) {
+    formData.append(
+      "photo",
+      task.photo
     );
-    return response.data;
-  },
+  }
+
+  const response = await api.put(
+    `/tasks/${id}/complete`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
+},
 };
