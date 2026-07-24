@@ -58,10 +58,13 @@ export default function Sidebar({ open, onClose }) {
 
 const user = token ? jwtDecode(token) : null;
 
-const initials = user?.username
-  ? user.username
+const displayName =
+  user?.full_name || user?.username || "";
+
+const initials = displayName
+  ? displayName
       .split(" ")
-      .map((n) => n[0])
+      .map((word) => word[0])
       .join("")
       .toUpperCase()
   : "?";
@@ -159,8 +162,8 @@ const roleMap = {
     <div>
 
       <p className="font-semibold">
-        {user?.username || "User"}
-      </p>
+  {user?.full_name || user?.username || "User"}
+</p>
 
       <p className="text-sm text-gray-500">
         {roleMap[user?.role] || ""}

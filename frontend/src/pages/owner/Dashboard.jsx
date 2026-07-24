@@ -434,13 +434,14 @@ console.log("Comparison Data:", comparisonData);
 
   {/* Status Badge */}
   <div className="flex items-center gap-3 flex-shrink-0">
-    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
-      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-      <span className="text-sm font-semibold text-emerald-700">
-        5 Stores Active
-      </span>
-    </div>
+  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+
+    <span className="text-sm font-semibold text-emerald-700">
+  {totalStores} Stores Active
+</span>
   </div>
+</div>
 </Card>
 
           {/* ── KPI cards ─── */}

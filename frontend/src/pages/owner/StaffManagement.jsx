@@ -607,6 +607,56 @@ console.log("Filtered:", filtered);
     setStatusFilter("all");
   }
 
+  const exportStaff = () => {
+  const headers = [
+    "Full Name",
+    "Username",
+    "Email",
+    "Phone",
+    "Store",
+    "Role",
+    "Status",
+  ];
+
+  const rows = filtered.map((emp) => [
+    emp.full_name,
+    emp.username,
+    emp.email || "",
+    emp.phone || "",
+    emp.store_name || "",
+    emp.role,
+    emp.is_active ? "Active" : "Inactive",
+  ]);
+
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) =>
+      row
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "staff_list.csv";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  window.URL.revokeObjectURL(url);
+};
+
   return (
     <div className="min-h-screen bg-[#F9FAFB]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="max-w-[1400px] mx-auto px-8 py-8">
@@ -618,7 +668,10 @@ console.log("Filtered:", filtered);
             <p className="text-sm text-[#6B7280] mt-1">Manage employees across all pharmacy stores, assign roles and monitor account status.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] bg-white rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+            <button
+  onClick={exportStaff}
+  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] bg-white rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+>
               <Download size={15} /> Export Staff
             </button>
             <button
