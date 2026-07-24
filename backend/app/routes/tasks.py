@@ -2,7 +2,7 @@ from app.models.user import User
 from app.models.store import Store
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from datetime import date
 from app.database import get_db
 from app.models.task import Task
 from app.schemas.task import (
@@ -33,16 +33,15 @@ def create_task(
   
 
     task = Task(
-        store_id=data.store_id,
-        assigned_to=data.assigned_to,
-        task_title=data.task_title,
-        task_type=data.task_type,
-        role=data.role,
-        target_quantity=data.target_quantity,
-        requires_photo=data.requires_photo,
-        due_date=data.due_date,
-    )
-
+    store_id=data.store_id,
+    assigned_to=data.assigned_to,
+    task_title=data.task_title,
+    task_type=data.task_type,
+    role=data.role,
+    target_quantity=data.target_quantity,
+    requires_photo=data.requires_photo,
+    due_date=date.today(),
+)
     db.add(task)
     db.commit()
     db.refresh(task)

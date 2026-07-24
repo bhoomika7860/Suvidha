@@ -14,7 +14,7 @@ class TaskCreate(BaseModel):
 
     requires_photo: bool = False
 
-    due_date: date
+    
 
 
 class TaskComplete(BaseModel):

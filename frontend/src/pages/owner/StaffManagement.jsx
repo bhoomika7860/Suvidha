@@ -585,16 +585,16 @@ console.log("Filtered:", filtered);
 
 
   const kpis = [
-    { label: "Total Employees", value: employees.length, trend: "+3 this month", icon: <Users size={18} className="text-blue-600" />, iconBg: "bg-blue-50" },
-    { label: "Managers", value: employees.filter((e) => e.role === "store_manager").length, trend: "Across all stores", icon: <ShieldCheck size={18} className="text-emerald-600" />, iconBg: "bg-emerald-50" },
-    { label: "Store Staff", value: employees.filter((e) => e.role === "staff").length, trend: "+2 this week", icon: <UserCheck size={18} className="text-purple-600" />, iconBg: "bg-purple-50" },
-    { label: "Inactive Accounts", value: employees.filter((e) => !e.is_active || e.status === "Suspended").length, trend: "Needs review", icon: <UserX size={18} className="text-orange-500" />, iconBg: "bg-orange-50" },
+    { label: "Total Employees", value: employees.length, icon: <Users size={18} className="text-blue-600" />, iconBg: "bg-blue-50" },
+    { label: "Managers", value: employees.filter((e) => e.role === "store_manager").length, icon: <ShieldCheck size={18} className="text-emerald-600" />, iconBg: "bg-emerald-50" },
+    { label: "Store Staff", value: employees.filter((e) => e.role === "staff").length, icon: <UserCheck size={18} className="text-purple-600" />, iconBg: "bg-purple-50" },
+   
   {
   label: "Delivery Boys",
   value: employees.filter(
     (e) => e.role === "delivery"
   ).length,
-  trend: "Across all stores",
+
   icon: <Truck size={18} className="text-orange-600" />,
   iconBg: "bg-orange-50",
 }

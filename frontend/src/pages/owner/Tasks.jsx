@@ -33,7 +33,7 @@ export default function Tasks() {
 
         progress: Math.round(task.completion_percentage || 0),
 
-        due: task.due_date,
+        
 
         requiresPhoto: task.requires_photo,
 

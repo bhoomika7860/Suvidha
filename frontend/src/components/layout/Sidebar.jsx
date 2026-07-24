@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate, useLocation } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const navItems = [
   {
@@ -52,6 +53,25 @@ export default function Sidebar({ open, onClose }) {
     localStorage.removeItem("token");
     navigate("/");
   }
+
+  const token = localStorage.getItem("token");
+
+const user = token ? jwtDecode(token) : null;
+
+const initials = user?.username
+  ? user.username
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  : "?";
+
+const roleMap = {
+  owner: "Owner",
+  store_manager: "Store Manager",
+  staff: "Staff",
+  delivery: "Delivery Boy",
+};
 
   return (
     <>
@@ -128,27 +148,29 @@ export default function Sidebar({ open, onClose }) {
 
         {/* Footer */}
 
-        <div className="border-t border-gray-200 p-4">
+       <div className="border-t border-gray-200 p-4">
 
-          <div className="flex items-center gap-3 mb-4">
+  <div className="flex items-center gap-3 mb-4">
 
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
-              RA
-            </div>
+    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
+      {initials}
+    </div>
 
-            <div>
+    <div>
 
-              <p className="font-semibold">
-                Mukesh Sindhu
-              </p>
+      <p className="font-semibold">
+        {user?.username || "User"}
+      </p>
 
-              <p className="text-sm text-gray-500">
-                Owner
-              </p>
+      <p className="text-sm text-gray-500">
+        {roleMap[user?.role] || ""}
+      </p>
 
-            </div>
+    </div>
 
-          </div>
+  </div>
+
+
 
           <button
             onClick={logout}
