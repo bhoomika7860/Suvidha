@@ -188,8 +188,6 @@ def get_all_tasks(
 ):
     require_role(["owner"], current_user["role"])
 
-    from datetime import date
-
     today = date.today()
 
     tasks = (
@@ -204,6 +202,7 @@ def get_all_tasks(
     results = []
 
     for task in tasks:
+
         employee = (
             db.query(User)
             .filter(User.id == task.assigned_to)
@@ -218,29 +217,27 @@ def get_all_tasks(
 
         results.append({
             "id": task.id,
-            "task_title": task.task_title,
-            "task_type": task.task_type,
+
+            # ---------- names used by frontend ----------
+            "title": task.task_title,
+            "employee": employee.full_name if employee else "",
             "role": task.role,
-            "store_id": task.store_id,
-            "store_name": store.name if store else "",
-            "assigned_to": task.assigned_to,
-            "employee_name": employee.full_name if employee else "",
+            "store": store.name if store else "",
+            "type": task.task_type,
+
+            # ---------- task data ----------
             "target_quantity": task.target_quantity,
             "completed_quantity": task.completed_quantity,
             "completion_percentage": task.completion_percentage,
-            "requires_photo": task.requires_photo,
 
-"completed_quantity": task.completed_quantity,
+            # ---------- proof ----------
+            "requiresPhoto": task.requires_photo,
+            "photo_url": task.photo_url,
+            "note": task.note,
 
-"completion_percentage": task.completion_percentage,
-
-"photo_url": task.photo_url,
-
-"note": task.note,
-
-"status": task.status,
-
-"due_date": task.due_date,
+            # ---------- status ----------
+            "status": task.status,
+            "due_date": task.due_date,
         })
 
     return results

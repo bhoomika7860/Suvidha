@@ -11,53 +11,59 @@ export default function Tasks() {
   const [showModal, setShowModal] = useState(false);
   const [tasks, setTasks] = useState([]);
 
-  const loadTasks = async () => {
+  async function loadTasks() {
     try {
       const data = await taskService.getTasks();
+
+      console.log("Backend Tasks:", data);
 
       const formattedTasks = data.map((task) => ({
         id: task.id,
 
-        task: task.task_title,
+        task: task.title,
 
-        employee:
-          task.employee_name ||
-          task.assigned_to_name ||
-          task.assigned_to,
+        employee: task.employee,
 
         role: task.role,
 
-        store:
-          task.store_name ||
-          task.store_id,
+        store: task.store,
 
-        progress: Math.round(task.completion_percentage || 0),
-
-        
-
-        requiresPhoto: task.requires_photo,
+        type: task.type,
 
         target: task.target_quantity,
 
-        type: task.task_type,
+        completed: task.completed_quantity,
+
+        progress: Math.round(task.completion_percentage ?? 0),
+
+        requiresPhoto: task.requiresPhoto,
+
+        photo: task.photo_url,
+
+        note: task.note,
+
+        due: task.due_date,
 
         status: task.status,
       }));
+
+      console.log("Formatted Tasks:", formattedTasks);
 
       setTasks(formattedTasks);
     } catch (err) {
       console.error(err);
     }
-  };
+  }
 
   useEffect(() => {
     loadTasks();
   }, []);
 
-  const addTask = async (task) => {
+  async function addTask(task) {
     try {
       await taskService.createTask({
         store_id: Number(task.store),
+
         assigned_to: Number(task.employee),
 
         task_title: task.task,
@@ -74,28 +80,29 @@ export default function Tasks() {
         target_quantity: Number(task.target || 0),
 
         requires_photo: task.requiresPhoto,
-
-        
       });
 
       await loadTasks();
 
       setShowModal(false);
     } catch (err) {
-  console.error(err);
+      console.error(err);
 
-  console.log("FULL ERROR:", err);
-  console.log("RESPONSE:", err.response);
-  console.log("DATA:", err.response?.data);
+      console.log(err.response?.data);
 
-  alert(
-    JSON.stringify(err.response?.data, null, 2)
-  );
-}
-  };
+      alert(
+        JSON.stringify(
+          err.response?.data,
+          null,
+          2
+        )
+      );
+    }
+  }
 
   return (
     <div className="space-y-6">
+
       <TasksHeader />
 
       <TasksToolbar
@@ -109,6 +116,7 @@ export default function Tasks() {
         onClose={() => setShowModal(false)}
         onSave={addTask}
       />
+
     </div>
   );
 }

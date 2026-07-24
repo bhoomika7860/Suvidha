@@ -54,7 +54,7 @@ export default function TaskTable({ tasks = [] }) {
                   </td>
 
                   <td className="px-5 py-4">
-                    {task.due || "-"}
+                    {task.due_date || "-"}
                   </td>
 
                   <td className="px-5 py-4">

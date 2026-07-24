@@ -4,10 +4,12 @@ import {
   User,
   Building2,
   Briefcase,
-  Calendar,
   Target,
   Camera,
   Activity,
+  Image,
+  FileText,
+  Percent,
 } from "lucide-react";
 
 export default function TaskDrawer({
@@ -17,49 +19,39 @@ export default function TaskDrawer({
   onComplete,
 }) {
   const [note, setNote] = useState("");
-const [photo, setPhoto] = useState(null);
-const [actualSales, setActualSales] = useState("");
-const [actualDeliveries, setActualDeliveries] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [actualSales, setActualSales] = useState("");
+  const [actualDeliveries, setActualDeliveries] = useState("");
 
   if (!isOpen || !task) return null;
 
-  const status =
-    task.status === "completed"
-      ? "Completed"
-      : "Pending";
-
-  const statusColor =
-    task.status === "completed"
-      ? "bg-green-100 text-green-700"
-      : "bg-red-100 text-red-700";
-
   function handleComplete() {
-  onComplete({
-    ...task,
+    onComplete({
+      ...task,
 
-    completed_quantity:
-      task.type === "sales"
-        ? Number(actualSales)
-        : task.type === "delivery"
-        ? Number(actualDeliveries)
-        : 1,
+      completed_quantity:
+        task.type === "sales"
+          ? Number(actualSales)
+          : task.type === "delivery"
+          ? Number(actualDeliveries)
+          : 1,
 
-    photo: photo
-      ? URL.createObjectURL(photo)
-      : null,
+      photo: photo
+        ? URL.createObjectURL(photo)
+        : null,
 
-    note,
+      note,
 
-    photoUploaded: !!photo,
-  });
+      photoUploaded: !!photo,
+    });
 
-  setNote("");
-  setPhoto(null);
-  setActualSales("");
-  setActualDeliveries("");
+    setPhoto(null);
+    setNote("");
+    setActualSales("");
+    setActualDeliveries("");
 
-  onClose();
-}
+    onClose();
+  }
 
   return (
     <>
@@ -68,20 +60,21 @@ const [actualDeliveries, setActualDeliveries] = useState("");
         className="fixed inset-0 bg-black/30 z-40"
       />
 
-      <div className="fixed right-0 top-0 h-screen w-full sm:w-[470px] bg-white z-50 shadow-2xl flex flex-col">
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-[480px] bg-white shadow-2xl z-50 flex flex-col">
 
         {/* Header */}
 
-        <div className="flex items-center justify-between px-6 py-5 border-b">
+        <div className="border-b px-6 py-5 flex justify-between items-center">
 
           <div>
             <h2 className="text-3xl font-bold">
               Task Details
             </h2>
 
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-gray-500 mt-1">
               {task.title}
             </p>
+
           </div>
 
           <button
@@ -118,75 +111,161 @@ const [actualDeliveries, setActualDeliveries] = useState("");
           <InfoRow
             icon={<Activity size={20} />}
             title="Task Type"
-            value={task.type || "Normal"}
+            value={task.type}
           />
 
           <InfoRow
-  icon={<Target size={20} />}
-  title="Assigned Target"
-  value={
-    task.type === "sales"
-      ? `₹${task.target_quantity}`
-      : task.target_quantity || "-"
-  }
-/>
-
-{task.type === "sales" && (
-  <div>
-    <label className="block font-medium mb-2">
-      Actual Sales Today (₹)
-    </label>
-
-    <input
-      type="number"
-      value={actualSales}
-      onChange={(e) => setActualSales(e.target.value)}
-      placeholder="Enter today's sales"
-      className="w-full border rounded-xl px-4 h-11"
-    />
-  </div>
-)}
-
-          <InfoRow
-            icon={<Calendar size={20} />}
-            title="Due Date"
-            value={task.due_date || "-"}
+            icon={<Target size={20} />}
+            title="Assigned Target"
+            value={
+              task.type === "sales"
+                ? `₹${task.target_quantity}`
+                : task.target_quantity || "-"
+            }
           />
+
+          {/* SALES */}
+
+          {task.type === "sales" && task.status !== "completed" && (
+            <div>
+
+              <label className="font-medium block mb-2">
+                Actual Sales Today
+              </label>
+
+              <input
+                type="number"
+                value={actualSales}
+                onChange={(e) =>
+                  setActualSales(e.target.value)
+                }
+                placeholder="Enter today's sales"
+                className="w-full h-11 border rounded-xl px-4"
+              />
+
+            </div>
+          )}
+
+          {task.type === "sales" &&
+            task.status === "completed" && (
+              <>
+                <InfoRow
+                  icon={<Target size={20} />}
+                  title="Actual Sales"
+                  value={`₹${task.completed_quantity}`}
+                />
+
+                <InfoRow
+                  icon={<Percent size={20} />}
+                  title="Completion"
+                  value={`${task.completion_percentage}%`}
+                />
+              </>
+            )}
+
+          {/* DELIVERY */}
+
+          {task.type === "delivery" &&
+            task.status !== "completed" && (
+              <div>
+
+                <label className="font-medium block mb-2">
+                  Deliveries Completed
+                </label>
+
+                <input
+                  type="number"
+                  value={actualDeliveries}
+                  onChange={(e) =>
+                    setActualDeliveries(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Enter completed deliveries"
+                  className="w-full h-11 border rounded-xl px-4"
+                />
+
+              </div>
+            )}
+
+          {task.type === "delivery" &&
+            task.status === "completed" && (
+              <>
+                <InfoRow
+                  icon={<Target size={20} />}
+                  title="Completed Deliveries"
+                  value={task.completed_quantity}
+                />
+
+                <InfoRow
+                  icon={<Percent size={20} />}
+                  title="Completion"
+                  value={`${task.completion_percentage}%`}
+                />
+              </>
+            )}
+
+          {/* STATUS */}
 
           <div>
+
             <p className="text-sm text-gray-500 mb-2">
               Status
             </p>
 
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}
+              className={`px-4 py-1 rounded-full text-sm font-medium ${
+                task.status === "completed"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
             >
-              {status}
+              {task.status === "completed"
+                ? "Completed"
+                : "Pending"}
             </span>
+
           </div>
 
-          {task.requiresPhoto && (
-            <div>
+          {/* PHOTO */}
 
-              <label className="block font-medium mb-2">
-                Upload Photo
-              </label>
+          <div>
 
-              <label className="h-44 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition">
+            <p className="font-medium mb-2">
+              Photo Proof
+            </p>
+
+            {task.status === "completed" ? (
+              task.photo_url ? (
+                <img
+                  src={task.photo_url}
+                  alt="Proof"
+                  className="rounded-xl border w-full h-56 object-cover cursor-pointer"
+                  onClick={() =>
+                    window.open(
+                      task.photo_url,
+                      "_blank"
+                    )
+                  }
+                />
+              ) : (
+                <div className="border rounded-xl p-8 text-center text-gray-400">
+                  No photo uploaded
+                </div>
+              )
+            ) : (
+              <label className="border-2 border-dashed rounded-xl h-52 flex flex-col justify-center items-center cursor-pointer hover:border-blue-500">
 
                 {photo ? (
-
                   <img
                     src={URL.createObjectURL(photo)}
                     alt="Preview"
-                    className="h-full w-full object-contain rounded-2xl"
+                    className="w-full h-full rounded-xl object-cover"
                   />
-
                 ) : (
-
                   <>
-                    <Camera
-                      size={40}
+                    <Image
+                      size={42}
                       className="text-gray-400"
                     />
 
@@ -194,38 +273,45 @@ const [actualDeliveries, setActualDeliveries] = useState("");
                       Click to upload photo
                     </p>
                   </>
-
                 )}
 
                 <input
+                  hidden
                   type="file"
                   accept="image/*"
-                  className="hidden"
                   onChange={(e) =>
                     setPhoto(e.target.files[0])
                   }
                 />
 
               </label>
+            )}
 
-            </div>
-          )}
+          </div>
+
+          {/* REMARKS */}
 
           <div>
 
-            <label className="block font-medium mb-2">
+            <label className="font-medium flex items-center gap-2 mb-2">
+              <FileText size={18} />
               Remarks
             </label>
 
-            <textarea
-              rows={4}
-              value={note}
-              onChange={(e) =>
-                setNote(e.target.value)
-              }
-              className="w-full border rounded-xl p-3 resize-none"
-              placeholder="Enter remarks..."
-            />
+            {task.status === "completed" ? (
+              <div className="border rounded-xl bg-gray-50 p-4">
+                {task.note || "No remarks"}
+              </div>
+            ) : (
+              <textarea
+                rows={4}
+                value={note}
+                onChange={(e) =>
+                  setNote(e.target.value)
+                }
+                className="w-full border rounded-xl p-3 resize-none"
+              />
+            )}
 
           </div>
 
@@ -235,52 +321,31 @@ const [actualDeliveries, setActualDeliveries] = useState("");
 
         <div className="border-t p-5 space-y-3">
 
-          {task.status !== "completed" ? (
-
+          {task.status !== "completed" && (
             <button
-  onClick={handleComplete}
-  disabled={
-    task.type === "sales" &&
-    actualSales === ""
-  }
+              onClick={handleComplete}
+              disabled={
+                (task.type === "sales" &&
+                  !actualSales) ||
+                (task.type === "delivery" &&
+                  !actualDeliveries)
+              }
               className={`w-full h-11 rounded-xl text-white font-medium ${
-  task.type === "sales" &&
-  actualSales === ""
-    ? "bg-gray-400 cursor-not-allowed"
-    : "bg-green-600 hover:bg-green-700"
-}`}
+                (task.type === "sales" &&
+                  !actualSales) ||
+                (task.type === "delivery" &&
+                  !actualDeliveries)
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
               Mark Complete
             </button>
-
-          ) : (
-
-            <button
-              disabled={
-  (task.type === "sales" &&
-    actualSales === "") ||
-
-  (task.type === "delivery" &&
-    actualDeliveries === "")
-}
-             className={`w-full h-11 rounded-xl text-white font-medium ${
-  (task.type === "sales" &&
-    actualSales === "") ||
-
-  (task.type === "delivery" &&
-    actualDeliveries === "")
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-green-600 hover:bg-green-700"
-}`}
-            >
-              Completed
-            </button>
-
           )}
 
           <button
             onClick={onClose}
-            className="w-full h-11 rounded-xl border hover:bg-gray-50"
+            className="w-full h-11 rounded-xl border"
           >
             Close
           </button>
@@ -292,7 +357,11 @@ const [actualDeliveries, setActualDeliveries] = useState("");
   );
 }
 
-function InfoRow({ icon, title, value }) {
+function InfoRow({
+  icon,
+  title,
+  value,
+}) {
   return (
     <div className="flex gap-4">
 
@@ -301,6 +370,7 @@ function InfoRow({ icon, title, value }) {
       </div>
 
       <div>
+
         <p className="text-sm text-gray-500">
           {title}
         </p>
@@ -308,6 +378,7 @@ function InfoRow({ icon, title, value }) {
         <p className="text-lg font-semibold">
           {value || "-"}
         </p>
+
       </div>
 
     </div>
