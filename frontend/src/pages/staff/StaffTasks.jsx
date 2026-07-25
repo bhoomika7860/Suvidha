@@ -30,37 +30,16 @@ export default function StaffTasks() {
   }
 
   async function completeTask(task) {
-    try {
-      const formData = new FormData();
+  try {
+    console.log("Task being submitted:", task);
 
-      formData.append(
-        "completed_quantity",
-        task.completed_quantity
-      );
+    await taskService.completeTask(task.id, task);
 
-      formData.append(
-        "note",
-        task.note || ""
-      );
-
-      if (task.photo instanceof File) {
-        formData.append(
-          "photo",
-          task.photo
-        );
-      }
-
-      await taskService.completeTask(
-        task.id,
-        formData
-      );
-
-      await loadTasks();
-
-    } catch (err) {
-      console.error(err);
-    }
+    await loadTasks();
+  } catch (err) {
+    console.error(err);
   }
+}
 
   return (
     <div className="space-y-6">

@@ -29,7 +29,7 @@ export const taskService = {
     task.note || ""
   );
 
-  if (task.photo) {
+  if (task.photo instanceof File) {
     formData.append(
       "photo",
       task.photo

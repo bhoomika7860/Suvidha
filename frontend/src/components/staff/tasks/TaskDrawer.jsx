@@ -22,36 +22,37 @@ export default function TaskDrawer({
   const [photo, setPhoto] = useState(null);
   const [actualSales, setActualSales] = useState("");
   const [actualDeliveries, setActualDeliveries] = useState("");
+  const [showImage, setShowImage] = useState(false);
 
   if (!isOpen || !task) return null;
 
   function handleComplete() {
-    onComplete({
-      ...task,
+    console.log("PHOTO BEFORE SUBMIT:", photo);
+  onComplete({
+    ...task,
 
-      completed_quantity:
-        task.type === "sales"
-          ? Number(actualSales)
-          : task.type === "delivery"
-          ? Number(actualDeliveries)
-          : 1,
+    completed_quantity:
+      task.type === "sales"
+        ? Number(actualSales)
+        : task.type === "delivery"
+        ? Number(actualDeliveries)
+        : 1,
 
-      photo: photo
-        ? URL.createObjectURL(photo)
-        : null,
+    // Send the actual File object
+    photo: photo,
 
-      note,
+    note,
 
-      photoUploaded: !!photo,
-    });
+    photoUploaded: !!photo,
+  });
 
-    setPhoto(null);
-    setNote("");
-    setActualSales("");
-    setActualDeliveries("");
+  setPhoto(null);
+  setNote("");
+  setActualSales("");
+  setActualDeliveries("");
 
-    onClose();
-  }
+  onClose();
+}
 
   return (
     <>
@@ -227,67 +228,83 @@ export default function TaskDrawer({
 
           </div>
 
+
+
           {/* PHOTO */}
 
-          <div>
+<div>
+  <p className="font-medium mb-2">
+    Photo Proof
+  </p>
 
-            <p className="font-medium mb-2">
-              Photo Proof
-            </p>
+  {task.status === "completed" ? (
 
-            {task.status === "completed" ? (
-              task.photo_url ? (
-                <img
-                  src={task.photo_url}
-                  alt="Proof"
-                  className="rounded-xl border w-full h-56 object-cover cursor-pointer"
-                  onClick={() =>
-                    window.open(
-                      task.photo_url,
-                      "_blank"
-                    )
-                  }
-                />
-              ) : (
-                <div className="border rounded-xl p-8 text-center text-gray-400">
-                  No photo uploaded
-                </div>
-              )
-            ) : (
-              <label className="border-2 border-dashed rounded-xl h-52 flex flex-col justify-center items-center cursor-pointer hover:border-blue-500">
+    task.photo_url ? (
 
-                {photo ? (
-                  <img
-                    src={URL.createObjectURL(photo)}
-                    alt="Preview"
-                    className="w-full h-full rounded-xl object-cover"
-                  />
-                ) : (
-                  <>
-                    <Image
-                      size={42}
-                      className="text-gray-400"
-                    />
+      <div
+  className="w-full rounded-xl overflow-hidden border bg-gray-100 cursor-pointer"
+  onClick={() => setShowImage(true)}
+>
+        <img
+          src={task.photo_url}
+          alt="Task Proof"
+          className="w-full max-h-[420px] object-contain"
+        />
+      </div>
 
-                    <p className="text-gray-500 mt-3">
-                      Click to upload photo
-                    </p>
-                  </>
-                )}
+    ) : (
 
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setPhoto(e.target.files[0])
-                  }
-                />
+      <div className="border rounded-xl h-52 flex items-center justify-center text-gray-500">
+        No photo uploaded
+      </div>
 
-              </label>
-            )}
+    )
 
-          </div>
+  ) : (
+
+    <label className="border-2 border-dashed rounded-xl h-52 flex flex-col justify-center items-center cursor-pointer hover:border-blue-500">
+
+      {photo ? (
+
+        <img
+          src={URL.createObjectURL(photo)}
+          alt="Preview"
+          className="w-full h-full object-cover rounded-xl"
+        />
+
+      ) : (
+
+        <>
+          <Image
+            size={42}
+            className="text-gray-400"
+          />
+
+          <p className="text-gray-500 mt-3">
+            Click to upload photo
+          </p>
+        </>
+
+      )}
+
+      <input
+  hidden
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+
+    console.log("Selected file:", file);
+
+    setPhoto(file);
+  }}
+/>
+
+    </label>
+
+  )}
+</div>
+
 
           {/* REMARKS */}
 
@@ -353,7 +370,40 @@ export default function TaskDrawer({
         </div>
 
       </div>
+
+      {showImage && (
+  <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col">
+
+    <div className="flex justify-between items-center px-6 py-4 bg-black/60">
+
+      <h2 className="text-white text-xl font-semibold">
+        Task Photo
+      </h2>
+
+      <button
+        onClick={() => setShowImage(false)}
+        className="text-white text-3xl hover:text-gray-300"
+      >
+        <X size={32} />
+      </button>
+
+    </div>
+
+    <div className="flex-1 flex items-center justify-center p-6">
+
+      <img
+        src={task.photo_url}
+        alt="Task Proof"
+        className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+      />
+
+    </div>
+
+  </div>
+)}
     </>
+
+    
   );
 }
 

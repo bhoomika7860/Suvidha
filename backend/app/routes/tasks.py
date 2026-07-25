@@ -131,6 +131,8 @@ def complete_task(
     db: Session = Depends(get_db),
 ):
 
+    print("PHOTO RECEIVED:", photo)
+
     task = (
         db.query(Task)
         .filter(Task.id == task_id)
