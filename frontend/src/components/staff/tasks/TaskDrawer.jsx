@@ -25,7 +25,7 @@ export default function TaskDrawer({
   const [showImage, setShowImage] = useState(false);
 
   if (!isOpen || !task) return null;
-
+console.log("showImage:", showImage);
   function handleComplete() {
     console.log("PHOTO BEFORE SUBMIT:", photo);
   onComplete({
@@ -230,7 +230,7 @@ export default function TaskDrawer({
 
 
 
-          {/* PHOTO */}
+         {/* PHOTO */}
 
 <div>
   <p className="font-medium mb-2">
@@ -241,16 +241,23 @@ export default function TaskDrawer({
 
     task.photo_url ? (
 
-      <div
-  className="w-full rounded-xl overflow-hidden border bg-gray-100 cursor-pointer"
-  onClick={() => setShowImage(true)}
->
-        <img
-          src={task.photo_url}
-          alt="Task Proof"
-          className="w-full max-h-[420px] object-contain"
-        />
-      </div>
+      <>
+        <div className="w-full rounded-xl overflow-hidden border bg-gray-100">
+          <img
+            src={task.photo_url}
+            alt="Task Proof"
+            className="w-full max-h-[420px] object-contain"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowImage(true)}
+          className="mt-3 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2 font-medium"
+        >
+          View Full Image
+        </button>
+      </>
 
     ) : (
 
@@ -288,17 +295,14 @@ export default function TaskDrawer({
       )}
 
       <input
-  hidden
-  type="file"
-  accept="image/*"
-  onChange={(e) => {
-    const file = e.target.files?.[0];
-
-    console.log("Selected file:", file);
-
-    setPhoto(file);
-  }}
-/>
+        hidden
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          setPhoto(file);
+        }}
+      />
 
     </label>
 
@@ -372,21 +376,20 @@ export default function TaskDrawer({
       </div>
 
       {showImage && (
-  <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col">
+  <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col">
 
-    <div className="flex justify-between items-center px-6 py-4 bg-black/60">
-
+    <div className="flex justify-between items-center p-4 bg-black">
       <h2 className="text-white text-xl font-semibold">
         Task Photo
       </h2>
 
       <button
+        type="button"
         onClick={() => setShowImage(false)}
-        className="text-white text-3xl hover:text-gray-300"
+        className="text-white text-4xl"
       >
-        <X size={32} />
+        <X />
       </button>
-
     </div>
 
     <div className="flex-1 flex items-center justify-center p-6">
@@ -394,7 +397,7 @@ export default function TaskDrawer({
       <img
         src={task.photo_url}
         alt="Task Proof"
-        className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+        className="max-w-full max-h-full object-contain"
       />
 
     </div>
