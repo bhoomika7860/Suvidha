@@ -13,8 +13,15 @@ export default function ReportDrawer({
   isOpen,
   onClose,
 }) {
-
   if (!isOpen || !report) return null;
+
+  const expenses = report.expenses || [];
+  const purchases = report.purchases_list || [];
+  const totalExpenses =
+    expenses.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
 
   return (
     <>
@@ -34,62 +41,53 @@ export default function ReportDrawer({
         <div className="flex justify-between items-center border-b px-6 py-5">
 
           <div>
-
             <h2 className="text-2xl font-bold">
-
               Daily Report
-
             </h2>
 
             <p className="text-gray-500 mt-1 flex items-center gap-2">
-
               <CalendarDays size={16} />
-
               {report.date}
-
             </p>
-
           </div>
 
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100"
           >
-
             <X />
-
           </button>
 
         </div>
 
-        {/* Summary */}
-
         <div className="p-6 space-y-6">
+
+          {/* Summary */}
 
           <div className="grid grid-cols-2 gap-4">
 
             <SummaryCard
               icon={<Receipt size={18} />}
               title="Bills"
-              value={report.bills}
+              value={report.bills ?? 0}
             />
 
             <SummaryCard
               icon={<Wallet size={18} />}
               title="Sales"
-              value={`₹${report.sales.toLocaleString()}`}
+              value={`₹${Number(report.sales ?? 0).toLocaleString()}`}
             />
 
             <SummaryCard
               icon={<Package size={18} />}
               title="Purchases"
-              value={`₹${report.purchases.toLocaleString()}`}
+              value={`₹${Number(report.purchases ?? 0).toLocaleString()}`}
             />
 
             <SummaryCard
               icon={<Truck size={18} />}
               title="Deliveries"
-              value={report.deliveries}
+              value={report.deliveries ?? 0}
             />
 
           </div>
@@ -99,31 +97,29 @@ export default function ReportDrawer({
           <div className="border rounded-2xl p-5">
 
             <h3 className="font-semibold mb-4">
-
               Payment Breakdown
-
             </h3>
 
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3">
 
               <Row
                 title="Cash"
-                value="₹18,500"
+                value={`₹${Number(report.cash_sales ?? 0).toLocaleString()}`}
               />
 
               <Row
                 title="UPI"
-                value="₹22,300"
+                value={`₹${Number(report.upi_sales ?? 0).toLocaleString()}`}
               />
 
               <Row
                 title="Card"
-                value="₹9,100"
+                value={`₹${Number(report.card_sales ?? 0).toLocaleString()}`}
               />
 
               <Row
                 title="Udhaar"
-                value="₹4,200"
+                value={`₹${Number(report.udhaar_sales ?? 0).toLocaleString()}`}
               />
 
             </div>
@@ -138,23 +134,38 @@ export default function ReportDrawer({
               Expenses
             </h3>
 
-            <Row
-              title="Electricity"
-              value="₹1,200"
-            />
+            {expenses.length === 0 ? (
 
-            <Row
-              title="Tea & Snacks"
-              value="₹250"
-            />
+              <p className="text-gray-500">
+                No expenses recorded.
+              </p>
 
-            <div className="border-t mt-4 pt-4 flex justify-between font-semibold">
+            ) : (
 
-              <span>Total</span>
+              <>
+                {expenses.map((expense) => (
 
-              <span>₹1,450</span>
+                  <Row
+                    key={expense.id}
+                    title={expense.expense_type}
+                    value={`₹${Number(expense.amount).toLocaleString()}`}
+                  />
 
-            </div>
+                ))}
+
+                <div className="border-t mt-4 pt-4 flex justify-between font-semibold">
+
+                  <span>Total</span>
+
+                  <span>
+                    ₹{totalExpenses.toLocaleString()}
+                  </span>
+
+                </div>
+
+              </>
+
+            )}
 
           </div>
 
@@ -166,15 +177,25 @@ export default function ReportDrawer({
               Purchases
             </h3>
 
-            <Row
-              title="Sun Pharma"
-              value="₹8,500"
-            />
+            {purchases.length === 0 ? (
 
-            <Row
-              title="Cipla"
-              value="₹6,700"
-            />
+              <p className="text-gray-500">
+                No purchases recorded.
+              </p>
+
+            ) : (
+
+              purchases.map((purchase) => (
+
+                <Row
+                  key={purchase.id}
+                  title={purchase.product_name}
+                  value={`₹${Number(purchase.purchase_amount).toLocaleString()}`}
+                />
+
+              ))
+
+            )}
 
           </div>
 
@@ -188,8 +209,7 @@ export default function ReportDrawer({
 
             <p className="text-gray-600 leading-7">
 
-              Cipla delivery arrived later than expected.
-              Dolo 650 demand was significantly higher than usual.
+              {report.notes || "No notes added."}
 
             </p>
 
@@ -199,22 +219,16 @@ export default function ReportDrawer({
 
           <div className="rounded-2xl bg-green-50 border border-green-200 p-5 flex items-center gap-3">
 
-            <CheckCircle2
-              className="text-green-600"
-            />
+            <CheckCircle2 className="text-green-600" />
 
             <div>
 
               <p className="font-semibold text-green-700">
-
                 Report Submitted
-
               </p>
 
               <p className="text-sm text-gray-600">
-
                 This report is locked and cannot be edited.
-
               </p>
 
             </div>
@@ -238,17 +252,12 @@ function SummaryCard({
     <div className="border rounded-2xl p-4">
 
       <div className="flex items-center gap-2 text-gray-500 mb-3">
-
         {icon}
-
         {title}
-
       </div>
 
       <h2 className="text-2xl font-bold">
-
         {value}
-
       </h2>
 
     </div>
@@ -263,15 +272,11 @@ function Row({
     <div className="flex justify-between py-2">
 
       <span className="text-gray-600">
-
         {title}
-
       </span>
 
       <span className="font-medium">
-
         {value}
-
       </span>
 
     </div>

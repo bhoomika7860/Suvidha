@@ -20,7 +20,7 @@ class PurchaseOrderCreate(BaseModel):
     store_id: int
     supplier_name: str
     expected_amount: float
-    expected_date: date
+    
     created_by: int
     items: list[PurchaseOrderItemCreate] = []
 
@@ -30,7 +30,7 @@ class PurchaseOrderResponse(BaseModel):
     store_id: int
     supplier_name: str
     expected_amount: float
-    expected_date: date | None
+   
     status: str
     created_by: int
     items: list[PurchaseOrderItemResponse]

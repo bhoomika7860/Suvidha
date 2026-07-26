@@ -54,19 +54,7 @@ export default function CreatePurchaseOrderModal({
             }
           />
 
-          <input
-            type="date"
-            className="w-full h-11 border rounded-xl px-4"
-            value={order.expectedDate}
-            onChange={(e) => {
-  console.log(e.target.value);
-
-  setOrder({
-    ...order,
-    expectedDate: e.target.value,
-  });
-}}
-          />
+          
 
          
 
