@@ -530,7 +530,23 @@ def get_report(
             status_code=404,
             detail="Report not found"
         )
+    expenses = (
+    db.query(Expense)
+    .filter(
+        Expense.store_id == report.store_id,
+        func.date(Expense.created_at) == report.report_date,
+    )
+    .all()
+)
 
+    purchases = (
+    db.query(Purchase)
+    .filter(
+        Purchase.store_id == report.store_id,
+        func.date(Purchase.purchase_date) == report.report_date,
+    )
+    .all()
+)
     return {
         "id": report.id,
 
@@ -562,6 +578,18 @@ def get_report(
             "expenses": report.total_expenses,
         },
 
+
+        "purchases": [
+    {
+        "id": purchase.id,
+        "product_name": purchase.product_name,
+        "supplier_name": purchase.supplier_name,
+        "quantity": purchase.quantity,
+        "amount": purchase.purchase_amount,
+    }
+    for purchase in purchases
+],
+
         "payments": {
             "cash": report.cash_sales,
             "upi": report.upi_sales,
@@ -569,7 +597,15 @@ def get_report(
             "udhaar": report.udhaar_sales,
         },
 
-       "expenses": [],
+       "expenses": [
+    {
+        "id": expense.id,
+        "expense_type": expense.expense_type,
+        "amount": expense.amount,
+        "remarks": expense.remarks,
+    }
+    for expense in expenses
+],
 
         "bounced_products": [
             {

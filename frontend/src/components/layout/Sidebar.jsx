@@ -5,10 +5,10 @@ import {
   BarChart3,
   Users,
   Building2,
+  History,
   X,
   LogOut,
 } from "lucide-react";
-
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
@@ -22,6 +22,11 @@ const navItems = [
     label: "Daily Reports",
     icon: FileText,
     path: "/daily-reports",
+  },
+  {
+    label: "Previous Reports",
+    icon: History,
+    path: "/previous-reports",
   },
   {
     label: "Stores",

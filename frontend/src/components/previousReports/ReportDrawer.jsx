@@ -16,7 +16,7 @@ export default function ReportDrawer({
   if (!isOpen || !report) return null;
 
   const expenses = report.expenses || [];
-  const purchases = report.purchases_list || [];
+  const purchases = report.purchases || [];
   const totalExpenses =
     expenses.reduce(
       (sum, item) => sum + Number(item.amount || 0),
@@ -47,7 +47,14 @@ export default function ReportDrawer({
 
             <p className="text-gray-500 mt-1 flex items-center gap-2">
               <CalendarDays size={16} />
-              {report.date}
+              {new Date(report.report_date).toLocaleDateString(
+  "en-GB",
+  {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }
+)}
             </p>
           </div>
 
@@ -69,62 +76,70 @@ export default function ReportDrawer({
             <SummaryCard
               icon={<Receipt size={18} />}
               title="Bills"
-              value={report.bills ?? 0}
+              value={report.summary.bills ?? 0}
             />
 
             <SummaryCard
               icon={<Wallet size={18} />}
               title="Sales"
-              value={`₹${Number(report.sales ?? 0).toLocaleString()}`}
+              value={`₹${Number(report.summary.sales ?? 0).toLocaleString()}`}
             />
 
             <SummaryCard
               icon={<Package size={18} />}
               title="Purchases"
-              value={`₹${Number(report.purchases ?? 0).toLocaleString()}`}
+              value={`₹${Number(report.summary.purchases ?? 0).toLocaleString()}`}
             />
 
             <SummaryCard
               icon={<Truck size={18} />}
               title="Deliveries"
-              value={report.deliveries ?? 0}
+              value={report.summary.deliveries ?? 0}
             />
 
           </div>
 
           {/* Payment Breakdown */}
 
-          <div className="border rounded-2xl p-5">
+<div className="border rounded-2xl p-5">
 
-            <h3 className="font-semibold mb-4">
-              Payment Breakdown
-            </h3>
+  <h3 className="font-semibold mb-4">
+    Payment Breakdown
+  </h3>
 
-            <div className="space-y-3">
+  <div className="space-y-3">
 
-              <Row
-                title="Cash"
-                value={`₹${Number(report.cash_sales ?? 0).toLocaleString()}`}
-              />
+    <Row
+      title="Cash"
+      value={`₹${Number(
+        report.payments?.cash ?? 0
+      ).toLocaleString()}`}
+    />
 
-              <Row
-                title="UPI"
-                value={`₹${Number(report.upi_sales ?? 0).toLocaleString()}`}
-              />
+    <Row
+      title="UPI"
+      value={`₹${Number(
+        report.payments?.upi ?? 0
+      ).toLocaleString()}`}
+    />
 
-              <Row
-                title="Card"
-                value={`₹${Number(report.card_sales ?? 0).toLocaleString()}`}
-              />
+    <Row
+      title="Card"
+      value={`₹${Number(
+        report.payments?.card ?? 0
+      ).toLocaleString()}`}
+    />
 
-              <Row
-                title="Udhaar"
-                value={`₹${Number(report.udhaar_sales ?? 0).toLocaleString()}`}
-              />
+    <Row
+      title="Udhaar"
+      value={`₹${Number(
+        report.payments?.udhaar ?? 0
+      ).toLocaleString()}`}
+    />
 
-            </div>
+  </div>
 
-          </div>
+</div>
 
           {/* Expenses */}
 
@@ -190,7 +205,7 @@ export default function ReportDrawer({
                 <Row
                   key={purchase.id}
                   title={purchase.product_name}
-                  value={`₹${Number(purchase.purchase_amount).toLocaleString()}`}
+                  value={`₹${Number(purchase.amount).toLocaleString()}`}
                 />
 
               ))

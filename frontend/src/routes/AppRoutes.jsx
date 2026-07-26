@@ -80,7 +80,10 @@ function AppRoutes() {
   path="/stores"
   element={<Stores />}
 />
-
+<Route
+  path="/previous-reports"
+  element={<PreviousReports />}
+/>
   <Route
     path="/daily-reports/report/:id"
     element={<DailyReportView />}
@@ -116,11 +119,7 @@ function AppRoutes() {
     element={<Expenses />}
   />
 
-  <Route
-    path="/previous-reports"
-    element={<PreviousReports />}
-  />
-
+  
   <Route
   path="/manager-tasks"
   element={<StaffTasks />}

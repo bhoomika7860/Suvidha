@@ -35,11 +35,7 @@ const menuItems = [
   icon: ClipboardCheck,
   path: "/manager-tasks",
 },
-  {
-    title: "Previous Reports",
-    icon: FileText,
-    path: "/previous-reports",
-  },
+  
 ];
 
 export default function Sidebar() {

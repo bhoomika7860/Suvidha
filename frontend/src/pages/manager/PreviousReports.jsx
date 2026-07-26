@@ -13,45 +13,79 @@ export default function PreviousReports() {
   const [selectedReport, setSelectedReport] =
     useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+
+const reportsPerPage = 10;
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadReports();
   }, []);
 
+  useEffect(() => {
+  setCurrentPage(1);
+}, [search]);
+
   async function loadReports() {
     try {
-      const user = JSON.parse(
-        localStorage.getItem("user")
-      );
-
-      let data;
-
-      if (user.role === "owner") {
-        data =
-          await dailyReportsService.getAllReports();
-      } else {
-        data =
-          await dailyReportsService.getStoreReports(
-            user.store_id
-          );
-      }
-
+      const data =
+  await dailyReportsService.getAllReports();
       setReports(
         dailyReportsService.formatReports(data)
       );
+
     } catch (err) {
       console.error(err);
     }
   }
 
-  const filteredReports = reports.filter(
-    (report) =>
-      report.date
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  );
+  async function openReport(report) {
+    try {
 
+      const details =
+        await dailyReportsService.getReport(
+          report.id
+        );
+
+      const expenses =
+        await dailyReportsService.getExpenses(
+          report.id
+        );
+
+      const purchases =
+        await dailyReportsService.getPurchases(
+          report.id
+        );
+
+      setSelectedReport({
+        ...details,
+        expenses,
+        purchases,
+      });
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const filteredReports = reports.filter((report) =>
+  report.date
+    .toLowerCase()
+    .includes(search.toLowerCase())
+);
+
+const totalPages = Math.ceil(
+  filteredReports.length / reportsPerPage
+);
+
+const startIndex =
+  (currentPage - 1) * reportsPerPage;
+
+const currentReports =
+  filteredReports.slice(
+    startIndex,
+    startIndex + reportsPerPage
+  );
   return (
     <div className="space-y-6">
 
@@ -73,12 +107,16 @@ export default function PreviousReports() {
       />
 
       <ReportsTable
-        reports={filteredReports}
-        onOpen={setSelectedReport}
-      />
-
-      <Pagination />
-
+  reports={currentReports}
+  onOpen={openReport}
+/>
+      {totalPages > 1 && (
+  <Pagination
+    currentPage={currentPage}
+    totalPages={totalPages}
+    onPageChange={setCurrentPage}
+  />
+)}
       <ReportDrawer
         report={selectedReport}
         isOpen={selectedReport !== null}
