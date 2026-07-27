@@ -158,7 +158,7 @@ const handleCreateEmployee = async () => {
     }))
   }
   required
-  placeholder="e.g. Rahul"
+  placeholder="e.g. Kunal"
 />
             <Field
   label="Username"

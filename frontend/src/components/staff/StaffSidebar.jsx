@@ -6,7 +6,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
@@ -32,6 +32,15 @@ const menuItems = [
 ];
 
 export default function StaffSidebar() {
+
+  const navigate = useNavigate();
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  }
+
   return (
     <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
 
@@ -74,12 +83,12 @@ export default function StaffSidebar() {
 
       <div className="p-4 border-t">
 
-        <button className="w-full flex items-center gap-3 px-4 h-12 rounded-xl text-red-600 hover:bg-red-50 transition">
-
-          <LogOut size={20} />
-
+        <button
+          onClick={logout}
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[15px] text-red-600 hover:bg-red-50 transition"
+        >
+          <LogOut size={18} />
           Logout
-
         </button>
 
       </div>
