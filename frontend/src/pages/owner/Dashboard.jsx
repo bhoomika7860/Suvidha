@@ -1,13 +1,14 @@
-import { useMediaQuery } from "react-responsive";
-import DesktopDashboard from "./DesktopDashboard";
-import MobileDashboard from "./MobileDashboard";
+import useIsMobile from "../../hooks/useIsMobile";
+
+import OwnerDashboardDesktop from "./OwnerDashboardDesktop";
+import OwnerDashboardMobile from "./OwnerDashboardMobile";
 
 export default function Dashboard() {
-  const isMobile = useMediaQuery({
-    maxWidth: 1023,
-  });
+  const isMobile = useIsMobile();
 
-  return isMobile
-    ? <MobileDashboard />
-    : <DesktopDashboard />;
+  return isMobile ? (
+    <OwnerDashboardMobile />
+  ) : (
+    <OwnerDashboardDesktop />
+  );
 }
