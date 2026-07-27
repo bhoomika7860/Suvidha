@@ -90,7 +90,19 @@ const roleMap = {
         />
       )}
 
-      <aside className="fixed top-0 left-0 z-50 h-screen w-64 flex flex-col bg-white border-r border-[#E2E8F0]">
+      <aside
+  className={`
+    fixed top-0 left-0 z-50 h-screen w-64
+    flex flex-col bg-white border-r border-[#E2E8F0]
+    transform transition-transform duration-300
+    ${
+      open
+        ? "translate-x-0"
+        : "-translate-x-full"
+    }
+    lg:translate-x-0
+  `}
+>
 
         {/* Logo */}
 
