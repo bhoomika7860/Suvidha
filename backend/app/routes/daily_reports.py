@@ -457,8 +457,14 @@ def get_all_reports(
         )
 
     if period == "today":
-        query = query.filter(
+     query = query.filter(
         func.date(DailyReport.report_date) == date.today()
+    )
+
+# Owner should only see submitted reports
+    if current_user["role"] == "owner":
+        query = query.filter(
+        DailyReport.is_locked == True
     )
 
     reports = (

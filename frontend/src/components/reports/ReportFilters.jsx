@@ -18,7 +18,7 @@ export default function ReportFilters({
 
   async function loadStores() {
     try {
-      const data = await storesService.getStores();
+      const data = await storeService.getStores();
       setStores(data);
     } catch (err) {
       console.error(err);
