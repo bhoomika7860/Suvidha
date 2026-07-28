@@ -54,9 +54,9 @@ export default function PurchaseStats({
       color: "text-yellow-600 bg-yellow-100",
     },
     {
-      title: "Completed Orders",
+      title: "Received Orders",
       value: purchaseOrders.filter(
-        (o) => o.status === "Completed"
+        (o) => o.status === "Received"
       ).length,
       icon: PackageCheck,
       color: "text-green-600 bg-green-100",

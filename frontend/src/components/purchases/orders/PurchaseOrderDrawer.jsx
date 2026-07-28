@@ -5,12 +5,13 @@ import {
   Package,
   X,
 } from "lucide-react";
+import { formatDate } from "../../../utils/formatDate";
 
 export default function PurchaseOrderDrawer({
   order,
   isOpen,
   onClose,
-  onReceiveBill,
+
 }) {
   if (!isOpen || !order) return null;
 
@@ -90,7 +91,7 @@ export default function PurchaseOrderDrawer({
               </p>
 
               <p className="font-semibold">
-                {order.expected_date}
+                {formatDate(order.expected_date)}
               </p>
             </div>
           </div>
@@ -122,19 +123,7 @@ export default function PurchaseOrderDrawer({
             Close
           </button>
 
-          <button
-  onClick={() => {
-    console.log("Receive Bill clicked");
-    handleReceiveBill();
-  }}
-  className={`flex-1 h-11 rounded-xl text-white transition ${
-    order.status === "Completed"
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-blue-600 hover:bg-blue-700"
-  }`}
->
-  Receive Bill
-</button>
+          
 
         </div>
 

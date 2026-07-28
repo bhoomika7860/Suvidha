@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from datetime import date
@@ -64,21 +65,28 @@ def get_purchase_orders(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    from sqlalchemy import or_, and_
+
     today = date.today()
 
     orders = (
-        db.query(PurchaseOrder)
-        .options(joinedload(PurchaseOrder.items))
-        .filter(
-            PurchaseOrder.store_id == current_user["store_id"],
-            PurchaseOrder.expected_date == today,
-        )
-        .order_by(PurchaseOrder.created_at.desc())
-        .all()
+    db.query(PurchaseOrder)
+    .options(joinedload(PurchaseOrder.items))
+    .filter(
+        PurchaseOrder.store_id == current_user["store_id"]
     )
-
-    print("TODAY:", today)
-    print("Orders returned:", len(orders))
+    .filter(
+        or_(
+            PurchaseOrder.expected_date == today,
+            and_(
+                PurchaseOrder.expected_date < today,
+                PurchaseOrder.status == "Pending",
+            ),
+        )
+    )
+    .order_by(PurchaseOrder.created_at.desc())
+    .all()
+)
 
     return orders
 

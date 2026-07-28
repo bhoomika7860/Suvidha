@@ -115,7 +115,7 @@ async def create_purchase(
     print("Purchase Order Found:", purchase_order)
 
     if purchase_order:
-        purchase_order.status = "Completed"
+        purchase_order.status = "Received"
 
         print("Status Changed To:", purchase_order.status)
 
@@ -145,6 +145,18 @@ def update_purchase(
     was_completed = (
         purchase.status == "completed"
     )
+
+    if purchase.purchase_order_id:
+        purchase_order = (
+        db.query(PurchaseOrder)
+        .filter(
+            PurchaseOrder.id == purchase.purchase_order_id
+        )
+        .first()
+    )
+
+    if purchase_order:
+        purchase_order.status = "Closed"
     print("Purchase Order Updated:", purchase.id)
     print("New Status:", purchase.status)
 

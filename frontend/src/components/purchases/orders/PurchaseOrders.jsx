@@ -28,9 +28,9 @@ export default function PurchaseOrders({
   async function receivePurchaseOrder(order) {
     try {
       await purchaseService.updatePurchaseOrderStatus(
-        order.id,
-        "Completed"
-      );
+    order.id,
+    "Received"
+);
 
       const orders =
         await purchaseService.getPurchaseOrders();

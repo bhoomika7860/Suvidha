@@ -20,48 +20,41 @@ export default function PurchaseDrawer({
   if (!isOpen || !purchase) return null;
   async function moveToNextStage() {
   try {
+    const user = JSON.parse(
+      localStorage.getItem("user")
+    );
+
     let payload = {};
 
     if (purchase.status === "received") {
       payload = {
         status: "waiting-check",
-        checked_by: "Current User",
+        checked_by: user.full_name,
       };
     } else if (purchase.status === "waiting-check") {
       payload = {
         status: "waiting-entry",
-        entered_by: "Current User",
+        entered_by: user.full_name,
       };
     } else if (purchase.status === "waiting-entry") {
       payload = {
         status: "completed",
       };
+    } else {
+      return;
     }
 
-    await purchaseService.updatePurchase(
-      purchase.id,
-      payload
-    );
-
-    // When the purchase is fully completed,
-    // also complete the linked Purchase Order.
-    if (payload.status === "completed" && purchase.purchase_order_id) {
-      await purchaseService.updatePurchaseOrderStatus(
-        purchase.purchase_order_id,
-        "Completed"
+    const updatedPurchase =
+      await purchaseService.updatePurchase(
+        purchase.id,
+        payload
       );
-    }
 
-    const updatedPurchases = purchases.map((item) => {
-      if (item.id !== purchase.id) return item;
-
-      return {
-        ...item,
-        ...payload,
-      };
-    });
-
-    setPurchases(updatedPurchases);
+    setPurchases(
+      purchases.map((p) =>
+        p.id === purchase.id ? updatedPurchase : p
+      )
+    );
 
     onClose();
 
@@ -69,7 +62,6 @@ export default function PurchaseDrawer({
     console.error(err);
   }
 }
-
   return (
     <>
       {/* Overlay */}
@@ -316,7 +308,7 @@ export default function PurchaseDrawer({
     onClick={moveToNextStage}
     className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium"
 >
-    Mark Bill As Checked
+    Send for checking
 </button>
 
   )}

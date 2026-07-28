@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { formatDate } from "../../../utils/formatDate";
 import PurchaseOrderDrawer from "./PurchaseOrderDrawer";
 
 export default function PurchaseOrderTable({
@@ -18,9 +18,7 @@ export default function PurchaseOrderTable({
                 Supplier
               </th>
 
-              <th className="text-left px-6 py-4">
-                Items
-              </th>
+              
 
               <th className="text-left px-6 py-4">
                 Expected Amount
@@ -47,22 +45,26 @@ export default function PurchaseOrderTable({
                   {order.supplier_name}
                 </td>
 
-                <td className="px-6 py-5">
-                  {order.items?.length || 0}
-                </td>
+               
 
                 <td className="px-6 py-5">
                   ₹{Number(order.expected_amount).toLocaleString()}
                 </td>
 
                 <td className="px-6 py-5">
-                  {order.expected_date}
+                  {formatDate(order.expected_date)}
                 </td>
 
                 <td className="px-6 py-5">
-                  <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm">
-                    {order.status}
-                  </span>
+                  <span
+  className={`px-4 py-1 rounded-full text-sm font-medium ${
+    order.status === "Pending"
+      ? "bg-red-100 text-red-700"
+      : "bg-green-100 text-green-700"
+  }`}
+>
+  {order.status}
+</span>
                 </td>
               </tr>
             ))}
@@ -74,10 +76,7 @@ export default function PurchaseOrderTable({
         order={selectedOrder}
         isOpen={selectedOrder !== null}
         onClose={() => setSelectedOrder(null)}
-        onReceiveBill={(order) => {
-          setSelectedOrder(null);
-          onReceiveBill(order);
-        }}
+        
       />
     </>
   );
