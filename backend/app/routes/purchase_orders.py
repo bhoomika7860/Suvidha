@@ -27,13 +27,13 @@ def create_purchase_order(
     db: Session = Depends(get_db),
 ):
     order = PurchaseOrder(
-        store_id=data.store_id,
-        supplier_name=data.supplier_name,
-        expected_amount=data.expected_amount,
-        expected_date=data.expected_date,
-        created_by=data.created_by,
-        status="Pending",
-    )
+    store_id=data.store_id,
+    supplier_name=data.supplier_name,
+    expected_amount=data.expected_amount,
+    expected_date=date.today(),
+    created_by=data.created_by,
+    status="Pending",
+)
 
     db.add(order)
     db.commit()

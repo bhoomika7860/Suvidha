@@ -78,6 +78,7 @@ def lock_daily_report(
             detail="Report not found"
         )
 
+    report.is_submitted = True
     report.is_locked = True
     db.commit()
 
@@ -332,6 +333,7 @@ def submit_report(
             detail="Report already submitted",
         )
 
+    report.is_submitted = True
     report.is_locked = True
 
     db.commit()
@@ -464,7 +466,7 @@ def get_all_reports(
 # Owner should only see submitted reports
     if current_user["role"] == "owner":
         query = query.filter(
-        DailyReport.is_locked == True
+        DailyReport.is_submitted == True
     )
 
     reports = (

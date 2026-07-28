@@ -103,16 +103,22 @@ def _get_reports(
     store_id=None,
     from_date=None,
     to_date=None,
-
+    submitted_only=False,
 ) -> List[DailyReport]:
 
     query = db.query(DailyReport)
 
+    # Only include submitted reports when required
+    if submitted_only:
+        query = query.filter(
+            DailyReport.is_submitted == True
+        )
+
     start_date, end_date = _get_period_bounds(
-    period,
-    from_date,
-    to_date,
-)
+        period,
+        from_date,
+        to_date,
+    )
 
     if start_date:
         query = query.filter(
@@ -211,10 +217,11 @@ def dashboard_summary(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db=db,
+    period=period,
+    store_id=store_id,
+    submitted_only=current_user["role"] == "owner",
+)
 
     total_sales = 0
     total_expenses = 0
@@ -315,9 +322,10 @@ def store_summary(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
+        db=db,
+        period=period,
+        store_id=store_id,
+        submitted_only=current_user["role"] == "owner",
     )
 
     stores = {}
@@ -335,34 +343,23 @@ def store_summary(
             )
 
             stores[sid] = {
-
                 "store_id": sid,
-
                 "store_name": (
                     store.name
                     if store
                     else f"Store {sid}"
                 ),
-
                 "total_sales": 0,
-
                 "total_bills": 0,
-
                 "total_expenses": 0,
-
                 "total_purchases": 0,
             }
 
         stores[sid]["total_sales"] += (
-
             _safe_number(report.cash_sales)
-
             + _safe_number(report.upi_sales)
-
             + _safe_number(report.card_sales)
-
             + _safe_number(report.udhaar_sales)
-
         )
 
         stores[sid]["total_bills"] += (
@@ -370,35 +367,14 @@ def store_summary(
         )
 
         stores[sid]["total_expenses"] += (
-            _safe_number(
-                report.total_expenses
-            )
+            _safe_number(report.total_expenses)
+        )
+
+        stores[sid]["total_purchases"] += (
+            _safe_number(report.total_purchases)
         )
 
     for sid in stores:
-
-        purchases = (
-
-            db.query(
-                func.sum(
-                    Purchase.purchase_amount
-                )
-            )
-
-            .filter(
-                Purchase.store_id == sid
-            )
-
-            .scalar()
-
-            or 0
-
-        )
-
-        stores[sid]["total_purchases"] = round(
-            purchases,
-            2,
-        )
 
         stores[sid]["total_sales"] = round(
             stores[sid]["total_sales"],
@@ -410,10 +386,14 @@ def store_summary(
             2,
         )
 
+        stores[sid]["total_purchases"] = round(
+            stores[sid]["total_purchases"],
+            2,
+        )
+
         stores[sid]["growth_rate"] = 0
 
     return list(stores.values())
-
 
 @router.get("/payment-breakdown")
 def payment_breakdown(
@@ -432,11 +412,11 @@ def payment_breakdown(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
-
+    db=db,
+    period=period,
+    store_id=store_id,
+    submitted_only=current_user["role"] == "owner",
+)
     cash = 0
     upi = 0
     card = 0
@@ -523,10 +503,11 @@ def sales_trend(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db=db,
+    period=period,
+    store_id=store_id,
+    submitted_only=current_user["role"] == "owner",
+)
 
     return _monthly_series(reports)
 
@@ -672,10 +653,11 @@ def performance(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db=db,
+    period=period,
+    store_id=store_id,
+    submitted_only=current_user["role"] == "owner",
+)
 
     revenue = sum(
 
@@ -936,10 +918,11 @@ def overview(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-        db,
-        period,
-        store_id,
-    )
+    db=db,
+    period=period,
+    store_id=store_id,
+    submitted_only=current_user["role"] == "owner",
+)
 
     sales = sum(
 
@@ -960,15 +943,10 @@ def overview(
         for report in reports
     )
 
-    purchases = (
-        db.query(
-            func.sum(
-                Purchase.purchase_amount
-            )
-        )
-        .scalar()
-        or 0
-    )
+    purchases = sum(
+    _safe_number(report.total_purchases)
+    for report in reports
+)
 
     bills = sum(
         report.total_bills or 0
@@ -1013,11 +991,12 @@ def export_excel(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-    db,
-    period,
-    store_id,
-    from_date,
-    to_date,
+    db=db,
+    period=period,
+    store_id=store_id,
+    from_date=from_date,
+    to_date=to_date,
+    submitted_only=current_user["role"] == "owner",
 )
 
     workbook = Workbook()
@@ -1048,18 +1027,7 @@ def export_excel(
             .first()
         )
 
-        purchases = (
-            db.query(
-                func.sum(
-                    Purchase.purchase_amount
-                )
-            )
-            .filter(
-                Purchase.store_id == report.store_id
-            )
-            .scalar()
-            or 0
-        )
+        purchases = report.total_purchases
 
         sales = (
             _safe_number(report.cash_sales)
@@ -1125,13 +1093,13 @@ to_date: str | None = None,
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-    db,
-    period,
-    store_id,
-    from_date,
-    to_date,
+    db=db,
+    period=period,
+    store_id=store_id,
+    from_date=from_date,
+    to_date=to_date,
+    submitted_only=current_user["role"] == "owner",
 )
-
     buffer = BytesIO()
 
     document = SimpleDocTemplate(
