@@ -28,7 +28,6 @@ import SectionHeader from "../../components/reportDetails/shared/SectionHeader";
 import IconAction from "../../components/reportDetails/shared/IconAction";
 import KPICard from "../../components/reportDetails/shared/KPICard";
 import PaymentBreakdown from "../../components/reportDetails/PaymentBreakdown";
-import OperationalSummary from "../../components/reportDetails/OperationalSummary";
 import ExpenseBreakdown from "../../components/reportDetails/ExpenseBreakdown";
 
 import StoreNotes from "../../components/reportDetails/StoreNotes";
@@ -116,141 +115,213 @@ if (error) {
     { name: "Credit (Udhaar)", value: report.payments?.udhaar ?? 0, color: "#D97706", icon: Users },
   ];
 
-  const summaryItems = [
-    {
-      label: "Deliveries",
-      value: `${report.summary?.deliveries ?? 0}`,
-      sub: "Completed today",
-      icon: Truck,
-      iconBg: "#EFF6FF",
-      iconColor: "#2563EB",
-    },
-    
-    {
-      label: "Purchase Orders",
-     value: "1",
-      sub: fmt(report.summary?.purchases ?? 0),
-      icon: ClipboardList,
-      iconBg: "#F0FDF4",
-      iconColor: "#16A34A",
-    },
-    {
-      label: "Expense Items",
-      value: `${report.expenses?.length || 0}`,
-      sub: fmt(report.summary?.expenses ?? 0),
-      icon: Package,
-      iconBg: "#FFFBEB",
-      iconColor: "#D97706",
-    },
-  ];
+   
+return (
+  <div
+    className="min-h-screen"
+    style={{
+      background: "#F8FAFC",
+      fontFamily: "'Inter', sans-serif",
+    }}
+  >
+    <div className="max-w-[1280px] mx-auto px-7 py-7">
 
-  
+      <button
+        onClick={() => navigate("/daily-reports")}
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-5 transition-colors"
+        style={{ color: "#6B7280" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.color = "#2563EB")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.color = "#6B7280")
+        }
+      >
+        <ArrowLeft size={14} />
+        Back to Daily Reports
+      </button>
 
-  return (
-    <div className="min-h-screen" style={{ background: "#F8FAFC", fontFamily: "'Inter', sans-serif" }}>
-      <div className="max-w-[1280px] mx-auto px-7 py-7">
-        <button
-          onClick={() => navigate("/daily-reports")}
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-5 transition-colors"
-          style={{ color: "#6B7280" }}
-          onMouseEnter={(event) => (event.currentTarget.style.color = "#2563EB")}
-          onMouseLeave={(event) => (event.currentTarget.style.color = "#6B7280")}
-        >
-          <ArrowLeft size={14} />
-          Back to Daily Reports
-        </button>
+      <Card className="px-7 py-5 mb-5">
 
-        <Card className="px-7 py-5 mb-5">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-[26px] font-bold tracking-tight leading-none" style={{ color: "#111827" }}>
-                {report.store?.name}
-              </h1>
-              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                <span className="text-[13px] font-medium" style={{ color: "#6B7280" }}>{report.report_date}</span>
-                <Dot />
-                <span className="text-[13px]" style={{ color: "#6B7280" }}>
-                  Submitted by <span className="font-semibold" style={{ color: "#111827" }}>{report.submitted_by?.name}</span>
+        <div className="flex items-center justify-between">
+
+          <div>
+
+            <h1 className="text-[26px] font-bold">
+              {report.store?.name}
+            </h1>
+
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+
+              <span className="text-[13px] text-gray-500">
+                {report.report_date}
+              </span>
+
+              <Dot />
+
+              <span className="text-[13px] text-gray-500">
+                Submitted by{" "}
+                <span className="font-semibold text-black">
+                  {report.submitted_by?.name}
                 </span>
-                <Dot />
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md font-mono" style={{ background: "#F1F5F9", color: "#6B7280", border: "1px solid #E5E7EB" }}>
-                  {report.store?.code}
-                </span>
-              </div>
+              </span>
+
+              <Dot />
+
+              <span className="text-[11px] font-semibold px-2 py-1 rounded-md border bg-gray-100">
+                {report.store?.code}
+              </span>
+
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-
-  <IconAction
-    icon={<RotateCcw size={14} />}
-    label="Refresh Report"
-    onClick={loadReport}
-  />
-
- 
-
-  
-
-</div>
-              <div className="flex items-center gap-3">
-
-
-
-  <StatusBadge status={report.status} />
-
-</div>
-              
-            </div>
           </div>
-        </Card>
 
-        <div className="mb-5">
-          <SectionHeader title="Executive Summary" sub="Daily performance snapshot" />
-          <div className="flex gap-4">
-            <KPICard icon={<Wallet size={14} />} label="Total Sales" value={fmt(report.summary?.sales ?? 0)} trend="Today's total sales" dir="up" />
-            <KPICard icon={<Receipt size={14} />} label="Bills Generated" value={report.summary?.bills ?? 0} trend="Bills generated" dir="up" />
-            <KPICard icon={<Truck size={14} />} label="Deliveries" value={report.summary?.deliveries ?? 0} trend="Completed deliveries" dir="up" />
-            <KPICard icon={<ShoppingCart size={14} />} label="Purchases" value={fmt(report.summary?.purchases ?? 0)} trend="Today's purchases" dir="down" />
-            <KPICard icon={<CreditCard size={14} />} label="Expenses" value={fmt(report.summary?.expenses ?? 0)} trend="Operating expenses" dir="up" />
+          <div className="flex items-center gap-3">
+
+            <IconAction
+              icon={<RotateCcw size={14} />}
+              label="Refresh Report"
+              onClick={loadReport}
+            />
+
+            <StatusBadge
+              status={report.status}
+            />
+
           </div>
+
         </div>
 
+      </Card>
 
-        <div className="grid grid-cols-12 gap-5 mb-5">
+      {/* KPI */}
 
-  <div className="col-span-8">
-    <PaymentBreakdown payments={paymentRows} />
-  </div>
+      <div className="mb-6">
 
-  <div className="col-span-4">
-    <OperationalSummary items={summaryItems} />
-  </div>
+        <SectionHeader
+          title="Executive Summary"
+          sub="Daily performance snapshot"
+        />
 
-</div>
+        <div className="flex gap-4">
 
-<div className="grid grid-cols-12 gap-5 mb-5">
+          <KPICard
+            icon={<Wallet size={14} />}
+            label="Total Sales"
+            value={fmt(report.summary?.sales)}
+            trend="Today's total sales"
+            dir="up"
+          />
 
-  <div className="col-span-6">
-    <ExpenseBreakdown expenses={report.expenses || []} />
-  </div>
+          <KPICard
+            icon={<Receipt size={14} />}
+            label="Bills Generated"
+            value={report.summary?.bills}
+            trend="Bills generated"
+            dir="up"
+          />
 
-  
+          <KPICard
+            icon={<Truck size={14} />}
+            label="Deliveries"
+            value={report.summary?.deliveries}
+            trend="Completed deliveries"
+            dir="up"
+          />
 
-</div>
+          <KPICard
+            icon={<ShoppingCart size={14} />}
+            label="Purchases"
+            value={fmt(report.summary?.purchases)}
+            trend="Today's purchases"
+            dir="up"
+          />
 
-<div className="grid grid-cols-12 gap-5">
+          <KPICard
+            icon={<CreditCard size={14} />}
+            label="Expenses"
+            value={fmt(report.summary?.expenses)}
+            trend="Operating expenses"
+            dir="up"
+          />
 
-  <div className="col-span-8">
-    <StoreNotes note={report.notes?.trim() || "No notes submitted."} />
-  </div>
+        </div>
 
-  <div className="col-span-4">
-    <AdjustmentHistory adjustments={report.adjustments || []} />
-  </div>
-
-</div>
       </div>
+
+      {/* PAYMENT */}
+
+      <div className="mb-6">
+
+        <PaymentBreakdown
+          payments={paymentRows}
+        />
+
+      </div>
+
+      {/* EXPENSES */}
+
+      <div className="mb-6">
+
+        <ExpenseBreakdown
+          expenses={report.expenses || []}
+        />
+
+      </div>
+
+      {/* PURCHASES */}
+
+      <div className="mb-6">
+
+        <CompletedPurchases
+          purchases={
+            report.completed_purchases || []
+          }
+        />
+
+      </div>
+
+      {/* DELIVERIES */}
+
+      <div className="mb-6">
+
+        <DeliverySummary
+          deliveries={
+            report.delivery_assignments || []
+          }
+        />
+
+      </div>
+
+      {/* NOTES */}
+
+      <div className="grid grid-cols-12 gap-5">
+
+        <div className="col-span-8">
+
+          <StoreNotes
+            note={
+              report.notes?.trim() ||
+              "No notes submitted."
+            }
+          />
+
+        </div>
+
+        <div className="col-span-4">
+
+          <AdjustmentHistory
+            adjustments={
+              report.adjustments || []
+            }
+          />
+
+        </div>
+
+      </div>
+
     </div>
-  );
+
+  </div>
+);
 }

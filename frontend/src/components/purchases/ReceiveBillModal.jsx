@@ -85,7 +85,7 @@ export default function ReceiveBillModal({
 
       entered_by: "",
 
-      status: "received",
+      status: "waiting_check",
 
       purchase_order_id: selectedOrderId,
 

@@ -81,18 +81,42 @@ const PAYMENT_COLORS = {
   </div>
 ) : (
   <div className="flex items-center gap-8">
-    <div className="relative flex-shrink-0" style={{ width: 180, height: 180 }}>
-      <div className="w-40 h-40 rounded-full bg-red-500"></div>
+    <div
+  className="relative flex-shrink-0"
+  style={{ width: 220, height: 220 }}
+>
+  <ResponsiveContainer width="100%" height="100%">
+    <PieChart>
+      <Pie
+        data={rows}
+        dataKey="value"
+        nameKey="name"
+        innerRadius={60}
+        outerRadius={90}
+        paddingAngle={2}
+      >
+        {rows.map((entry, index) => (
+          <Cell
+            key={index}
+            fill={entry.color}
+          />
+        ))}
+      </Pie>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <p className="text-[10px] font-medium" style={{ color: "#6B7280" }}>
-          Total
-        </p>
-        <p className="text-[15px] font-bold" style={{ color: "#111827" }}>
-          {fmt(total)}
-        </p>
-      </div>
-    </div>
+      <Tooltip content={<DonutTooltip />} />
+    </PieChart>
+  </ResponsiveContainer>
+
+  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+    <p className="text-xs text-gray-500">
+      Total
+    </p>
+
+    <p className="text-lg font-bold text-gray-900">
+      {fmt(total)}
+    </p>
+  </div>
+</div>
 
     <div className="flex-1 flex flex-col gap-4">
       {rows.map((entry) => {

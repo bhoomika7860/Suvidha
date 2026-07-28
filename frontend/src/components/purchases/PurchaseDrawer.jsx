@@ -40,24 +40,21 @@ export default function PurchaseDrawer({
       payload = {
         status: "completed",
       };
-    } else {
-      return;
     }
 
-    const updatedPurchase =
+    const updated =
       await purchaseService.updatePurchase(
         purchase.id,
         payload
       );
 
-    setPurchases(
-      purchases.map((p) =>
-        p.id === purchase.id ? updatedPurchase : p
+    setPurchases((prev) =>
+      prev.map((p) =>
+        p.id === purchase.id ? updated : p
       )
     );
 
     onClose();
-
   } catch (err) {
     console.error(err);
   }

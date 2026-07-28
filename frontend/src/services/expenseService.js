@@ -1,26 +1,19 @@
 import api from "../api/api";
 
 const expenseService = {
-  getExpenses: async () => {
+  async getExpenses() {
     const response = await api.get("/expenses/");
     return response.data;
   },
-createExpense: async (expense) => {
-  console.log("Sending Expense:", expense);
 
-  const response = await api.post(
-    "/expenses/",
-    expense
-  );
-
-  return response.data;
-},
-  getExpense: async (id) => {
+  async getExpense(id) {
     const response = await api.get(`/expenses/${id}`);
     return response.data;
   },
 
-  createExpense: async (expense) => {
+  async createExpense(expense) {
+    console.log("Sending Expense:", expense);
+
     const response = await api.post(
       "/expenses/",
       expense
@@ -29,7 +22,7 @@ createExpense: async (expense) => {
     return response.data;
   },
 
-  deleteExpense: async (id) => {
+  async deleteExpense(id) {
     const response = await api.delete(
       `/expenses/${id}`
     );

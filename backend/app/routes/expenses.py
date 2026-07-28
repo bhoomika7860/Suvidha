@@ -1,16 +1,18 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from typing import List
-from app.models.user import User
+
 from app.database import get_db
+from app.dependencies.auth import get_current_user
+from app.models.daily_report import DailyReport
 from app.models.expense import Expense
+from app.models.user import User
 from app.schemas.expense import (
     ExpenseCreate,
     ExpenseResponse,
 )
-from app.dependencies.auth import get_current_user
-from sqlalchemy import func
-from datetime import date
 
 router = APIRouter(
     prefix="/expenses",
@@ -38,14 +40,24 @@ def create_expense(
     db.commit()
     db.refresh(expense)
 
-    from datetime import date
-    from app.models.daily_report import DailyReport
+    print("Expense created:")
+    print("ID:", expense.id)
+    print("Store:", expense.store_id)
+    print("Created At:", expense.created_at)
 
+    # Update today's daily report total
     report = (
         db.query(DailyReport)
         .filter(
             DailyReport.store_id == expense.store_id,
-            DailyReport.report_date == date.today(),
+            DailyReport.report_date
+            == func.date(
+                func.datetime(
+                    expense.created_at,
+                    "+5 hours",
+                    "+30 minutes",
+                )
+            ),
         )
         .first()
     )
@@ -53,9 +65,9 @@ def create_expense(
     if report:
         report.total_expenses += expense.amount
         db.commit()
-        db.refresh(report)
 
     return expense
+
 
 # -----------------------------
 # Get Today's Expenses
@@ -74,9 +86,6 @@ def get_expenses(
             User,
             Expense.created_by == User.id,
         )
-        .filter(
-            func.date(Expense.created_at) == date.today()
-        )
     )
 
     if current_user["role"] != "owner":
@@ -84,7 +93,26 @@ def get_expenses(
             Expense.store_id == current_user["store_id"]
         )
 
-    expenses = query.all()
+    # Convert UTC -> IST before comparing dates
+    query = query.filter(
+        func.date(
+            func.datetime(
+                Expense.created_at,
+                "+5 hours",
+                "+30 minutes",
+            )
+        )
+        == date.today()
+    )
+
+    expenses = (
+        query.order_by(
+            Expense.created_at.desc()
+        )
+        .all()
+    )
+
+    print("Expenses returned:", len(expenses))
 
     return [
         {

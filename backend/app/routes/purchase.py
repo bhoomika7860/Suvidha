@@ -9,6 +9,9 @@ from datetime import date
 from app.schemas.purchase import PurchaseUpdate
 from fastapi import HTTPException
 from app.models.purchase_order import PurchaseOrder
+from app.models.daily_report import DailyReport
+from app.dependencies.auth import get_current_user
+from sqlalchemy import func
 import os
 import uuid
 
@@ -40,7 +43,7 @@ async def create_purchase(
     received_by: str = Form(None),
     checked_by: str = Form(None),
     entered_by: str = Form(None),
-    status: str = Form("received"),
+    status: str = Form("waiting_check"),
     purchase_order_id: int | None = Form(None),
     bill_image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -83,20 +86,22 @@ async def create_purchase(
     print("===================================")
 
     purchase = Purchase(
-        store_id=store_id,
-        product_name=product_name,
-        quantity=quantity,
-        supplier_name=supplier_name,
-        purchase_amount=purchase_amount,
-        created_by=created_by,
-        bill_number=bill_number,
-        received_by=received_by,
-        checked_by=checked_by,
-        entered_by=entered_by,
-        status=status,
-        purchase_order_id=purchase_order_id,
-        bill_image=image_path,
-    )
+    store_id=store_id,
+    product_name=product_name,
+    quantity=quantity,
+    supplier_name=supplier_name,
+    purchase_amount=purchase_amount,
+    created_by=created_by,
+    bill_number=bill_number,
+    received_by=received_by,
+    checked_by=checked_by,
+    entered_by=entered_by,
+
+    status="received",
+
+    purchase_order_id=purchase_order_id,
+    bill_image=image_path,
+)
 
     db.add(purchase)
 
@@ -191,19 +196,32 @@ def update_purchase(
 
     return purchase
 
-# Get all purchases
+from app.dependencies.auth import get_current_user
+
+# Get purchases for today's report
 @router.get("/", response_model=List[PurchaseResponse])
 def get_all_purchases(
     db: Session = Depends(get_db),
 ):
     purchases = (
         db.query(Purchase)
-        .filter(
-            func.date(Purchase.purchase_date)
-            == date.today()
-        )
+        .order_by(Purchase.id.desc())
         .all()
     )
+
+    print("\n========== PURCHASE API ==========")
+    print("Returned:", len(purchases))
+
+    for p in purchases:
+        print(
+            p.id,
+            p.supplier_name,
+            p.status,
+            p.purchase_order_id,
+            p.purchase_date,
+        )
+
+    print("==================================\n")
 
     return purchases
 

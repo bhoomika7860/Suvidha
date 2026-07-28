@@ -9,7 +9,8 @@ from app.utils.audit import create_audit_log
 from sqlalchemy.orm import joinedload
 
 from app.models.expense import Expense
-
+from app.models.delivery_assignment import DeliveryAssignment
+from app.models.user import User
 from app.models.adjustment_request import AdjustmentRequest
 from sqlalchemy.orm import joinedload
 
@@ -378,7 +379,9 @@ def get_report_expenses(
 ):
     report = (
         db.query(DailyReport)
-        .filter(DailyReport.id == report_id)
+        .filter(
+            DailyReport.id == report_id
+        )
         .first()
     )
 
@@ -399,7 +402,17 @@ def get_report_expenses(
         )
         .filter(
             Expense.store_id == report.store_id,
-            func.date(Expense.created_at) == report.report_date,
+            func.date(
+                func.datetime(
+                    Expense.created_at,
+                    "+5 hours",
+                    "+30 minutes",
+                )
+            )
+            == report.report_date,
+        )
+        .order_by(
+            Expense.created_at.desc()
         )
         .all()
     )
@@ -414,7 +427,6 @@ def get_report_expenses(
         }
         for expense, created_by_name in expenses
     ]
-
 
 # Get all reports
 from sqlalchemy import func
@@ -535,6 +547,21 @@ def get_report(
     )
     .all()
 )
+
+    delivery_assignments = (
+    db.query(
+        DeliveryAssignment,
+        User.full_name.label("delivery_boy_name"),
+    )
+    .join(
+        User,
+        DeliveryAssignment.delivery_boy_id == User.id,
+    )
+    .filter(
+        DeliveryAssignment.daily_report_id == report.id,
+    )
+    .all()
+)
     return {
         "id": report.id,
 
@@ -567,15 +594,19 @@ def get_report(
         },
 
 
-        "purchases": [
+       "completed_purchases": [
     {
         "id": purchase.id,
-        "product_name": purchase.product_name,
         "supplier_name": purchase.supplier_name,
-        "quantity": purchase.quantity,
-        "amount": purchase.purchase_amount,
+        "bill_number": purchase.bill_number,
+        "purchase_amount": purchase.purchase_amount,
+        "received_by": purchase.received_by,
+        "checked_by": purchase.checked_by,
+        "entered_by": purchase.entered_by,
+        "status": purchase.status,
     }
     for purchase in purchases
+    if purchase.status == "completed"
 ],
 
         "payments": {
@@ -593,6 +624,15 @@ def get_report(
         "remarks": expense.remarks,
     }
     for expense in expenses
+],
+
+        "delivery_assignments": [
+    {
+        "id": assignment.id,
+        "delivery_boy_name": delivery_boy_name,
+        "deliveries_completed": assignment.deliveries_completed,
+    }
+    for assignment, delivery_boy_name in delivery_assignments
 ],
 
         
