@@ -9,7 +9,7 @@ from app.utils.audit import create_audit_log
 from sqlalchemy.orm import joinedload
 
 from app.models.expense import Expense
-from app.models.bounced_product import BouncedProduct
+
 from app.models.adjustment_request import AdjustmentRequest
 from sqlalchemy.orm import joinedload
 
@@ -145,7 +145,7 @@ def get_today_report(
 
     report = (
         db.query(DailyReport)
-        .options(joinedload(DailyReport.bounced_products))
+        
         .filter(
             DailyReport.store_id == current_user["store_id"],
             DailyReport.report_date == date.today(),
@@ -183,31 +183,11 @@ def get_today_report(
     "notes": report.notes,
     "is_locked": report.is_locked,
 
-    "bounced_products": [
-        {
-            "id": product.id,
-            "product_name": product.product_name,
-            "quantity": product.quantity,
-        }
-        for product in report.bounced_products
-    ],
+    
 }
 
 
-@router.get("/{report_id}/bounced-products")
-def get_report_bounced_products(
-    report_id: int,
-    db: Session = Depends(get_db),
-):
-    products = (
-        db.query(BouncedProduct)
-        .filter(
-            BouncedProduct.daily_report_id == report_id
-        )
-        .all()
-    )
 
-    return products
 
 @router.put("/{report_id}/sales")
 def update_sales(
@@ -526,7 +506,7 @@ def get_report(
         .options(
     joinedload(DailyReport.store),
     joinedload(DailyReport.submitted_by_user),
-    joinedload(DailyReport.bounced_products),
+
     joinedload(DailyReport.adjustment_requests)
 )
         .filter(DailyReport.id == report_id)
@@ -615,14 +595,7 @@ def get_report(
     for expense in expenses
 ],
 
-        "bounced_products": [
-            {
-                "id": product.id,
-                "product_name": product.product_name,
-                "quantity": product.quantity,
-            }
-            for product in report.bounced_products
-        ],
+        
 
         "adjustments": [
             {

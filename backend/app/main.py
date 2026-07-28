@@ -11,7 +11,7 @@ from app.models.store import Store
 from app.models.daily_report import DailyReport
 from app.models.expense import Expense
 from app.models.delivery import Delivery
-from app.models.bounced_product import BouncedProduct
+
 from app.models.udhaar_entry import UdhaarEntry
 from app.models.adjustment_request import AdjustmentRequest
 from app.models.audit_log import AuditLog
@@ -28,7 +28,7 @@ from app.routes.users import router as user_router
 from app.routes.daily_reports import router as daily_report_router
 from app.routes.expenses import router as expense_router
 from app.routes.deliveries import router as delivery_router
-from app.routes.bounced_products import router as bounced_product_router
+
 from app.routes import (
     udhaar,
     adjustments,
@@ -97,7 +97,7 @@ app.include_router(user_router)
 app.include_router(daily_report_router)
 app.include_router(expense_router)
 app.include_router(delivery_router)
-app.include_router(bounced_product_router)
+
 app.include_router(udhaar.router)
 app.include_router(adjustments.router)
 app.include_router(audit_logs.router)

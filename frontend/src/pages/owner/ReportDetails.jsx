@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } frfom "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { dailyReportsService } from "../../services/dailyReportsService";
@@ -7,7 +7,7 @@ import { dailyReportsService } from "../../services/dailyReportsService";
 import SummaryCards from "../../components/reportDetails/SummaryCards";
 import PaymentBreakdown from "../../components/reportDetails/PaymentBreakdown";
 import ExpenseBreakdown from "../../components/reportDetails/ExpenseBreakdown";
-import BouncedProducts from "../../components/reportDetails/BouncedProducts";
+
 import NotesCard from "../../components/reportDetails/NotesCard";
 import AdjustmentHistory from "../../components/reportDetails/AdjustmentHistory";
 
@@ -127,7 +127,7 @@ if (!report) {
 
         <div className="grid grid-cols-2 gap-6 mt-6">
 
-          <BouncedProducts />
+        
 
           <NotesCard />
 

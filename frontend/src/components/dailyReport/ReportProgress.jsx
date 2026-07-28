@@ -59,13 +59,7 @@ export default function ReportProgress() {
           ? "done"
           : "todo",
     },
-    {
-      title: "Bounced Products",
-      status:
-        report.bounced_products?.length > 0
-          ? "done"
-          : "todo",
-    },
+    
     
   ];
 

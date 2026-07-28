@@ -54,10 +54,7 @@ export default function ReviewSection() {
     report.deliveries > 0
   );
 
-  addSection(
-    "Bounced Products",
-    report.bounced_products?.length > 0
-  );
+  
 
   
   async function submitReport() {

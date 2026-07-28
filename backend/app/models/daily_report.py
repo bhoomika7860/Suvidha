@@ -10,7 +10,6 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import relationship
-
 from app.database import Base
 
 
@@ -53,12 +52,7 @@ class DailyReport(Base):
         back_populates="submitted_reports",
     )
 
-    bounced_products = relationship(
-        "BouncedProduct",
-        back_populates="daily_report",
-        cascade="all, delete-orphan",
-    )
-
+    
     adjustment_requests = relationship(
         "AdjustmentRequest",
         back_populates="daily_report",

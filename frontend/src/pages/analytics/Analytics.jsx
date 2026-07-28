@@ -180,7 +180,7 @@ const [udhaar, setUdhaar] = useState([]);
 const [paymentBreakdown, setPaymentBreakdown] = useState([]);
 const [expenseDistribution, setExpenseDistribution] = useState([]);
 const [salesTrend, setSalesTrend] = useState([]);
-const [bouncedProducts, setBouncedProducts] = useState([]);
+
 
 const [performance, setPerformance] = useState([]);
 
@@ -208,7 +208,7 @@ const [showExport, setShowExport] = useState(false);
       paymentData,
       expenseData,
       trendData,
-      bouncedData,
+      
       performanceData,
     ] = await Promise.all([
       analyticsService.getDashboardSummary(selectedPeriod, selectedStore),
@@ -217,7 +217,7 @@ analyticsService.getOutstandingUdhaar(selectedPeriod, selectedStore),
 analyticsService.getPaymentBreakdown(selectedPeriod, selectedStore),
 analyticsService.getExpenseDistribution(selectedPeriod, selectedStore),
 analyticsService.getSalesTrend(selectedPeriod, selectedStore),
-analyticsService.getTopBouncedProducts(selectedPeriod, selectedStore),
+
 analyticsService.getPerformance(selectedPeriod, selectedStore),
     ]);
 
@@ -238,7 +238,7 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     setPaymentBreakdown(paymentData);
     setExpenseDistribution(expenseData);
     setSalesTrend(trendData);
-    setBouncedProducts(bouncedData);
+    
     
     setPerformance(performanceData);
 
@@ -759,7 +759,7 @@ console.log("Stores:", stores);
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-                <SectionHeader title="Top Bounced Medicines" subtitle="Highest-risk stock-outs" />
+              
                 <div className="overflow-hidden rounded-xl border border-slate-200">
                   <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
@@ -771,18 +771,7 @@ console.log("Stores:", stores);
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {(bouncedProducts || []).map((item, index) => (
-                        <tr key={`${item.medicine}-${index}`} className="transition hover:bg-slate-50">
-                          <td className="px-4 py-3 text-sm font-semibold" style={{ color: TEXT }}>{item.medicine}</td>
-                          <td className="px-4 py-3 text-sm font-semibold" style={{ color: TEXT }}>{fmtNumber(item.requests)}</td>
-                          <td className="px-4 py-3 text-sm" style={{ color: MUTED }}>{item.store}</td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-full px-2.5 py-1 text-sm font-semibold" style={{ background: item.risk === "Critical" ? "#FEF2F2" : item.risk === "High" ? "#FFF7ED" : "#F0FDF4", color: item.risk === "Critical" ? RED : item.risk === "High" ? ORANGE : GREEN }}>
-                              {item.risk}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                     
                     </tbody>
                   </table>
                 </div>

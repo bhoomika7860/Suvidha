@@ -11,7 +11,7 @@ import {
   Receipt,
   RotateCcw,
   ScrollText,
-  Share2,
+ 
   ShoppingCart,
   Smartphone,
   Truck,
@@ -30,7 +30,7 @@ import KPICard from "../../components/reportDetails/shared/KPICard";
 import PaymentBreakdown from "../../components/reportDetails/PaymentBreakdown";
 import OperationalSummary from "../../components/reportDetails/OperationalSummary";
 import ExpenseBreakdown from "../../components/reportDetails/ExpenseBreakdown";
-import BouncedProducts from "../../components/reportDetails/BouncedProducts";
+
 import StoreNotes from "../../components/reportDetails/StoreNotes";
 import AdjustmentHistory from "../../components/reportDetails/AdjustmentHistory";
 
@@ -125,17 +125,7 @@ if (error) {
       iconBg: "#EFF6FF",
       iconColor: "#2563EB",
     },
-    {
-  label: "Bounced",
-  value: `${report.bounced_products?.length || 0} items`,
-  sub:
-    report.bounced_products?.length > 0
-      ? "Needs attention"
-      : "No current flags",
-      icon: AlertTriangle,
-      iconBg: "#FEF2F2",
-      iconColor: "#DC2626",
-    },
+    
     {
       label: "Purchase Orders",
      value: "1",
@@ -198,20 +188,9 @@ if (error) {
     onClick={loadReport}
   />
 
-  <IconAction
-    icon={<Download size={14} />}
-    label="Export Report"
-  />
+ 
 
-  <IconAction
-    icon={<ScrollText size={14} />}
-    label="Audit Logs"
-  />
-
-  <IconAction
-    icon={<Share2 size={14} />}
-    label="Share"
-  />
+  
 
 </div>
               <div className="flex items-center gap-3">
@@ -256,9 +235,7 @@ if (error) {
     <ExpenseBreakdown expenses={report.expenses || []} />
   </div>
 
-  <div className="col-span-6">
-    <BouncedProducts rows={report.bounced_products || []} />
-  </div>
+  
 
 </div>
 

@@ -33,7 +33,7 @@ export default function HeroCard() {
     report.expenses_completed,
     report.purchases_completed,
     report.deliveries_completed,
-    report.bounced_products_completed,
+    
     report.notes_completed,
   ].filter(Boolean).length;
 

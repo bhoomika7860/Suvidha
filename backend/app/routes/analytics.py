@@ -33,7 +33,7 @@ from app.models.expense import Expense
 from app.models.purchase import Purchase
 from app.models.store import Store
 from app.models.udhaar_entry import UdhaarEntry
-from app.models.bounced_product import BouncedProduct
+
 
 router = APIRouter(
     prefix="/analytics",
@@ -585,55 +585,7 @@ def outstanding_udhaar(
         for row in rows
     ]
 
-@router.get("/top-bounced-products")
-def top_bounced_products(
-    period: str = "today",
-    store_id: str = "all",
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
 
-    require_role(
-        ["owner", "store_manager"],
-        current_user["role"],
-    )
-
-    if current_user["role"] == "store_manager":
-        store_id = str(current_user["store_id"])
-
-    query = db.query(BouncedProduct)
-
-    if store_id != "all":
-        query = query.filter(
-            BouncedProduct.store_id == int(store_id)
-        )
-
-    products = query.all()
-
-    grouped = defaultdict(int)
-
-    for product in products:
-
-        grouped[product.product_name] += (
-            product.quantity or 1
-        )
-
-    rows = []
-
-    for name, qty in sorted(
-        grouped.items(),
-        key=lambda x: x[1],
-        reverse=True,
-    ):
-
-        rows.append(
-            {
-                "product_name": name,
-                "count": qty,
-            }
-        )
-
-    return rows
 
 
 @router.get("/performance")
@@ -742,18 +694,7 @@ def manager_hero(
         .count()
     )
 
-    bounced_count = (
-        db.query(BouncedProduct)
-        .join(
-            DailyReport,
-            BouncedProduct.daily_report_id == DailyReport.id,
-        )
-        .filter(
-            DailyReport.store_id == current_user["store_id"],
-            DailyReport.report_date == report.report_date,
-        )
-        .count()
-    )
+    
 
     return {
         "user": {
@@ -780,7 +721,7 @@ def manager_hero(
 
             "deliveries_completed": (report.deliveries or 0) > 0,
 
-            "bounced_products_completed": bounced_count > 0,
+            
 
             "notes_completed": bool(report.notes),
         },
@@ -827,17 +768,7 @@ def manager_dashboard(
     .order_by(Expense.created_at.desc())
     .all()
 )
-    bounced = []
-
-    if report:
-        bounced = (
-            db.query(BouncedProduct)
-            .filter(
-                BouncedProduct.daily_report_id == report.id,
-            )
-            .all()
-        )
-
+    
     payment_breakdown = {
         "cash": report.cash_sales if report else 0,
         "upi": report.upi_sales if report else 0,
@@ -861,8 +792,6 @@ def manager_dashboard(
         "deliveries_completed":
             report.deliveries > 0 if report else False,
 
-        "bounced_products_completed":
-            len(bounced) > 0,
 
         "report_submitted":
             report.is_locked if report else False,
@@ -892,13 +821,7 @@ def manager_dashboard(
             for e in expenses
         ],
 
-        "bounced_products": [
-            {
-                "product_name": b.product_name,
-                "quantity": b.quantity,
-            }
-            for b in bounced
-        ],
+        
     }
 
 @router.get("/overview")

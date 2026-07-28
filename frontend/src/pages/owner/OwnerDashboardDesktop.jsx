@@ -52,12 +52,7 @@ const COLORS = ["#2563EB", "#1E40AF", "#60A5FA", "#93C5FD", "#BFDBFE"];
 
 
 
-const bouncedProducts = [
-  { name: "Cough Syrup 100ml", type: "Syrup", count: 14 },
-  { name: "Ranitidine 150mg", type: "Tablet", count: 9 },
-  { name: "Vitamin C 500mg", type: "Capsule", count: 7 },
-  { name: "Cetirizine 10mg", type: "Tablet", count: 5 },
-];
+
 
 
 

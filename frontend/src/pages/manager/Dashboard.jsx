@@ -5,7 +5,7 @@ import SalesSummary from "../../components/manager/SalesSummary";
 import QuickActions from "../../components/manager/QuickActions";
 import PurchaseSummary from "../../components/manager/PurchaseSummary";
 import ExpenseSummary from "../../components/manager/ExpenseSummary";
-import BouncedProducts from "../../components/manager/BouncedProducts";
+
 
 
 export default function Dashboard() {
@@ -33,7 +33,7 @@ export default function Dashboard() {
 
     <ExpenseSummary />
 
-    <BouncedProducts />
+    
 
 </div>
 </div>

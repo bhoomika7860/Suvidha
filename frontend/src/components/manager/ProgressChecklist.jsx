@@ -43,10 +43,7 @@ export default function ProgressChecklist() {
       text: "Deliveries Added",
       status: progress.deliveries_completed ? "done" : "todo",
     },
-    {
-      text: "Bounced Products Added",
-      status: progress.bounced_products_completed ? "done" : "todo",
-    },
+    
     {
       text: "Report Submitted",
       status: progress.report_submitted ? "done" : "todo",

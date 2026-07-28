@@ -28,11 +28,7 @@ export default function QuickActions() {
     text: "Add Purchase",
     path: "/manager-purchases",
   },
-  {
-    icon: AlertTriangle,
-    text: "Add Bounced Product",
-    path: "/daily-report",
-  },
+  
 ];
 
   return (

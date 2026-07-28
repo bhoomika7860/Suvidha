@@ -117,13 +117,9 @@ export default function ReportDetailModal({ report, onClose }) {
     </div>
 
     <div className="rounded-xl border border-gray-100 p-4">
-      <div className="text-xs text-gray-500 uppercase mb-1">
-        Bounced Products
-      </div>
+      
 
-      <div className="text-2xl font-bold text-[#0F172A]">
-        {report.bouncedProducts?.length || 0}
-      </div>
+      
     </div>
   </div>
 </section>
@@ -173,34 +169,6 @@ export default function ReportDetailModal({ report, onClose }) {
             </div>
           </section>
 
-          {/* Bounced Products */}
-          <section>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Bounced Products ({report.bouncedProducts?.length || 0})
-            </div>
-            {(report.bouncedProducts?.length || 0) === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-gray-400 py-3 px-4 bg-gray-50 rounded-xl">
-                <CheckCircle2 size={14} className="text-green-500" />
-                No bounced products
-              </div>
-            ) : (
-              <div className="rounded-xl border border-gray-100 overflow-hidden">
-                {(report.bouncedProducts || []).map((p, i) => (
-                  <div
-                    key={i}
-                    className={`px-4 py-3 ${
-                      i !== report.bouncedProducts.length - 1 ? "border-b border-gray-50" : ""
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-gray-900">{p.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      Qty: {p.qty} · {p.reason}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
 
           {/* Notes */}
           <section>

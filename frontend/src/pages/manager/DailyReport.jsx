@@ -3,7 +3,7 @@ import SalesSection from "../../components/dailyReport/SalesSection";
 import ExpenseSection from "../../components/dailyReport/ExpenseSection";
 import PurchaseSection from "../../components/dailyReport/PurchaseSection";
 import DeliverySection from "../../components/dailyReport/DeliverySection";
-import BouncedSection from "../../components/dailyReport/BouncedSection";
+
 import NotesSection from "../../components/dailyReport/NotesSection";
 import ReviewSection from "../../components/dailyReport/ReviewSection";
 
@@ -45,7 +45,7 @@ export default function DailyReport() {
 
       <DeliverySection />
 
-      <BouncedSection />
+      
 
       <NotesSection />
 
