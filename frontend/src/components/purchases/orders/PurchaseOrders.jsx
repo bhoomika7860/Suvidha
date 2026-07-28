@@ -12,7 +12,6 @@ export default function PurchaseOrders({
 
   async function addPurchaseOrder(order) {
     try {
-
       await purchaseService.createPurchaseOrder(order);
 
       const orders =
@@ -21,21 +20,16 @@ export default function PurchaseOrders({
       setPurchaseOrders(orders);
 
       setShowModal(false);
-
     } catch (err) {
-
       console.error(err);
-
     }
   }
 
   async function receivePurchaseOrder(order) {
-
     try {
-
       await purchaseService.updatePurchaseOrderStatus(
         order.id,
-        "Received"
+        "Completed"
       );
 
       const orders =
@@ -44,13 +38,9 @@ export default function PurchaseOrders({
       setPurchaseOrders(orders);
 
       setActiveTab("received");
-
     } catch (err) {
-
       console.error(err);
-
     }
-
   }
 
   return (

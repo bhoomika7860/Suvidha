@@ -35,15 +35,17 @@ export default function Purchases() {
   async function loadData() {
     try {
       const [
-        purchaseData,
-        purchaseOrderData,
-      ] = await Promise.all([
-        purchaseService.getPurchases(),
-        purchaseService.getPurchaseOrders(),
-      ]);
+  purchaseData,
+  purchaseOrderData,
+] = await Promise.all([
+  purchaseService.getPurchases(),
+  purchaseService.getPurchaseOrders(),
+]);
 
-      setPurchases(purchaseData);
-      setPurchaseOrders(purchaseOrderData);
+console.log("Purchase Orders:", purchaseOrderData);
+
+setPurchases(purchaseData);
+setPurchaseOrders(purchaseOrderData);
 
     } catch (err) {
       console.error(err);

@@ -15,7 +15,11 @@ const purchaseService = {
     const response = await api.get(`/purchases/store/${storeId}`);
     return response.data;
   },
-
+  
+  async getPendingPurchaseOrders() {
+  const response = await api.get("/purchase-orders/pending");
+  return response.data;
+},
   createPurchase: async (purchase) => {
   const formData = new FormData();
 
@@ -40,6 +44,8 @@ const purchaseService = {
       },
     }
   );
+
+
 
   return response.data;
 },

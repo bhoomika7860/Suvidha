@@ -1,47 +1,98 @@
 import { useEffect, useState } from "react";
 import { Upload, X } from "lucide-react";
+import purchaseService from "../../services/purchaseService";
 
 export default function ReceiveBillModal({
   isOpen,
   onClose,
   onSave,
-  purchaseOrder,
 }) {
+  const [pendingOrders, setPendingOrders] = useState([]);
+
+  const [selectedOrderId, setSelectedOrderId] = useState("");
+
   const [party, setParty] = useState("");
+
   const [billNo, setBillNo] = useState("");
+
   const [amount, setAmount] = useState("");
+
   const [billImage, setBillImage] = useState(null);
 
   useEffect(() => {
-    if (purchaseOrder) {
-      setParty(purchaseOrder.supplier_name || "");
-      setAmount(purchaseOrder.expected_amount || "");
+    if (!isOpen) return;
+
+    async function loadPendingOrders() {
+      try {
+        const data =
+          await purchaseService.getPendingPurchaseOrders();
+
+        setPendingOrders(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }, [purchaseOrder]);
+
+    loadPendingOrders();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  function handleSubmit() {
-    if (!party || !billNo || !amount) return;
+  function handlePurchaseOrderChange(e) {
+    const orderId = Number(e.target.value);
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    setSelectedOrderId(orderId);
+
+    const order = pendingOrders.find(
+      (o) => o.id === orderId
+    );
+
+    if (!order) return;
+
+    setParty(order.supplier_name);
+
+    setAmount(order.expected_amount);
+  }
+
+  function handleSubmit() {
+    if (
+      !selectedOrderId ||
+      !billNo ||
+      !amount
+    )
+      return;
+
+    const user = JSON.parse(
+      localStorage.getItem("user")
+    );
 
     onSave({
       store_id: user.store_id,
       product_name: "Purchase Bill",
       quantity: 1,
+
       supplier_name: party,
+
       purchase_amount: Number(amount),
+
       created_by: user.user_id,
+
       bill_number: billNo,
+
       received_by: user.full_name,
+
       checked_by: "",
+
       entered_by: "",
+
       status: "received",
-      purchase_order_id: purchaseOrder?.id,
+
+      purchase_order_id: selectedOrderId,
+
       bill_image: billImage,
     });
 
+    setSelectedOrderId("");
     setParty("");
     setBillNo("");
     setAmount("");
@@ -77,28 +128,40 @@ export default function ReceiveBillModal({
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Party Name
+                Purchase Order
               </label>
 
-              <input
-                value={party}
-                onChange={(e) => setParty(e.target.value)}
+              <select
+                value={selectedOrderId}
+                onChange={handlePurchaseOrderChange}
                 className="w-full h-11 border border-gray-200 rounded-xl px-4"
-              />
+              >
+                <option value="">
+                  Select Purchase Order
+                </option>
+
+                {pendingOrders.map((order) => (
+                  <option
+    key={order.id}
+    value={order.id}
+>
+    {order.label}
+</option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Bill Number
+                  Party Name
                 </label>
 
                 <input
-                  value={billNo}
-                  onChange={(e) => setBillNo(e.target.value)}
-                  placeholder="Enter bill number"
-                  className="w-full h-11 border border-gray-200 rounded-xl px-4"
+                  value={party}
+                  readOnly
+                  className="w-full h-11 border border-gray-200 rounded-xl px-4 bg-gray-50"
                 />
               </div>
 
@@ -108,17 +171,30 @@ export default function ReceiveBillModal({
                 </label>
 
                 <input
-                  type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full h-11 border border-gray-200 rounded-xl px-4"
+                  readOnly
+                  className="w-full h-11 border border-gray-200 rounded-xl px-4 bg-gray-50"
                 />
               </div>
 
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-2">
+                Bill Number
+              </label>
 
+              <input
+                value={billNo}
+                onChange={(e) =>
+                  setBillNo(e.target.value)
+                }
+                placeholder="Enter Bill Number"
+                className="w-full h-11 border border-gray-200 rounded-xl px-4"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-2">
                 Upload Bill
               </label>
@@ -138,7 +214,7 @@ export default function ReceiveBillModal({
                       className="text-gray-400"
                     />
 
-                    <p className="text-sm text-gray-500 mt-3">
+                    <p className="mt-3 text-sm text-gray-500">
                       Click to upload bill image
                     </p>
                   </>
@@ -149,12 +225,13 @@ export default function ReceiveBillModal({
                   accept="image/*"
                   className="hidden"
                   onChange={(e) =>
-                    setBillImage(e.target.files[0])
+                    setBillImage(
+                      e.target.files[0]
+                    )
                   }
                 />
 
               </label>
-
             </div>
 
             <button

@@ -102,16 +102,22 @@ async def create_purchase(
 
     if purchase.purchase_order_id:
 
-        purchase_order = (
-            db.query(PurchaseOrder)
-            .filter(
-                PurchaseOrder.id == purchase.purchase_order_id
-            )
-            .first()
-        )
+     print("Looking for PO:", purchase.purchase_order_id)
 
-        if purchase_order:
-            purchase_order.status = "Completed"
+    purchase_order = (
+        db.query(PurchaseOrder)
+        .filter(
+            PurchaseOrder.id == purchase.purchase_order_id
+        )
+        .first()
+    )
+
+    print("Purchase Order Found:", purchase_order)
+
+    if purchase_order:
+        purchase_order.status = "Completed"
+
+        print("Status Changed To:", purchase_order.status)
 
     db.commit()
     db.refresh(purchase)
@@ -139,6 +145,8 @@ def update_purchase(
     was_completed = (
         purchase.status == "completed"
     )
+    print("Purchase Order Updated:", purchase.id)
+    print("New Status:", purchase.status)
 
     purchase.status = data.status
 

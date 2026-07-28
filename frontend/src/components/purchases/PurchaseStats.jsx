@@ -68,19 +68,19 @@ export default function PurchaseStats({
       color: "text-blue-600 bg-blue-100",
     },
     {
-      title: "Expected Amount",
-      value:
-        "₹" +
-        purchaseOrders
-          .reduce(
-            (sum, o) =>
-              sum + Number(o.expectedAmount || 0),
-            0
-          )
-          .toLocaleString(),
-      icon: CircleDollarSign,
-      color: "text-violet-600 bg-violet-100",
-    },
+  title: "Expected Amount",
+  value:
+    "₹" +
+    purchaseOrders
+      .reduce(
+        (sum, o) =>
+          sum + Number(o.expected_amount || 0),
+        0
+      )
+      .toLocaleString("en-IN"),
+  icon: CircleDollarSign,
+  color: "text-violet-600 bg-violet-100",
+},
   ];
 
   if (activeTab === "orders") {

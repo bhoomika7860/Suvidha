@@ -66,22 +66,53 @@ def get_purchase_orders(
 ):
     today = date.today()
 
-    print("TODAY:", today)
-
     orders = (
         db.query(PurchaseOrder)
         .options(joinedload(PurchaseOrder.items))
         .filter(
             PurchaseOrder.store_id == current_user["store_id"],
             PurchaseOrder.expected_date == today,
-            PurchaseOrder.status == "Pending",
         )
+        .order_by(PurchaseOrder.created_at.desc())
         .all()
     )
 
+    print("TODAY:", today)
     print("Orders returned:", len(orders))
 
     return orders
+
+
+@router.get("/pending")
+def get_pending_purchase_orders(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    orders = (
+        db.query(PurchaseOrder)
+        .filter(
+            PurchaseOrder.store_id == current_user["store_id"],
+            PurchaseOrder.status == "Pending",
+        )
+        .order_by(PurchaseOrder.created_at.asc())
+        .all()
+    )
+
+    return [
+    {
+        "id": order.id,
+        "supplier_name": order.supplier_name,
+        "expected_amount": order.expected_amount,
+        "expected_date": order.expected_date,
+        "label": (
+            f"{order.supplier_name} • "
+            f"₹{order.expected_amount:,.0f} • "
+            f"{order.created_at.strftime('%d %b')}"
+        ),
+    }
+    for order in orders
+]
+
 # -----------------------------
 # Get Single Purchase Order
 # -----------------------------
