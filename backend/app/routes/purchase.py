@@ -171,20 +171,20 @@ def update_purchase(
     if (
         not was_completed
         and purchase.status == "completed"
-    ):
+):
         from app.models.daily_report import DailyReport
 
-        report = (
-            db.query(DailyReport)
-            .filter(
-                DailyReport.store_id == purchase.store_id,
-                DailyReport.report_date == date.today(),
-            )
-            .first()
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == purchase.store_id,
+            DailyReport.report_date == date.today(),
         )
+        .first()
+    )
 
-        if report:
-            report.total_purchases += purchase.purchase_amount
+    if report:
+        report.total_purchases += purchase.purchase_amount
 
     db.commit()
     db.refresh(purchase)
