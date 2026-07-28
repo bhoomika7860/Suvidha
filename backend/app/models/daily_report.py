@@ -64,3 +64,9 @@ class DailyReport(Base):
         back_populates="daily_report",
         cascade="all, delete-orphan",
     )
+
+    delivery_assignments = relationship(
+    "DeliveryAssignment",
+    back_populates="daily_report",
+    cascade="all, delete-orphan",
+)

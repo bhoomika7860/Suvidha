@@ -20,7 +20,7 @@ from app.models.task import Task
 from app.models.purchase import Purchase
 from app.models.purchase_order import PurchaseOrder
 from app.models.purchase_order_item import PurchaseOrderItem
-
+from app.routes import delivery_assignments
 # Import routers
 from app.routes.auth import router as auth_router
 from app.routes.stores import router as store_router
@@ -107,6 +107,7 @@ app.include_router(tasks.router)
 app.include_router(export.router)
 app.include_router(purchase.router)
 app.include_router(purchase_orders.router)
+app.include_router(delivery_assignments.router)
 
 # ----------------------------------------------------
 # Health Routes
@@ -124,3 +125,4 @@ def health():
     return {
         "status": "healthy"
     }
+
