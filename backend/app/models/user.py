@@ -22,6 +22,10 @@ class User(Base):
 )
 
     is_active = Column(Boolean, default=True)
+    is_deleted = Column(
+    Boolean,
+    default=False,
+)
 
     # Reports submitted by this user
     submitted_reports = relationship(

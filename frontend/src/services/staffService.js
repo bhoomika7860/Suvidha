@@ -26,8 +26,7 @@ export const staffService = {
     return response.data;
   },
 
-  deactivateUser: async (id) => {
-    const response = await api.delete(`/users/${id}`);
-    return response.data;
-  },
+  deleteEmployee(id) {
+  return api.delete(`/users/${id}`);
+},
 };

@@ -15,7 +15,7 @@ export default function PerformanceRing({
     <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
 
       <h3 className="mb-6 text-lg font-semibold text-[#111827]">
-        Overall Performance
+        Overall Performance Score
       </h3>
 
       <div className="flex justify-center">
@@ -56,7 +56,7 @@ export default function PerformanceRing({
             </span>
 
             <span className="mt-2 text-sm text-[#6B7280]">
-              Performance
+              Performance Score
             </span>
 
           </div>

@@ -331,6 +331,9 @@ export default function App() {
   const [stores, setStores] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
+const closeDrawer = () => {
+  setSelectedEmployee(null);
+};
 
 const loadUsers = async () => {
   try {
@@ -700,7 +703,11 @@ console.log("Filtered:", filtered);
 
       {/* ── Drawer ──────────────────────────────────────────────────── */}
       {selectedEmployee && (
-        <EmployeeDrawer employee={selectedEmployee} onClose={() => setSelectedEmployee(null)} />
+       <EmployeeDrawer
+    employee={selectedEmployee}
+    onClose={closeDrawer}
+    onEmployeeUpdated={loadUsers}
+/>
       )}
 
       {/* ── Add Modal ───────────────────────────────────────────────── */}

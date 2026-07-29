@@ -9,14 +9,7 @@ export default function DrawerActions({
 
       <div className="grid grid-cols-2 gap-4">
 
-        <button
-          onClick={onEdit}
-          className="flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          <Pencil size={17} />
-
-          Edit Employee
-        </button>
+        
 
         <button
           onClick={onDelete}

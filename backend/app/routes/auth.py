@@ -38,12 +38,18 @@ def login(data: LoginRequest):
                 User.is_active == True,
             )
             .first()
+            
         )
-
         if not user:
             return {
-                "message": "Invalid credentials"
-            }
+        "message": "Invalid credentials"
+    }
+
+        if user.is_deleted:
+            return {
+        "message": "Invalid credentials"
+    }
+        
 
         if not verify_password(
             data.password,

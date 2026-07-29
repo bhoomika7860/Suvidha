@@ -34,8 +34,8 @@ export default function PerformanceSummary({
       <div className="grid grid-cols-2 gap-4">
 
         <StatCard
-          title="Completed Tasks"
-          value={performance.completed_tasks}
+          title="Submitted Tasks"
+          value={performance.submitted_tasks}
           color="#16A34A"
         />
 
@@ -52,7 +52,7 @@ export default function PerformanceSummary({
         />
 
         <StatCard
-          title="Completion Rate"
+          title="Performance Score"
           value={`${performance.completion_rate}%`}
           color="#7C3AED"
         />

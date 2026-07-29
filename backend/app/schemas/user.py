@@ -15,3 +15,4 @@ class UserUpdate(BaseModel):
     role: Literal["owner", "store_manager", "staff", "delivery"]
     store_id: int
     is_active: bool
+    is_deleted: bool = False

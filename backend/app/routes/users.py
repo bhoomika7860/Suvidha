@@ -100,7 +100,8 @@ def get_user(
     db = SessionLocal()
 
     user = db.query(User).filter(
-        User.id == user_id
+        User.id == user_id,
+        User.is_deleted == False
     ).first()
 
     if not user:
@@ -110,38 +111,29 @@ def get_user(
             detail="User not found"
         )
 
-    # Owner can view anyone
-    if current_user["role"] == "owner":
-     users = db.query(User).all()
-
-    result = []
-
-    for user in users:
-        result.append({
-            "id": user.id,
-            "full_name": user.full_name,
-            "username": user.username,
-            "role": user.role,
-            "is_active": user.is_active,
-            "store_id": user.store_id,
-            "store_name": user.store.name if user.store else None,
-        })
-
-    db.close()
-    return result
-
-
-    # Non-owner users can only see users from their own store
-    if user.store_id != current_user["store_id"]:
+    if (
+        current_user["role"] != "owner"
+        and user.store_id != current_user["store_id"]
+    ):
         db.close()
         raise HTTPException(
             status_code=403,
             detail="Access denied"
         )
 
-    db.close()
-    return user
+    result = {
+        "id": user.id,
+        "full_name": user.full_name,
+        "username": user.username,
+        "role": user.role,
+        "is_active": user.is_active,
+        "store_id": user.store_id,
+        "store_name": user.store.name if user.store else None,
+    }
 
+    db.close()
+
+    return result
 
 @router.get("/{user_id}/performance", response_model=EmployeePerformanceResponse)
 def get_employee_performance(
@@ -152,7 +144,10 @@ def get_employee_performance(
 
     db = SessionLocal()
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(
+    User.id == user_id,
+    User.is_deleted == False
+).first()
 
     if not user:
         db.close()
@@ -161,48 +156,61 @@ def get_employee_performance(
             detail="User not found",
         )
 
+    from app.models.task import Task
+
+    assigned_tasks = (
+     db.query(Task)
+    .filter(Task.assigned_to == user.id)
+    .count()
+)
+
+    submitted_tasks = (
+        db.query(Task)
+    .filter(
+        Task.assigned_to == user.id,
+        Task.status == "completed",
+    )
+    .count()
+)
+
+    pending_tasks = assigned_tasks - submitted_tasks
+
+    completed_task_rows = (
+        db.query(Task)
+    .filter(
+        Task.assigned_to == user.id,
+        Task.status == "completed",
+    )
+    .all()
+)
+
+    if completed_task_rows:
+        performance_score = round(
+        sum(t.completion_percentage for t in completed_task_rows)
+        / len(completed_task_rows)
+    )
+    else:
+     performance_score = 0
+
     daily_reports = (
         db.query(func.count(DailyReport.id))
-        .filter(DailyReport.submitted_by == user.id)
-        .scalar()
-    )
+    .filter(DailyReport.submitted_by == user.id)
+    .scalar()
+)
 
     expenses = (
         db.query(func.count(Expense.id))
-        .filter(Expense.created_by == user.id)
-        .scalar()
-    )
+    .filter(Expense.created_by == user.id)
+    .scalar()
+)
 
     purchases = (
-        db.query(func.count(Purchase.id))
-        .filter(Purchase.created_by == user.id)
-        .scalar()
-    )
-
-    # deliveries = (
-#     db.query(func.count(Delivery.id))
-#     .filter(Delivery.completed_by == user.id)
-#     .scalar()
-# )
+         db.query(func.count(Purchase.id))
+    .filter(Purchase.created_by == user.id)
+    .scalar()
+)
 
     deliveries = 0
-
-    completed_tasks = (
-        daily_reports
-        + expenses
-        + purchases
-        + deliveries
-    )
-
-    assigned_tasks = completed_tasks
-
-    pending_tasks = 0
-
-    completion_rate = (
-        100
-        if assigned_tasks == 0
-        else round((completed_tasks / assigned_tasks) * 100)
-    )
 
     response = {
         "employee": {
@@ -214,12 +222,12 @@ def get_employee_performance(
             "is_active": user.is_active,
         },
         "performance": {
-            "completed_tasks": completed_tasks,
-            "assigned_tasks": assigned_tasks,
-            "pending_tasks": pending_tasks,
-            "completion_rate": completion_rate,
-            "overall_score": completion_rate,
-        },
+    "submitted_tasks": submitted_tasks,
+    "assigned_tasks": assigned_tasks,
+    "pending_tasks": pending_tasks,
+    "completion_rate": performance_score,
+    "overall_score": performance_score,
+},
         "statistics": {
             "daily_reports": daily_reports,
             "deliveries": deliveries,
@@ -244,8 +252,9 @@ def update_user(
     db = SessionLocal()
 
     user = db.query(User).filter(
-        User.id == user_id
-    ).first()
+    User.id == user_id,
+    User.is_deleted == False
+).first()
 
     if not user:
         db.close()
@@ -290,12 +299,14 @@ def deactivate_user(
         )
 
     user.is_active = False
+    user.is_deleted = True
+    user.username = f"deleted_user_{user.id}"
 
     db.commit()
     db.close()
 
     return {
-        "message": "User deactivated"
+        "message": "Employee deleted successfully"
     }
 
 
@@ -308,7 +319,11 @@ def get_users(
 
     # Owner sees all users
     if current_user["role"] == "owner":
-        users = db.query(User).all()
+        users = (
+    db.query(User)
+    .filter(User.is_deleted == False)
+    .all()
+)
 
         result = []
 
@@ -327,9 +342,14 @@ def get_users(
         return result
 
     # Staff sees only their own store users
-    users = db.query(User).filter(
-        User.store_id == current_user["store_id"]
-    ).all()
+    users = (
+    db.query(User)
+    .filter(
+        User.store_id == current_user["store_id"],
+        User.is_deleted == False,
+    )
+    .all()
+)
 
     result = []
 

@@ -11,7 +11,7 @@ class EmployeeInfo(BaseModel):
 
 
 class PerformanceInfo(BaseModel):
-    completed_tasks: int
+    submitted_tasks: int
     assigned_tasks: int
     pending_tasks: int
     completion_rate: int

@@ -13,6 +13,7 @@ import DeleteEmployeeModal from "./drawer/DeleteEmployeeModal";
 export default function EmployeeDrawer({
   employee,
   onClose,
+  onEmployeeUpdated,
 }) {
   const [showDeleteModal, setShowDeleteModal] =
     useState(false);
@@ -56,11 +57,26 @@ export default function EmployeeDrawer({
     console.log("Edit employee", employee);
   }
 
-  function handleDelete() {
-    console.log("Delete employee", employee);
-    setShowDeleteModal(false);
-  }
+  async function handleDelete() {
+  try {
+    await staffService.deleteEmployee(employee.id);
 
+    setShowDeleteModal(false);
+
+    if (onEmployeeUpdated) {
+      await onEmployeeUpdated();
+    }
+
+    onClose();
+  } catch (error) {
+    console.error("Failed to delete employee", error);
+
+    alert(
+      error?.response?.data?.detail ||
+      "Failed to delete employee."
+    );
+  }
+}
   if (loading) {
     return (
       <>
