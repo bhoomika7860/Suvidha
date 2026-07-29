@@ -30,7 +30,7 @@ function fmt(value) {
 
 function DonutTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
-console.log("PAYMENT ROWS:", rows);
+
   
 
 return (

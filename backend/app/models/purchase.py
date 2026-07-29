@@ -80,3 +80,8 @@ bill_image = Column(
     String,
     nullable=True,
 )
+
+completed_at = Column(
+    DateTime(timezone=True),
+    nullable=True,
+)

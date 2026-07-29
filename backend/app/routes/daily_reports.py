@@ -340,6 +340,18 @@ def get_report_purchases(
     report_id: int,
     db: Session = Depends(get_db),
 ):
+    all_purchases = db.query(Purchase).all()
+
+    print("----- ALL PURCHASES -----")
+    for p in all_purchases:
+            print(
+        p.id,
+        p.store_id,
+        p.purchase_date,
+        p.status,
+        p.supplier_name,
+    )
+    print("-------------------------")
     report = (
         db.query(DailyReport)
         .filter(DailyReport.id == report_id)
@@ -351,16 +363,42 @@ def get_report_purchases(
             status_code=404,
             detail="Report not found",
         )
-
     purchases = (
-    db.query(Purchase)
+        db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
-        func.date(Purchase.purchase_date) == date.today(),
+        func.date(
+            func.datetime(
+                Purchase.purchase_date,
+                "+5 hours",
+                "+30 minutes",
+            )
+        ) == report.report_date,
+        Purchase.status == "completed",
     )
+    .order_by(Purchase.purchase_date.desc())
     .all()
 )
+    print("Report Date:", report.report_date)
 
+    for p in all_purchases:
+     print(
+        p.id,
+        p.purchase_date,
+        p.purchase_date.date(),
+    )
+    print("Report:", report.id)
+    print("Store:", report.store_id)
+    print("Date:", report.report_date)
+    print("Purchases:", len(purchases))
+
+    for p in purchases:
+     print(
+        p.id,
+        p.supplier_name,
+        p.purchase_date,
+        p.status,
+    )
     return [
         {
             "id": purchase.id,
@@ -534,19 +572,35 @@ def get_report(
     db.query(Expense)
     .filter(
         Expense.store_id == report.store_id,
-        func.date(Expense.created_at) == report.report_date,
+        func.date(
+            func.datetime(
+                Expense.created_at,
+                "+5 hours",
+                "+30 minutes",
+            )
+        ) == report.report_date,
     )
     .all()
 )
-
     purchases = (
     db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
-        func.date(Purchase.purchase_date) == report.report_date,
     )
     .all()
 )
+
+    print("REPORT DATE:", report.report_date)
+
+    print("PURCHASES FOUND:", len(purchases))
+
+    for p in purchases:
+        print(
+        p.id,
+        p.purchase_date,
+        p.status,
+        p.supplier_name,
+    )
 
     delivery_assignments = (
     db.query(

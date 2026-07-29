@@ -52,7 +52,7 @@ const navItems = [
   { label: "Targets", icon: Target },
   { label: "Inventory", icon: Package },
   { label: "Analytics", icon: BarChart2 },
-  { label: "Adjustments", icon: SlidersHorizontal },
+  
   { label: "Audit Logs", icon: ClipboardList },
   { label: "Settings", icon: Settings },
 ];

@@ -15,13 +15,40 @@ export default function ReportDrawer({
 }) {
   if (!isOpen || !report) return null;
 
-  const expenses = report.expenses || [];
-  const purchases = report.purchases || [];
-  const totalExpenses =
-    expenses.reduce(
-      (sum, item) => sum + Number(item.amount || 0),
-      0
-    );
+  const rawExpenses = report.expenses || [];
+const purchases = report.purchases || [];
+
+// Group expenses by expense type
+const groupedExpenses = {};
+
+rawExpenses.forEach((expense) => {
+  const key =
+    expense.expense_type ||
+    expense.title ||
+    expense.category ||
+    "Other";
+
+  if (!groupedExpenses[key]) {
+    groupedExpenses[key] = 0;
+  }
+
+  groupedExpenses[key] += Number(
+    expense.amount || 0
+  );
+});
+
+const expenses = Object.entries(
+  groupedExpenses
+).map(([expense_type, amount], index) => ({
+  id: index,
+  expense_type,
+  amount,
+}));
+
+const totalExpenses = expenses.reduce(
+  (sum, item) => sum + item.amount,
+  0
+);
 
   return (
     <>
@@ -159,14 +186,12 @@ export default function ReportDrawer({
 
               <>
                 {expenses.map((expense) => (
-
-                  <Row
-                    key={expense.id}
-                    title={expense.expense_type}
-                    value={`₹${Number(expense.amount).toLocaleString()}`}
-                  />
-
-                ))}
+  <Row
+    key={expense.expense_type}
+    title={expense.expense_type}
+    value={`₹${expense.amount.toLocaleString("en-IN")}`}
+  />
+))}
 
                 <div className="border-t mt-4 pt-4 flex justify-between font-semibold">
 

@@ -29,9 +29,10 @@ import IconAction from "../../components/reportDetails/shared/IconAction";
 import KPICard from "../../components/reportDetails/shared/KPICard";
 import PaymentBreakdown from "../../components/reportDetails/PaymentBreakdown";
 import ExpenseBreakdown from "../../components/reportDetails/ExpenseBreakdown";
+import CompletedPurchases from "../../components/reportDetails/CompletedPurchases";
+import DeliverySummary from "../../components/reportDetails/DeliverySummary";
 
-import StoreNotes from "../../components/reportDetails/StoreNotes";
-import AdjustmentHistory from "../../components/reportDetails/AdjustmentHistory";
+
 
 function fmt(value) {
   return `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -293,32 +294,7 @@ return (
 
       </div>
 
-      {/* NOTES */}
-
-      <div className="grid grid-cols-12 gap-5">
-
-        <div className="col-span-8">
-
-          <StoreNotes
-            note={
-              report.notes?.trim() ||
-              "No notes submitted."
-            }
-          />
-
-        </div>
-
-        <div className="col-span-4">
-
-          <AdjustmentHistory
-            adjustments={
-              report.adjustments || []
-            }
-          />
-
-        </div>
-
-      </div>
+      
 
     </div>
 

@@ -14,7 +14,7 @@ export default function PurchaseSection() {
 
       const data =
         await dailyReportsService.getPurchases(report.id);
-
+        console.log("Purchases API:", data);
       setPurchases(data);
     }
 
