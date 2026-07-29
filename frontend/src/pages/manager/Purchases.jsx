@@ -38,7 +38,7 @@ export default function Purchases() {
   purchaseData,
   purchaseOrderData,
 ] = await Promise.all([
-  purchaseService.getPurchases(),
+  purchaseService.getTodayPurchases(),
   purchaseService.getPurchaseOrders(),
 ]);
 

@@ -37,7 +37,7 @@ export default function HeroCard() {
     
   ].filter(Boolean).length;
 
-  const totalSections = 6;
+  const totalSections = 5;
 
   const progress = Math.round(
     (completedSections / totalSections) * 100

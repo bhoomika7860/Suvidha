@@ -7,7 +7,7 @@ export default function ReportInfo({ report, user }) {
   if (!report.purchases_completed) pending.push("Purchases");
   if (!report.deliveries_completed) pending.push("Deliveries");
  
-  if (!report.notes_completed) pending.push("Notes");
+  
 
   return (
     <div>

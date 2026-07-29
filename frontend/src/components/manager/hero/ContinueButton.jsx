@@ -7,7 +7,7 @@ export default function ContinueButton() {
 
   return (
     <button
-      onClick={() => navigate("/manager/daily-report")}
+      onClick={() => navigate("/daily-report")}
       className="
       w-52
       h-10

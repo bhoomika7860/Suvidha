@@ -329,7 +329,7 @@ const kpiCards = dashboard
         icon: DollarSign,
         label: "Total Revenue",
         value: fmtCurrency(dashboard.total_sales),
-        trend: "0.0%",
+        
         up: true,
         accent: BLUE,
       },
@@ -337,23 +337,23 @@ const kpiCards = dashboard
         icon: FileText,
         label: "Total Bills",
         value: fmtNumber(dashboard.total_bills),
-        trend: "0.0%",
+        
         up: true,
         accent: GREEN,
       },
       {
-        icon: BarChart2,
-        label: "Avg Bill Value",
-        value: fmtCurrency(dashboard.average_bill),
-        trend: "0.0%",
-        up: true,
-        accent: PURPLE,
-      },
+  icon: Package,
+  label: "Total Purchases",
+  value: fmtCurrency(dashboard.total_purchases),
+
+  up: true,
+  accent: PURPLE,
+},
       {
         icon: AlertCircle,
         label: "Total Expenses",
         value: fmtCurrency(dashboard.total_expenses),
-        trend: "0.0%",
+        
         up: false,
         accent: ORANGE,
       },
@@ -361,7 +361,7 @@ const kpiCards = dashboard
         icon: CreditCard,
         label: "Outstanding Udhaar",
         value: fmtCurrency(dashboard.total_udhaar),
-        trend: "0.0%",
+        
         up: false,
         accent: RED,
       },
