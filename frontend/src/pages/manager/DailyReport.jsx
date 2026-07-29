@@ -46,7 +46,7 @@ export default function DailyReport() {
 
       
 
-      <NotesSection />
+      
 
       <ReviewSection />
 

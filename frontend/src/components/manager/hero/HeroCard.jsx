@@ -34,7 +34,7 @@ export default function HeroCard() {
     report.purchases_completed,
     report.deliveries_completed,
     
-    report.notes_completed,
+    
   ].filter(Boolean).length;
 
   const totalSections = 6;
