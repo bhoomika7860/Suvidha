@@ -69,8 +69,8 @@ export default function ReportTable({ filteredReports, onSelectReport }) {
       </td>
 
       <td className="px-5 py-4 font-semibold">
-        {fmt(r.totalSales)}
-      </td>
+  {fmt(r.sales)}
+</td>
 
       <td className="px-5 py-4">
         {r.bills}

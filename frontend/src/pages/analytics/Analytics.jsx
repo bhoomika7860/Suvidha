@@ -677,20 +677,7 @@ console.log("Stores:", stores);
               </div>
             </div>
 
-            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-              <SectionHeader title="Sales Trend" subtitle="Revenue and bills over time" />
-              <ResponsiveContainer width="100%" height={360}>
-                <LineChart data={salesTrend || []} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: MUTED }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: MUTED }} axisLine={false} tickLine={false} tickFormatter={(value) => fmtShort(value)} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: MUTED }} />
-                  <Line type="monotone" dataKey="revenue" stroke={BLUE} strokeWidth={3} dot={false} name="Revenue" />
-                  <Line type="monotone" dataKey="bills" stroke={GREEN} strokeWidth={3} dot={false} name="Bills" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            
 
             <div className="mb-8 grid gap-6 xl:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
@@ -758,24 +745,7 @@ console.log("Stores:", stores);
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-              
-                <div className="overflow-hidden rounded-xl border border-slate-200">
-                  <table className="min-w-full divide-y divide-slate-200">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Medicine</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Requests</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Store</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Risk</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                     
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+             
             </div>
 
             <div className="mb-8 grid gap-4 xl:grid-cols-4">

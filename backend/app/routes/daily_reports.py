@@ -586,6 +586,14 @@ def get_report(
     db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
+        Purchase.status == "completed",
+        func.date(
+            func.datetime(
+                Purchase.purchase_date,
+                "+5 hours",
+                "+30 minutes",
+            )
+        ) == report.report_date,
     )
     .all()
 )
@@ -643,8 +651,14 @@ def get_report(
             ),
             "bills": report.total_bills,
             "deliveries": report.deliveries,
-            "purchases": report.total_purchases,
-            "expenses": report.total_expenses,
+            "purchases": sum(
+    purchase.purchase_amount
+    for purchase in purchases
+),
+            "expenses": sum(
+    expense.amount
+    for expense in expenses
+),
         },
 
 

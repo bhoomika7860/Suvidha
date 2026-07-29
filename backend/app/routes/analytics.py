@@ -222,9 +222,7 @@ def dashboard_summary(
     store_id=store_id,
     submitted_only=current_user["role"] == "owner",
 )
-
     total_sales = 0
-    total_expenses = 0
     total_bills = 0
     total_deliveries = 0
     total_udhaar = 0
@@ -234,26 +232,59 @@ def dashboard_summary(
 
         total_sales += (
             _safe_number(report.cash_sales)
-            + _safe_number(report.upi_sales)
-            + _safe_number(report.card_sales)
-            + _safe_number(report.udhaar_sales)
-        )
-
-        total_expenses += _safe_number(
-            report.total_expenses
-        )
+        + _safe_number(report.upi_sales)
+        + _safe_number(report.card_sales)
+        + _safe_number(report.udhaar_sales)
+    )
 
         total_purchases += _safe_number(
-    report.total_purchases
-        )
+        report.total_purchases
+    )
 
         total_bills += report.total_bills or 0
 
         total_deliveries += report.deliveries or 0
 
         total_udhaar += _safe_number(
-            report.udhaar_sales
-        )
+        report.udhaar_sales
+    )
+
+# ----------------------------------------------------
+# Expenses are calculated from the Expense table
+# ----------------------------------------------------
+
+    expense_query = db.query(func.sum(Expense.amount))
+
+    if store_id != "all":
+        expense_query = expense_query.filter(
+        Expense.store_id == int(store_id)
+    )
+
+    start_date, end_date = _get_period_bounds(period)
+
+    if start_date:
+        expense_query = expense_query.filter(
+        func.date(
+    func.datetime(
+        Expense.created_at,
+        "+5 hours",
+        "+30 minutes",
+    )
+) >= start_date
+    )
+
+    if end_date:
+        expense_query = expense_query.filter(
+        func.date(
+    func.datetime(
+        Expense.created_at,
+        "+5 hours",
+        "+30 minutes",
+    )
+) <= end_date
+    )
+
+    total_expenses = expense_query.scalar() or 0
 
     
 
@@ -448,7 +479,6 @@ def payment_breakdown(
         },
     ]
 
-
 @router.get("/expense-distribution")
 def expense_distribution(
     period: str = "today",
@@ -466,26 +496,82 @@ def expense_distribution(
 
     query = db.query(Expense)
 
+    # ---------- Store Filter ----------
     if store_id != "all":
         query = query.filter(
             Expense.store_id == int(store_id)
         )
 
+    # ---------- Period Filter ----------
+    start_date, end_date = _get_period_bounds(period)
+
+    print("Start Date:", start_date)
+    print("End Date:", end_date)
+    print("Store ID:", store_id)
+
+    if start_date:
+        query = query.filter(
+            func.date(
+    func.datetime(
+        Expense.created_at,
+        "+5 hours",
+        "+30 minutes",
+    )
+) >= start_date
+        )
+
+    if end_date:
+        query = query.filter(
+            func.date(
+    func.datetime(
+        Expense.created_at,
+        "+5 hours",
+        "+30 minutes",
+    )
+) <= end_date
+        )
+
+    # ---------- Debug: All Expenses ----------
+    all_expenses = db.query(Expense).all()
+
+    print("\n===== ALL EXPENSES =====")
+
+    for expense in all_expenses:
+        print(
+            expense.id,
+            expense.expense_type,
+            expense.amount,
+            expense.created_at,
+        )
+
+    # ---------- Filtered Expenses ----------
     expenses = query.all()
+
+    print("\n===== FILTERED EXPENSES =====")
+    print("Expenses Found:", len(expenses))
+
+    for expense in expenses:
+        print(
+            expense.id,
+            expense.expense_type,
+            expense.amount,
+            expense.created_at,
+        )
 
     grouped = defaultdict(float)
 
     for expense in expenses:
-        grouped[expense.expense_type] += _safe_number(expense.amount)
+        grouped[expense.expense_type] += _safe_number(
+            expense.amount
+        )
 
     return [
         {
             "name": name,
-            "value": round(amount, 2),
+            "amount": round(amount, 2),
         }
         for name, amount in grouped.items()
     ]
-
 @router.get("/sales-trend")
 def sales_trend(
     period: str = "today",
@@ -763,7 +849,13 @@ def manager_dashboard(
     db.query(Expense)
     .filter(
         Expense.store_id == store_id,
-        func.date(Expense.created_at) == today,
+        func.date(
+    func.datetime(
+        Expense.created_at,
+        "+5 hours",
+        "+30 minutes",
+    )
+) == today,
     )
     .order_by(Expense.created_at.desc())
     .all()
