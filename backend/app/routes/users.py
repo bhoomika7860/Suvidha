@@ -5,7 +5,14 @@ from app.schemas.user import UserCreate, UserUpdate
 from app.dependencies.auth import get_current_user
 from app.dependencies.roles import require_role
 from app.core.security import hash_password
+from sqlalchemy import func
 
+from app.models.daily_report import DailyReport
+from app.models.delivery import Delivery
+from app.models.expense import Expense
+from app.models.purchase import Purchase
+
+from app.schemas.performance import EmployeePerformanceResponse
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
@@ -135,6 +142,95 @@ def get_user(
     db.close()
     return user
 
+
+@router.get("/{user_id}/performance", response_model=EmployeePerformanceResponse)
+def get_employee_performance(
+    user_id: int,
+    current_user: dict = Depends(get_current_user),
+):
+    require_role(["owner"], current_user["role"])
+
+    db = SessionLocal()
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        db.close()
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    daily_reports = (
+        db.query(func.count(DailyReport.id))
+        .filter(DailyReport.submitted_by == user.id)
+        .scalar()
+    )
+
+    expenses = (
+        db.query(func.count(Expense.id))
+        .filter(Expense.created_by == user.id)
+        .scalar()
+    )
+
+    purchases = (
+        db.query(func.count(Purchase.id))
+        .filter(Purchase.created_by == user.id)
+        .scalar()
+    )
+
+    # deliveries = (
+#     db.query(func.count(Delivery.id))
+#     .filter(Delivery.completed_by == user.id)
+#     .scalar()
+# )
+
+    deliveries = 0
+
+    completed_tasks = (
+        daily_reports
+        + expenses
+        + purchases
+        + deliveries
+    )
+
+    assigned_tasks = completed_tasks
+
+    pending_tasks = 0
+
+    completion_rate = (
+        100
+        if assigned_tasks == 0
+        else round((completed_tasks / assigned_tasks) * 100)
+    )
+
+    response = {
+        "employee": {
+            "id": user.id,
+            "full_name": user.full_name,
+            "username": user.username,
+            "role": user.role,
+            "store_id": user.store_id,
+            "is_active": user.is_active,
+        },
+        "performance": {
+            "completed_tasks": completed_tasks,
+            "assigned_tasks": assigned_tasks,
+            "pending_tasks": pending_tasks,
+            "completion_rate": completion_rate,
+            "overall_score": completion_rate,
+        },
+        "statistics": {
+            "daily_reports": daily_reports,
+            "deliveries": deliveries,
+            "purchases": purchases,
+            "expenses": expenses,
+        },
+    }
+
+    db.close()
+
+    return response
 
 # Update user (owner only)
 @router.put("/{user_id}")

@@ -6,13 +6,18 @@ export const staffService = {
     return response.data;
   },
 
-  createUser: async (data) => {
-    const response = await api.post("/users/", data);
+  getUser: async (id) => {
+    const response = await api.get(`/users/${id}`);
     return response.data;
   },
 
-  getUser: async (id) => {
-    const response = await api.get(`/users/${id}`);
+  getEmployeePerformance: async (id) => {
+    const response = await api.get(`/users/${id}/performance`);
+    return response.data;
+  },
+
+  createUser: async (data) => {
+    const response = await api.post("/users/", data);
     return response.data;
   },
 

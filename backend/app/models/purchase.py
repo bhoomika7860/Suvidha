@@ -1,5 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    ForeignKey,
+    DateTime,
+)
 from sqlalchemy.sql import func
+
 from app.database import Base
 
 
@@ -8,16 +16,37 @@ class Purchase(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    store_id = Column(
+        Integer,
+        ForeignKey("stores.id"),
+        nullable=False,
+    )
 
-    product_name = Column(String, nullable=False)
-    quantity = Column(Integer, nullable=False)
+    product_name = Column(
+        String,
+        nullable=False,
+    )
 
-    supplier_name = Column(String, nullable=True)
+    quantity = Column(
+        Integer,
+        nullable=False,
+    )
 
-    purchase_amount = Column(Float, nullable=False)
+    supplier_name = Column(
+        String,
+        nullable=True,
+    )
 
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    purchase_amount = Column(
+        Float,
+        nullable=False,
+    )
+
+    created_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
     purchase_date = Column(
         DateTime(timezone=True),
@@ -41,47 +70,16 @@ class Purchase(Base):
         nullable=False,
     )
 
-    received_by = Column(
-        String,
-        nullable=True,
-    )
-
-    checked_by = Column(
-        String,
-        nullable=True,
-    )
-
-    entered_by = Column(
-        String,
-        nullable=True,
-    )
+    received_by = Column(String, nullable=True)
+    checked_by = Column(String, nullable=True)
+    entered_by = Column(String, nullable=True)
 
     bill_image = Column(
         String,
         nullable=True,
     )
 
-received_by = Column(
-    String,
-    nullable=True,
-)
-
-checked_by = Column(
-    String,
-    nullable=True,
-)
-
-entered_by = Column(
-    String,
-    nullable=True,
-)
-
-bill_image = Column(
-    String,
-    nullable=True,
-)
-
-completed_at = Column(
-    DateTime(timezone=True),
-    nullable=True,
-)
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )

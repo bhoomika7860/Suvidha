@@ -24,11 +24,12 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+import EmployeeDrawer from "../../components/staff/EmployeeDrawer";
 import storesService from "../../services/storeService";
 import { staffService } from "../../services/staffService";
 import {
   RoleBadge,
-  StatusBadge,
+
   Select,
 } from "../staff_management/components/Badges";
 
@@ -316,190 +317,13 @@ const handleCreateEmployee = async () => {
       </div>
     </div>
 
-);    {showAddModal && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-    <div className="bg-white rounded-xl shadow-xl w-[500px] p-6">
-
-      <h2 className="text-2xl font-bold mb-6">
-        Add Employee
-      </h2>
-
-      <p className="text-gray-500 mb-6">
-        Employee form goes here.
-      </p>
-
-      <div className="flex justify-end gap-3">
-
-        <button
-          onClick={() => setShowAddModal(false)}
-          className="px-4 py-2 border rounded-lg"
-        >
-          Cancel
-        </button>
-
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          Save
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-)}
-  
+);    
 }
 
-// ─── Employee Drawer ──────────────────────────────────────────────────────────
 
-const ALL_PERMISSIONS = ["Daily Reports", "Dashboard", "Analytics", "Inventory", "Targets", "Staff Management", "Audit Logs", "Settings"];
-
-function EmployeeDrawer({ employee, onClose }) {
-  function InfoRow({ label, value, icon }) {
-    return (
-      <div className="flex items-start justify-between py-3 border-b border-[#F3F4F6] last:border-0">
-        <span className="text-sm text-[#6B7280] font-medium">{label}</span>
-        <span className="text-sm text-[#111827] font-medium flex items-center gap-1.5 text-right">{icon}{value}</span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-[460px] bg-white shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-[#E5E7EB] bg-white">
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex items-center gap-4">
-              <div
-  className="w-16 h-16 ..."
-  style={{ backgroundColor: AVATAR_COLORS[employee.id] }}
->
-  {getInitials(employee.full_name)}
-</div>
-              <div>
-                <h2 className="text-lg font-semibold text-[#111827]">{employee.full_name}</h2>
-                <p className="text-sm text-[#6B7280]">@{employee.username}</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-[#6B7280]">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-              <RoleBadge role={employee.role} />
-              <Store size={11} />{employee.store_name || "-"}
-              <StatusBadge active={employee.is_active} />
-            </span>
-            
-          </div>
-        </div>
-
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Section 1 — Personal */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-            <h3 className="text-sm font-semibold text-[#111827] mb-1">Personal Information</h3>
-            <p className="text-xs text-[#6B7280] mb-4">Basic contact details</p>
-            <InfoRow label="Full Name" value={employee.full_name} />
-            <InfoRow label="Username" value={`@${employee.username}`} />
-            
-            <InfoRow label="Email" value={employee.email} icon={<Mail size={12} className="text-[#6B7280]" />} />
-           
-          </div>
-
-          {/* Section 2 — Work */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-            <h3 className="text-sm font-semibold text-[#111827] mb-1">Work Information</h3>
-            <p className="text-xs text-[#6B7280] mb-4">Store assignment and access level</p>
-            <InfoRow label="Assigned Store" value={employee.store_name || "-"} icon={<Store size={12} className="text-[#6B7280]" />} />
-            <InfoRow label="Role" value={employee.role} />
-            <InfoRow label="Status" value={employee.is_active ? "Active" : "Inactive"} />
-            <InfoRow label="Employee ID" value={employee.id} />
-            
-           
-          </div>
-
-          {/* Section 3 — Permissions */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-            <h3 className="text-sm font-semibold text-[#111827] mb-1">Permissions</h3>
-            <p className="text-xs text-[#6B7280] mb-4">Module access granted to this employee</p>
-            <div className="space-y-2.5">
-              {ALL_PERMISSIONS.map((perm) => {
-                const granted = false;
-                return (
-                  <div key={perm} className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-0">
-                    <span className="text-sm text-[#374151]">{perm}</span>
-                    {granted ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                        <Check size={13} className="text-emerald-500" /> Granted
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-gray-400">
-                        <X size={13} className="text-gray-400" /> Denied
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Section 4 — Timeline */}
-          <div className="bg-white border border-[#E5E7EB] rounded-[16px] p-5">
-            <h3 className="text-sm font-semibold text-[#111827] mb-1">Activity Timeline</h3>
-            <p className="text-xs text-[#6B7280] mb-5">Recent account activity</p>
-            <div className="relative pl-4">
-              {/* Vertical line */}
-              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-[#E5E7EB]" />
-              <div className="space-y-5">
-                {(employee.timeline || []).map((item, i) => (
-                  <div key={i} className="relative flex gap-3">
-                    <div
-                      className="absolute -left-4 top-1 w-3 h-3 rounded-full border-2 border-white flex-shrink-0"
-                      style={{ backgroundColor: item.color, boxShadow: `0 0 0 2px ${item.color}22` }}
-                    />
-                    <div className="pl-2">
-                      <p className="text-sm font-medium text-[#111827]">{item.event}</p>
-                      <p className="text-xs text-[#6B7280] mt-0.5">{item.description}</p>
-                      <p className="text-xs text-[#9CA3AF] mt-1">{item.date}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sticky footer */}
-        <div className="border-t border-[#E5E7EB] px-6 py-4 bg-white flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-xl hover:bg-gray-50 transition-colors">
-            <Key size={14} /> Reset Password
-          </button>
-          <button className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-[#374151] bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-            <Pencil size={14} /> Edit Employee
-          </button>
-          <button className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
-            <Ban size={14} /> Deactivate
-          </button>
-          <button className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors">
-            Save Changes
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
+
 
 export default function App() {
 
