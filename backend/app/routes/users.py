@@ -11,7 +11,7 @@ from app.models.daily_report import DailyReport
 from app.models.delivery import Delivery
 from app.models.expense import Expense
 from app.models.purchase import Purchase
-
+from app.models.task import Task
 from app.schemas.performance import EmployeePerformanceResponse
 router = APIRouter(
     prefix="/users",
@@ -156,7 +156,7 @@ def get_employee_performance(
             detail="User not found",
         )
 
-    from app.models.task import Task
+   
 
     assigned_tasks = (
      db.query(Task)
@@ -275,8 +275,6 @@ def update_user(
     return {
         "message": "User updated"
     }
-
-
 # Deactivate user (owner only)
 @router.delete("/{user_id}")
 def deactivate_user(
@@ -320,40 +318,42 @@ def get_users(
     # Owner sees all users
     if current_user["role"] == "owner":
         users = (
-    db.query(User)
-    .filter(User.is_deleted == False)
-    .all()
-)
-
-        result = []
-
-        for user in users:
-            result.append({
-                "id": user.id,
-                "full_name": user.full_name,
-                "username": user.username,
-                "role": user.role,
-                "is_active": user.is_active,
-                "store_id": user.store_id,
-                "store_name": user.store.name if user.store else None,
-            })
-
-        db.close()
-        return result
-
-    # Staff sees only their own store users
-    users = (
-    db.query(User)
-    .filter(
-        User.store_id == current_user["store_id"],
-        User.is_deleted == False,
-    )
-    .all()
-)
+            db.query(User)
+            .filter(User.is_deleted == False)
+            .all()
+        )
+    else:
+        # Store staff only see users from their own store
+        users = (
+            db.query(User)
+            .filter(
+                User.store_id == current_user["store_id"],
+                User.is_deleted == False,
+            )
+            .all()
+        )
 
     result = []
 
     for user in users:
+
+        completed_tasks = (
+            db.query(Task)
+            .filter(
+                Task.assigned_to == user.id,
+                Task.status == "completed",
+            )
+            .all()
+        )
+
+        if completed_tasks:
+            performance_score = round(
+                sum(task.completion_percentage for task in completed_tasks)
+                / len(completed_tasks)
+            )
+        else:
+            performance_score = 0
+
         result.append({
             "id": user.id,
             "full_name": user.full_name,
@@ -362,6 +362,7 @@ def get_users(
             "is_active": user.is_active,
             "store_id": user.store_id,
             "store_name": user.store.name if user.store else None,
+            "performance_score": performance_score,
         })
 
     db.close()

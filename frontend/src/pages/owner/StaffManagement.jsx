@@ -626,7 +626,7 @@ console.log("Filtered:", filtered);
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    {["Employee", "Store", "Role", "Status", "Phone", "Actions"].map((col) => (
+                    {["Employee", "Store", "Role", "Performance"].map((col) => (
                       <th key={col} className="text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wide px-6 py-3.5 whitespace-nowrap">
                         {col}
                       </th>
@@ -636,9 +636,10 @@ console.log("Filtered:", filtered);
                 <tbody>
                   {filtered.map((emp) => (
                     <tr
-                      key={emp.id}
-                      className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors group"
-                    >
+    key={emp.id}
+    onClick={() => setSelectedEmployee(emp)}
+    className="cursor-pointer border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors"
+>
                       {/* Employee */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -664,34 +665,28 @@ console.log("Filtered:", filtered);
                       {/* Role */}
                       <td className="px-6 py-4">
   <RoleBadge role={emp.role} />
+
+  <td className="px-6 py-4">
+
+  <span
+    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+      ${
+        emp.performance_score >= 80
+          ? "bg-green-100 text-green-700"
+          : emp.performance_score >= 50
+          ? "bg-yellow-100 text-yellow-700"
+          : "bg-red-100 text-red-700"
+      }`}
+  >
+    {emp.performance_score}%
+  </span>
+
+</td>
 </td>
                       
                       
                       
-                      {/* Actions */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => setSelectedEmployee(emp)}
-                            className="p-2 rounded-lg hover:bg-blue-50 text-[#6B7280] hover:text-blue-600 transition-colors"
-                            title="View"
-                          >
-                            <Eye size={15} />
-                          </button>
-                          <button
-                            className="p-2 rounded-lg hover:bg-gray-100 text-[#6B7280] hover:text-[#374151] transition-colors"
-                            title="Edit"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            className="p-2 rounded-lg hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors"
-                            title="Deactivate"
-                          >
-                            <Ban size={15} />
-                          </button>
-                        </div>
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>

@@ -142,7 +142,7 @@ export default function EmployeeInformation({
             <option value="owner">Owner</option>
             <option value="store_manager">Store Manager</option>
             <option value="staff">Staff</option>
-            <option value="delivery_boy">Delivery Boy</option>
+            <option value="delivery">Delivery Boy</option>
           </select>
         ) : (
           <span>{employee.role}</span>
