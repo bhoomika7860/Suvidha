@@ -474,7 +474,6 @@ from sqlalchemy.orm import joinedload
 
 @router.get("/")
 def get_all_reports(
-    period: str = "all",
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -488,18 +487,10 @@ def get_all_reports(
             DailyReport.store_id == current_user["store_id"]
         )
 
-    if period == "today":
-        query = query.filter(
-        func.date(DailyReport.report_date) == date.today()
-    )
-    elif period == "all":
-        pass
-
-# Owner should only see submitted reports
     if current_user["role"] == "owner":
         query = query.filter(
-        DailyReport.is_submitted == True
-    )
+            DailyReport.is_submitted == True
+        )
 
     reports = (
         query.order_by(DailyReport.report_date.desc())
@@ -528,6 +519,52 @@ def get_all_reports(
         }
         for report in reports
     ]
+
+@router.get("/today/all")
+def get_today_reports(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user["role"] != "owner":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    reports = (
+        db.query(DailyReport)
+        .options(joinedload(DailyReport.store))
+        .filter(
+            DailyReport.is_submitted == True,
+            func.date(DailyReport.report_date) == date.today(),
+        )
+        .order_by(DailyReport.store_id)
+        .all()
+    )
+
+    return [
+        {
+            "id": report.id,
+            "store_id": report.store_id,
+            "store_name": report.store.name,
+            "report_date": report.report_date,
+
+            "total_bills": report.total_bills,
+            "deliveries": report.deliveries,
+
+            "cash_sales": report.cash_sales,
+            "upi_sales": report.upi_sales,
+            "card_sales": report.card_sales,
+            "udhaar_sales": report.udhaar_sales,
+
+            "total_expenses": report.total_expenses,
+            "total_purchases": report.total_purchases,
+
+            "is_locked": report.is_locked,
+        }
+        for report in reports
+    ]
+
 
 
 # Get reports by store

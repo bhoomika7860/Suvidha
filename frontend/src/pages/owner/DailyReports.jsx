@@ -121,7 +121,7 @@ useEffect(() => {
     if (storeId) {
         data = await dailyReportsService.getStoreReports(storeId);
     } else {
-        data = await dailyReportsService.getAllReports();
+        data = await dailyReportsService.getTodayReports();
     }
 
     setReports(data);

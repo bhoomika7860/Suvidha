@@ -60,6 +60,11 @@ getTodayReport: async () => {
   return response.data;
 },
 
+getTodayReports: async () => {
+  const response = await api.get("/daily-reports/today/all");
+  return response.data;
+},
+
 updateSales: async (reportId, payload) => {
   const response = await api.put(
     `/daily-reports/${reportId}/sales`,
