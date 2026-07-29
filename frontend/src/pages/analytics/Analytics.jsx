@@ -18,6 +18,7 @@ import {
   TrendingUp,
   DollarSign,
   FileText,
+  Truck,
   BarChart2,
   AlertCircle,
   CreditCard,
@@ -180,7 +181,7 @@ const [udhaar, setUdhaar] = useState([]);
 const [paymentBreakdown, setPaymentBreakdown] = useState([]);
 const [expenseDistribution, setExpenseDistribution] = useState([]);
 const [salesTrend, setSalesTrend] = useState([]);
-
+const [deliveryPerformance, setDeliveryPerformance] = useState([]);
 
 const [performance, setPerformance] = useState([]);
 
@@ -202,24 +203,24 @@ const [showExport, setShowExport] = useState(false);
     setError("");
 
     const [
-      dashboardData,
-      storeData,
-      udhaarData,
-      paymentData,
-      expenseData,
-      trendData,
-      
-      performanceData,
-    ] = await Promise.all([
-      analyticsService.getDashboardSummary(selectedPeriod, selectedStore),
-analyticsService.getStoreSummary(selectedPeriod, selectedStore),
-analyticsService.getOutstandingUdhaar(selectedPeriod, selectedStore),
-analyticsService.getPaymentBreakdown(selectedPeriod, selectedStore),
-analyticsService.getExpenseDistribution(selectedPeriod, selectedStore),
-analyticsService.getSalesTrend(selectedPeriod, selectedStore),
-
-analyticsService.getPerformance(selectedPeriod, selectedStore),
-    ]);
+  dashboardData,
+  storeData,
+  udhaarData,
+  paymentData,
+  expenseData,
+  trendData,
+  deliveryData,
+  performanceData,
+] = await Promise.all([
+  analyticsService.getDashboardSummary(selectedPeriod, selectedStore),
+  analyticsService.getStoreSummary(selectedPeriod, selectedStore),
+  analyticsService.getOutstandingUdhaar(selectedPeriod, selectedStore),
+  analyticsService.getPaymentBreakdown(selectedPeriod, selectedStore),
+  analyticsService.getExpenseDistribution(selectedPeriod, selectedStore),
+  analyticsService.getSalesTrend(selectedPeriod, selectedStore),
+  analyticsService.getDeliveryPerformance(selectedPeriod, selectedStore),
+  analyticsService.getPerformance(selectedPeriod, selectedStore),
+]);
 
     setDashboard(dashboardData);
 
@@ -238,7 +239,7 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     setPaymentBreakdown(paymentData);
     setExpenseDistribution(expenseData);
     setSalesTrend(trendData);
-    
+    setDeliveryPerformance(deliveryData);
     
     setPerformance(performanceData);
 
@@ -251,6 +252,7 @@ analyticsService.getPerformance(selectedPeriod, selectedStore),
     setRefreshing(false);
   }
 };
+
 
 const handleRefresh = async () => {
   setRefreshing(true);
@@ -364,13 +366,13 @@ const kpiCards = dashboard
         accent: RED,
       },
       {
-        icon: TrendingUp,
-        label: "Growth Rate",
-        value: `${dashboard.growth_rate || 0}%`,
-        trend: "Stable",
-        up: true,
-        accent: GREEN,
-      },
+  icon: Truck,
+  label: "Total Deliveries",
+  value: dashboard.total_deliveries || 0,
+  trend: `${dashboard.total_deliveries || 0} Today`,
+  up: true,
+  accent: GREEN,
+},
     ]
   : [];
 
@@ -679,74 +681,142 @@ console.log("Stores:", stores);
 
             
 
-            <div className="mb-8 grid gap-6 xl:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-                <SectionHeader title="Top Selling Stores" subtitle="Revenue leaders across the network" />
-                <div className="overflow-hidden rounded-xl border border-slate-200">
-                  <table className="min-w-full divide-y divide-slate-200">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Store</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Revenue</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Bills</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Growth</th>
-                      </tr>
-                    </thead>
-<tbody className="divide-y divide-slate-100 bg-white">
-  {(stores || []).map((store, index) => (
-    <tr
-      key={store.store_id ?? index}
-      className="transition hover:bg-slate-50"
-    >
-      <td className="px-4 py-3">
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
-          style={{
-            background: index === 0 ? "#FEF9C3" : "#EEF2FF",
-            color: index === 0 ? "#92400E" : BLUE,
-          }}
-        >
-          {index + 1}
-        </span>
-      </td>
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <td
-        className="px-4 py-3 text-[15px] font-bold"
-        style={{ color: TEXT }}
-      >
-        {store.store_name}
-      </td>
+  {/* Top Selling Stores */}
+  <div
+    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+    style={{ borderColor: BORDER }}
+  >
+    <SectionHeader
+      title="Top Selling Stores"
+      subtitle="Revenue leaders across the network"
+    />
 
-      <td
-        className="px-4 py-3 text-[15px] font-semibold"
-        style={{ color: TEXT }}
-      >
-        {fmtCurrency(store.total_sales)}
-      </td>
+    <div className="overflow-hidden rounded-xl border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200">
+        <thead className="bg-slate-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>#</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Store</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Revenue</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>Bills</th>
 
-      <td
-        className="px-4 py-3 text-[15px]"
-        style={{ color: MUTED }}
-      >
-        {fmtNumber(store.total_bills)}
-      </td>
+          </tr>
+        </thead>
 
-      <td
-        className="px-4 py-3 text-[15px] font-semibold"
-        style={{ color: Number(store.growth_rate || 0) >= 0 ? GREEN : RED }}
-      >
-        {`${Number(store.growth_rate || 0).toFixed(1)}%`}
-      </td>
-    </tr>
-  ))}
-</tbody>
-                  </table>
-                </div>
-              </div>
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {(stores || []).map((store, index) => (
+            <tr
+              key={store.store_id ?? index}
+              className="transition hover:bg-slate-50"
+            >
+              <td className="px-4 py-3">
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                  style={{
+                    background: index === 0 ? "#FEF9C3" : "#EEF2FF",
+                    color: index === 0 ? "#92400E" : BLUE,
+                  }}
+                >
+                  {index + 1}
+                </span>
+              </td>
 
-             
-            </div>
+              <td
+                className="px-4 py-3 text-[15px] font-bold"
+                style={{ color: TEXT }}
+              >
+                {store.store_name}
+              </td>
+
+              <td
+                className="px-4 py-3 text-[15px] font-semibold"
+                style={{ color: TEXT }}
+              >
+                {fmtCurrency(store.total_sales)}
+              </td>
+
+              <td
+                className="px-4 py-3 text-[15px]"
+                style={{ color: MUTED }}
+              >
+                {fmtNumber(store.total_bills)}
+              </td>
+
+              
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {/* Deliveries */}
+  <div
+    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+    style={{ borderColor: BORDER }}
+  >
+    <SectionHeader
+      title="Deliveries"
+      subtitle="Deliveries completed by each store"
+    />
+
+    <div className="overflow-hidden rounded-xl border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200">
+        <thead className="bg-slate-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>#</th>
+
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>
+              Store
+            </th>
+
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: MUTED }}>
+              Deliveries
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {(deliveryPerformance || []).map((store, index) => (
+            <tr
+              key={store.store}
+              className="transition hover:bg-slate-50"
+            >
+              <td className="px-4 py-3">
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                  style={{
+                    background: index === 0 ? "#DCFCE7" : "#EEF2FF",
+                    color: index === 0 ? GREEN : BLUE,
+                  }}
+                >
+                  {index + 1}
+                </span>
+              </td>
+
+              <td
+                className="px-4 py-3 text-[15px] font-bold"
+                style={{ color: TEXT }}
+              >
+                {store.store}
+              </td>
+
+              <td
+                className="px-4 py-3 text-[15px] font-semibold"
+                style={{ color: GREEN }}
+              >
+                {fmtNumber(store.deliveries)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 
             <div className="mb-8 grid gap-4 xl:grid-cols-4">
               

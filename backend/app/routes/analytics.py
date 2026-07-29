@@ -915,6 +915,69 @@ def manager_dashboard(
 
         
     }
+@router.get("/delivery-performance")
+def delivery_performance(
+    period: str = "today",
+    store_id: str = "all",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    require_role(
+        ["owner", "store_manager"],
+        current_user["role"],
+    )
+
+    query = db.query(DailyReport)
+
+    if current_user["role"] == "store_manager":
+        query = query.filter(
+            DailyReport.store_id == current_user["store_id"]
+        )
+    elif store_id != "all":
+        query = query.filter(
+            DailyReport.store_id == int(store_id)
+        )
+
+    start_date, end_date = _get_period_bounds(period)
+
+    if start_date:
+        query = query.filter(
+            DailyReport.report_date >= start_date
+        )
+
+    if end_date:
+        query = query.filter(
+            DailyReport.report_date <= end_date
+        )
+
+    reports = query.all()
+
+    stores = {}
+
+    for report in reports:
+        store = db.query(Store).filter(
+            Store.id == report.store_id
+        ).first()
+
+        if not store:
+            continue
+
+        if store.name not in stores:
+            stores[store.name] = 0
+
+        stores[store.name] += report.deliveries or 0
+
+    return sorted(
+        [
+            {
+                "store": name,
+                "deliveries": deliveries,
+            }
+            for name, deliveries in stores.items()
+        ],
+        key=lambda x: x["deliveries"],
+        reverse=True,
+    )
 
 @router.get("/overview")
 def overview(

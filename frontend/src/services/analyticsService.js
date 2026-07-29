@@ -119,7 +119,15 @@ exportPDF: async (period = "today", store = "all") => {
         store_id: store,
       },
     }).then((r) => r.data),
-
+  
+  getDeliveryPerformance: (period = "today", store = "all") =>
+  api.get("/analytics/delivery-performance", {
+    params: {
+      period,
+      store_id: store,
+    },
+  }).then((r) => r.data),
+  
   getTopBouncedProducts: (period = "today", store = "all") =>
     api.get("/analytics/top-bounced-products", {
       params: {
@@ -176,6 +184,8 @@ exportReportsExcel: async (
 
   return response.data;
 },
+
+
 
 exportReportsPDF: async (
   period,
