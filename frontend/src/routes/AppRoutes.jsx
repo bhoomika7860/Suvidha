@@ -16,6 +16,7 @@ import DailyReport from "../pages/manager/DailyReport";
 import PreviousReports from "../pages/manager/PreviousReports";
 import Profile from "../pages/manager/Profile";
 import Tasks from "../pages/owner/Tasks";
+import OwnerPurchases from "../pages/owner/OwnerPurchases";
 // Staff Layout
 import StaffLayout from "../components/layout/StaffLayout";
 
@@ -80,6 +81,12 @@ function AppRoutes() {
   path="/stores"
   element={<Stores />}
 />
+
+<Route
+    path="/owner-purchases"
+    element={<OwnerPurchases />}
+/>
+
 <Route
   path="/previous-reports"
   element={<PreviousReports />}

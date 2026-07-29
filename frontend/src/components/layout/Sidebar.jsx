@@ -44,6 +44,11 @@ const navItems = [
     path: "/tasks",
   },
   {
+  label: "Purchases",
+  icon: FileText,
+  path: "/owner-purchases",
+},
+  {
     label: "Analytics",
     icon: BarChart3,
     path: "/analytics",
