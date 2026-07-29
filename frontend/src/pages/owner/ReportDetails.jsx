@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } frfom "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { dailyReportsService } from "../../services/dailyReportsService";

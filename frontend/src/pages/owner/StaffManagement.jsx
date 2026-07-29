@@ -637,8 +637,16 @@ console.log("Filtered:", filtered);
                   {filtered.map((emp) => (
                     <tr
     key={emp.id}
-    onClick={() => setSelectedEmployee(emp)}
-    className="cursor-pointer border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors"
+    onClick={
+        emp.role === "owner"
+            ? undefined
+            : () => setSelectedEmployee(emp)
+    }
+    className={
+        emp.role === "owner"
+            ? "border-b border-[#F3F4F6] bg-gray-50"
+            : "cursor-pointer border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
+    }
 >
                       {/* Employee */}
                       <td className="px-6 py-4">
@@ -663,26 +671,29 @@ console.log("Filtered:", filtered);
                         </div>
                       </td>
                       {/* Role */}
-                      <td className="px-6 py-4">
-  <RoleBadge role={emp.role} />
+<td className="px-6 py-4">
+    <RoleBadge role={emp.role} />
+</td>
 
-  <td className="px-6 py-4">
-
-  <span
-    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
-      ${
+{/* Performance */}
+<td className="px-6 py-4">
+  {emp.role === "owner" ? (
+    <span className="text-sm font-medium text-gray-400">-</span>
+  ) : (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
         emp.performance_score >= 80
           ? "bg-green-100 text-green-700"
           : emp.performance_score >= 50
           ? "bg-yellow-100 text-yellow-700"
           : "bg-red-100 text-red-700"
       }`}
-  >
-    {emp.performance_score}%
-  </span>
+    >
+      {emp.performance_score}%
+    </span>
+  )}
+</td>
 
-</td>
-</td>
                       
                       
                       

@@ -19,6 +19,10 @@ export default function ReportsTable({
             <th className="px-6 py-4 text-left text-sm font-semibold">
               Date
             </th>
+            
+            <th className="px-6 py-4 text-left text-sm font-semibold">
+              Store
+            </th>
 
             <th className="px-6 py-4 text-left text-sm font-semibold">
               Bills
@@ -44,9 +48,7 @@ export default function ReportsTable({
               Status
             </th>
 
-            <th className="px-6 py-4 text-center text-sm font-semibold">
-              View
-            </th>
+            
 
           </tr>
 
@@ -75,6 +77,10 @@ export default function ReportsTable({
 
                 </div>
 
+              </td>
+
+              <td className="px-6 py-4 font-medium text-gray-700">
+                {report.store}
               </td>
 
               <td className="px-6 py-4 font-medium">
@@ -111,18 +117,7 @@ export default function ReportsTable({
 
               </td>
 
-              <td className="px-6 py-4 text-center">
-
-                <button className="w-9 h-9 rounded-lg hover:bg-blue-100 flex items-center justify-center mx-auto">
-
-                  <Eye
-                    size={18}
-                    className="text-blue-600"
-                  />
-
-                </button>
-
-              </td>
+              
 
             </tr>
 

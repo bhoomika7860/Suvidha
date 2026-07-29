@@ -474,7 +474,7 @@ from sqlalchemy.orm import joinedload
 
 @router.get("/")
 def get_all_reports(
-    period: str = "today",
+    period: str = "all",
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -489,9 +489,11 @@ def get_all_reports(
         )
 
     if period == "today":
-     query = query.filter(
+        query = query.filter(
         func.date(DailyReport.report_date) == date.today()
     )
+    elif period == "all":
+        pass
 
 # Owner should only see submitted reports
     if current_user["role"] == "owner":
