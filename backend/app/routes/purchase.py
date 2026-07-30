@@ -25,6 +25,8 @@ from app.schemas.purchase import (
     PurchaseCreate,
     PurchaseResponse,
     PurchaseUpdate,
+    OwnerPurchaseResponse,
+    PaginatedOwnerPurchaseResponse,
 )
 
 router = APIRouter(
@@ -218,9 +220,12 @@ def get_all_purchases(
 
 @router.get(
     "/owner",
-    response_model=list[OwnerPurchaseResponse],
+    response_model=PaginatedOwnerPurchaseResponse,
 )
 def get_owner_purchases(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+
     store_id: int | None = Query(None),
     status: str | None = Query(None),
     supplier: str | None = Query(None),
@@ -268,15 +273,19 @@ def get_owner_purchases(
         func.date(Purchase.purchase_date) == date
     )
 
+    total = query.count()
+
     purchases = (
         query.order_by(
-            Purchase.purchase_date.desc(),
-            Purchase.id.desc(),
-        )
-        .all()
+        Purchase.purchase_date.desc(),
+        Purchase.id.desc(),
     )
-
-    return [
+    .offset((page - 1) * page_size)
+    .limit(page_size)
+    .all()
+)
+    return {
+    "items": [
         {
             "id": purchase.id,
             "purchase_date": purchase.purchase_date,
@@ -295,7 +304,11 @@ def get_owner_purchases(
             "bill_image": purchase.bill_image,
         }
         for purchase, store_name in purchases
-    ]
+    ],
+    "total": total,
+    "page": page,
+    "page_size": page_size,
+}
 
 # ----------------------------------------------------
 # Get Store Purchases

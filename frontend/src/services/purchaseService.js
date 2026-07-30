@@ -63,9 +63,14 @@ const purchaseService = {
   return response.data;
 },
 
-  getOwnerPurchases: async (filters = {}) => {
+
+  getOwnerPurchases: async (filters = {}, page = 1, pageSize = 10) => {
   const response = await api.get("/purchases/owner", {
-    params: filters,
+    params: {
+      ...filters,
+      page,
+      page_size: pageSize,
+    },
   });
 
   return response.data;

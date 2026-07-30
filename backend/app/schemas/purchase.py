@@ -75,3 +75,9 @@ class OwnerPurchaseResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PaginatedOwnerPurchaseResponse(BaseModel):
+    items: list[OwnerPurchaseResponse]
+    total: int
+    page: int
+    page_size: int
