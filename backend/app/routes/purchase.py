@@ -1,4 +1,7 @@
 from datetime import date
+from app.models.store import Store
+from app.schemas.purchase import OwnerPurchaseResponse
+from fastapi import Query
 import os
 import uuid
 
@@ -211,6 +214,88 @@ def get_all_purchases(
 
     return purchases
 
+
+
+@router.get(
+    "/owner",
+    response_model=list[OwnerPurchaseResponse],
+)
+def get_owner_purchases(
+    store_id: int | None = Query(None),
+    status: str | None = Query(None),
+    supplier: str | None = Query(None),
+    bill_number: str | None = Query(None),
+    date: date | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user["role"] != "owner":
+        raise HTTPException(
+            status_code=403,
+            detail="Only owners can access this endpoint.",
+        )
+
+    query = (
+        db.query(Purchase, Store.name)
+        .join(
+            Store,
+            Purchase.store_id == Store.id,
+        )
+    )
+
+    if store_id:
+        query = query.filter(
+            Purchase.store_id == store_id
+        )
+
+    if status:
+        query = query.filter(
+            Purchase.status == status
+        )
+
+    if supplier:
+        query = query.filter(
+            Purchase.supplier_name.ilike(f"%{supplier}%")
+        )
+
+    if bill_number:
+        query = query.filter(
+            Purchase.bill_number.ilike(f"%{bill_number}%")
+        )
+
+    if date:
+        query = query.filter(
+        func.date(Purchase.purchase_date) == date
+    )
+
+    purchases = (
+        query.order_by(
+            Purchase.purchase_date.desc(),
+            Purchase.id.desc(),
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": purchase.id,
+            "purchase_date": purchase.purchase_date,
+            "store_id": purchase.store_id,
+            "store_name": store_name,
+            "product_name": purchase.product_name,
+            "quantity": purchase.quantity,
+            "supplier_name": purchase.supplier_name,
+            "purchase_amount": purchase.purchase_amount,
+            "bill_number": purchase.bill_number,
+            "status": purchase.status,
+            "received_by": purchase.received_by,
+            "checked_by": purchase.checked_by,
+            "entered_by": purchase.entered_by,
+            "purchase_order_id": purchase.purchase_order_id,
+            "bill_image": purchase.bill_image,
+        }
+        for purchase, store_name in purchases
+    ]
 
 # ----------------------------------------------------
 # Get Store Purchases

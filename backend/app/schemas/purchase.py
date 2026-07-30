@@ -45,3 +45,33 @@ class PurchaseResponse(PurchaseBase):
 
     class Config:
         from_attributes = True
+
+class OwnerPurchaseResponse(BaseModel):
+    id: int
+
+    purchase_date: datetime
+
+    store_id: int
+    store_name: str
+
+    product_name: str
+    quantity: int
+
+    supplier_name: str | None = None
+
+    purchase_amount: float
+
+    bill_number: str
+
+    status: str
+
+    received_by: str | None = None
+    checked_by: str | None = None
+    entered_by: str | None = None
+
+    purchase_order_id: int | None = None
+
+    bill_image: str | None = None
+
+    class Config:
+        from_attributes = True

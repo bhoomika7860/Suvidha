@@ -63,6 +63,14 @@ const purchaseService = {
   return response.data;
 },
 
+  getOwnerPurchases: async (filters = {}) => {
+  const response = await api.get("/purchases/owner", {
+    params: filters,
+  });
+
+  return response.data;
+},
+
 createPurchaseOrder: async (order) => {
   console.log("Sending Purchase Order:", order);
 

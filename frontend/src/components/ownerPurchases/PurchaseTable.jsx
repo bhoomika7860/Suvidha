@@ -1,22 +1,31 @@
 import { Package } from "lucide-react";
 
-const statusColors = {
-  received:
-    "bg-blue-100 text-blue-700",
+const STATUS_STYLES = {
+  received: {
+    label: "Received",
+    className: "bg-blue-100 text-blue-700",
+  },
 
-  checking:
-    "bg-orange-100 text-orange-700",
+  checking: {
+    label: "Waiting Check",
+    className: "bg-orange-100 text-orange-700",
+  },
 
-  entered:
-    "bg-purple-100 text-purple-700",
+  entered: {
+    label: "Waiting Entry",
+    className: "bg-purple-100 text-purple-700",
+  },
 
-  completed:
-    "bg-green-100 text-green-700",
+  completed: {
+    label: "Completed",
+    className: "bg-green-100 text-green-700",
+  },
 };
 
 export default function PurchaseTable({
   purchases,
   loading,
+  onRowClick,
 }) {
   if (loading) {
     return (
@@ -29,7 +38,6 @@ export default function PurchaseTable({
   if (!purchases.length) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-16">
-
         <div className="flex flex-col items-center">
 
           <Package
@@ -46,7 +54,6 @@ export default function PurchaseTable({
           </p>
 
         </div>
-
       </div>
     );
   }
@@ -84,10 +91,6 @@ export default function PurchaseTable({
               Status
             </th>
 
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Received By
-            </th>
-
           </tr>
 
         </thead>
@@ -98,14 +101,17 @@ export default function PurchaseTable({
 
             <tr
               key={purchase.id}
-              className="cursor-pointer border-t transition hover:bg-slate-50"
+              onClick={() => onRowClick(purchase)}
+              className="cursor-pointer border-t transition-all duration-200 hover:bg-blue-50"
             >
 
               <td className="px-6 py-4">
-                {purchase.purchase_date}
+                {new Date(
+                  purchase.purchase_date
+                ).toLocaleDateString("en-IN")}
               </td>
 
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 font-medium">
                 {purchase.store_name}
               </td>
 
@@ -118,23 +124,23 @@ export default function PurchaseTable({
               </td>
 
               <td className="px-6 py-4 font-semibold">
-                ₹{purchase.purchase_amount}
+                ₹
+                {Number(
+                  purchase.purchase_amount
+                ).toLocaleString("en-IN")}
               </td>
 
               <td className="px-6 py-4">
 
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    statusColors[purchase.status]
+                    STATUS_STYLES[purchase.status]?.className
                   }`}
                 >
-                  {purchase.status}
+                  {STATUS_STYLES[purchase.status]?.label ??
+                    purchase.status}
                 </span>
 
-              </td>
-
-              <td className="px-6 py-4">
-                {purchase.received_by_name}
               </td>
 
             </tr>
