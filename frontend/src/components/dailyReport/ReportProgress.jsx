@@ -163,7 +163,7 @@ export default function ReportProgress() {
               )}
 
               {section.title}
-
+console.log(report);
             </div>
           );
         })}
