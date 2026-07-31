@@ -32,6 +32,8 @@ export default function ReportProgress() {
     );
   }
 
+  console.log("TODAY REPORT:", report);
+
   const salesCompleted =
     report.total_bills > 0 ||
     report.cash_sales > 0 ||
@@ -89,7 +91,7 @@ export default function ReportProgress() {
 
   const percentage =
     (completed / sections.length) * 100;
-console.log(report);
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
 

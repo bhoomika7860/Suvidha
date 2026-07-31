@@ -19,9 +19,9 @@ const deliveryAssignmentService = {
 
   async createAssignment(payload) {
     const { data } = await api.post(
-      "/delivery-assignments",
-      payload
-    );
+  "/delivery-assignments/",
+  payload
+);
 
     return data;
   },
