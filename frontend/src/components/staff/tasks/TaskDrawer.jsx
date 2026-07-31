@@ -244,10 +244,10 @@ console.log("showImage:", showImage);
       <>
         <div className="w-full rounded-xl overflow-hidden border bg-gray-100">
           <img
-            src={task.photo_url}
-            alt="Task Proof"
-            className="w-full max-h-[420px] object-contain"
-          />
+  src={`${import.meta.env.VITE_API_URL}${task.photo_url}`}
+  alt="Task Proof"
+  className="w-full h-full object-contain"
+/>
         </div>
 
         <button

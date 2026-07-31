@@ -201,9 +201,7 @@ def complete_task(
                 buffer,
             )
 
-        task.photo_url = (
-            f"http://127.0.0.1:8000/uploads/tasks/{filename}"
-        )
+        task.photo_url = f"/uploads/tasks/{filename}"
 
     task.status = "completed"
 

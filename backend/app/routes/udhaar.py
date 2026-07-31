@@ -19,7 +19,8 @@ router = APIRouter(
 @router.post("/")
 def create_udhaar(
     data: UdhaarCreate,
-    db: Session = Depends(get_db)
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     report = db.query(DailyReport).filter(
         DailyReport.id == data.daily_report_id
@@ -43,7 +44,7 @@ def create_udhaar(
         customer_name=data.customer_name,
         customer_phone=data.customer_phone,
         amount=data.amount,
-        created_by=report.submitted_by
+        created_by=current_user["user_id"]
     )
 
     db.add(udhaar)
