@@ -4,7 +4,7 @@ import PurchaseFilters from "../../components/ownerPurchases/PurchaseFilters";
 import PurchaseTable from "../../components/ownerPurchases/PurchaseTable";
 import PurchaseDrawer from "../../components/ownerPurchases/PurchaseDrawer";
 import Pagination from "../../components/common/Pagination";
-
+import * as XLSX from "xlsx";
 import purchaseService from "../../services/purchaseService";
 import storeService from "../../services/storeService";
 
@@ -90,7 +90,40 @@ export default function OwnerPurchases() {
       setSelectedPurchase(null);
     }, 200);
   }
+  function exportPurchases() {
+  const rows = purchases.map((purchase) => ({
+    Store: purchase.store_name,
+    Supplier: purchase.supplier_name,
+    "Bill Number": purchase.bill_number,
+    Product: purchase.product_name,
+    Quantity: purchase.quantity,
+    Amount: purchase.purchase_amount,
+    Status: purchase.status,
+    Date: purchase.purchase_date,
+    "Received By": purchase.received_by_name,
+    "Checked By": purchase.checked_by_name,
+    "Entered By": purchase.entered_by_name,
+  }));
 
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Purchases"
+  );
+
+  const today = new Date()
+    .toISOString()
+    .split("T")[0];
+
+  XLSX.writeFile(
+    workbook,
+    `Purchases_${today}.xlsx`
+  );
+}
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -102,9 +135,12 @@ export default function OwnerPurchases() {
           </p>
         </div>
 
-        <button className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-700">
-          Export Purchases
-        </button>
+        <button
+  onClick={exportPurchases}
+  className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-700"
+>
+  Export Purchases
+</button>
       </div>
 
       <PurchaseKPIs purchases={purchases} />

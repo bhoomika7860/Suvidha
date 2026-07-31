@@ -28,7 +28,7 @@ export default function DeliveryHeader() {
         </h1>
 
         <p className="text-gray-500 text-sm">
-          Good Morning {name}
+          {name}
         </p>
       </div>
 

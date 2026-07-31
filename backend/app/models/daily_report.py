@@ -25,7 +25,7 @@ class DailyReport(Base):
 
     total_bills = Column(Integer, default=0)
     deliveries = Column(Integer, default=0)
-
+    completed_deliveries = Column(Integer, default=0)
     cash_sales = Column(Float, default=0)
     upi_sales = Column(Float, default=0)
     card_sales = Column(Float, default=0)

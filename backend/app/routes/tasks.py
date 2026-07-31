@@ -139,11 +139,20 @@ def complete_task(
         .first()
     )
 
+    
     if not task:
         raise HTTPException(
             status_code=404,
             detail="Task not found",
         )
+
+    # Prevent resubmission
+    if task.status == "completed":
+            raise HTTPException(
+            status_code=400,
+            detail="This delivery has already been submitted."
+        )
+    
 
     if task.assigned_to != current_user["user_id"]:
         raise HTTPException(

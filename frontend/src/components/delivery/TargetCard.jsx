@@ -1,64 +1,27 @@
-import { useEffect, useState } from "react";
-import { taskService } from "../../services/taskService";
-
-export default function TargetCard() {
-  const [completed, setCompleted] = useState(0);
-  const [target, setTarget] = useState(0);
-
-  useEffect(() => {
-    loadTarget();
-  }, []);
-
-  async function loadTarget() {
-    try {
-      const tasks = await taskService.getMyTasks();
-
-      // Find today's delivery task
-      const deliveryTask = tasks.find(
-        (task) =>
-          task.type === "delivery" ||
-          task.role === "delivery"
-      );
-
-      if (!deliveryTask) {
-        setCompleted(0);
-        setTarget(0);
-        return;
-      }
-
-      setCompleted(
-        deliveryTask.completed_quantity || 0
-      );
-
-      setTarget(
-        deliveryTask.target_quantity || 0
-      );
-
-    } catch (err) {
-      console.error(err);
-    }
-  }
+export default function TargetCard({ task }) {
+  const completed = task?.completed_quantity || 0;
+  const target = task?.target_quantity || 0;
 
   const percent =
     target > 0
-      ? (completed / target) * 100
+      ? Math.min((completed / target) * 100, 100)
       : 0;
 
   return (
     <div className="bg-white rounded-2xl border shadow-sm p-5">
 
-      <h2 className="text-lg font-bold">
-        Today's Target
+      <h2 className="text-xl font-bold">
+        Today's Delivery Target
       </h2>
 
-      <p className="text-gray-500 mt-1">
-        {completed} of {target} Deliveries
+      <p className="mt-2 text-gray-500">
+        {target} Deliveries Assigned
       </p>
 
-      <div className="mt-4 h-3 rounded-full bg-gray-200 overflow-hidden">
+      <div className="mt-6 h-3 w-full overflow-hidden rounded-full bg-gray-200">
 
         <div
-          className="h-3 rounded-full bg-blue-600"
+          className="h-3 rounded-full bg-blue-600 transition-all duration-500"
           style={{
             width: `${percent}%`,
           }}
@@ -66,9 +29,29 @@ export default function TargetCard() {
 
       </div>
 
-      <h3 className="mt-4 text-3xl font-bold text-blue-600">
-        {Math.round(percent)}%
-      </h3>
+      <div className="mt-5 flex items-center justify-between">
+
+        <div>
+          <p className="text-sm text-gray-500">
+            Completed
+          </p>
+
+          <p className="text-2xl font-bold text-blue-600">
+            {completed}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-sm text-gray-500">
+            Remaining
+          </p>
+
+          <p className="text-2xl font-bold text-red-500">
+            {Math.max(target - completed, 0)}
+          </p>
+        </div>
+
+      </div>
 
     </div>
   );
