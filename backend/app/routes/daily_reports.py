@@ -367,7 +367,9 @@ def get_report_purchases(
         db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
-        func.date(Purchase.purchase_date) == report.report_date,
+        func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+) == report.report_date,
         Purchase.status == "completed",
     )
     .order_by(Purchase.purchase_date.desc())
@@ -435,7 +437,9 @@ def get_report_expenses(
         .filter(
             Expense.store_id == report.store_id,
             
-                func.date(Expense.created_at)
+                func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+)
             == report.report_date,
         )
         .order_by(
@@ -600,7 +604,9 @@ def get_report(
     db.query(Expense)
     .filter(
         Expense.store_id == report.store_id,
-        func.date(Expense.created_at) == report.report_date,
+        func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) == report.report_date,
     )
     .all()
 )
@@ -609,7 +615,9 @@ def get_report(
     .filter(
         Purchase.store_id == report.store_id,
         Purchase.status == "completed",
-        func.date(Purchase.purchase_date) == report.report_date,
+        func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+) == report.report_date,
     )
     .all()
 )

@@ -270,7 +270,9 @@ def get_owner_purchases(
 
     if date:
         query = query.filter(
-        func.date(Purchase.purchase_date) == date
+        func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+) == date
     )
 
     total = query.count()
@@ -347,7 +349,9 @@ def get_today_purchases(
     db: Session = Depends(get_db),
 ):
     query = db.query(Purchase).filter(
-        func.date(Purchase.purchase_date)
+        func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+)
         == date.today()
     )
 

@@ -279,12 +279,16 @@ def dashboard_summary(
 
     if start_date:
         expense_query = expense_query.filter(
-        func.date(Expense.created_at) >= start_date
+        func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) >= start_date
     )
 
     if end_date:
         expense_query = expense_query.filter(
-        func.date(Expense.created_at) <= end_date
+        func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) <= end_date
     )
 
     total_expenses = expense_query.scalar() or 0
@@ -461,12 +465,16 @@ def expense_distribution(
 
     if start_date:
         query = query.filter(
-            func.date(Expense.created_at) >= start_date
+            func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) >= start_date
     )
 
     if end_date:
         query = query.filter(
-            func.date(Expense.created_at) <= end_date
+            func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) <= end_date
     )
 
     # ---------- Debug: All Expenses ----------
@@ -714,7 +722,9 @@ def manager_hero(
         db.query(Purchase)
         .filter(
             Purchase.store_id == current_user["store_id"],
-            func.date(Purchase.purchase_date) == report.report_date,
+            func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+) == report.report_date,
         )
         .count()
     )
@@ -776,7 +786,9 @@ def manager_dashboard(
         db.query(Purchase)
         .filter(
             Purchase.store_id == store_id,
-            func.date(Purchase.purchase_date) == today,
+            func.date(
+    func.timezone("Asia/Kolkata", Purchase.purchase_date)
+) == today,
         )
         .order_by(Purchase.purchase_date.desc())
         .all()
@@ -786,7 +798,9 @@ def manager_dashboard(
     db.query(Expense)
     .filter(
         Expense.store_id == store_id,
-        func.date(Expense.created_at) == today,
+        func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) == today,
     )
     .order_by(Expense.created_at.desc())
     .all()

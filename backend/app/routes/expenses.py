@@ -51,7 +51,9 @@ def create_expense(
     db.query(DailyReport)
     .filter(
         DailyReport.store_id == expense.store_id,
-        DailyReport.report_date == func.date(expense.created_at),
+        DailyReport.report_date == func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+),
     )
     .first()
 )
@@ -88,7 +90,9 @@ def get_expenses(
         )
 
     query = query.filter(
-    func.date(Expense.created_at) == date.today()
+    func.date(
+    func.timezone("Asia/Kolkata", Expense.created_at)
+) == date.today()
 )
 
     expenses = (
