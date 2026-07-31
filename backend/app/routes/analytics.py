@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
@@ -39,7 +40,8 @@ router = APIRouter(
     prefix="/analytics",
     tags=["Analytics"],
 )
-
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 def _safe_number(value):
 
@@ -48,14 +50,14 @@ def _safe_number(value):
 
     return float(value)
 
-from datetime import datetime
+
 
 def _get_period_bounds(
     period,
     from_date=None,
     to_date=None,
 ):
-    today = date.today()
+    today = ist_today()
 
     if period == "today":
         return today, today
@@ -194,7 +196,7 @@ def _today_report(db: Session, store_id: int):
         db.query(DailyReport)
         .filter(
             DailyReport.store_id == store_id,
-            DailyReport.report_date == date.today(),
+            DailyReport.report_date == ist_today(),
         )
         .first()
     )
@@ -696,7 +698,7 @@ def manager_hero(
         current_user["role"],
     )
 
-    today = date.today()
+    today = ist_today()
 
     report = (
         db.query(DailyReport)
@@ -771,7 +773,7 @@ def manager_dashboard(
     )
 
     store_id = current_user["store_id"]
-    today = date.today()
+    today = ist_today()
 
     report = (
         db.query(DailyReport)

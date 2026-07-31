@@ -12,7 +12,8 @@ from fastapi import (
     Form,
 )
 from sqlalchemy.orm import Session
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.roles import require_role
@@ -26,7 +27,8 @@ router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"],
 )
-
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 # -------------------------------------------------------------------
 # Owner creates task
@@ -47,7 +49,7 @@ def create_task(
         role=data.role,
         target_quantity=data.target_quantity,
         requires_photo=data.requires_photo,
-        due_date=date.today(),
+        due_date=ist_today(),
     )
 
     db.add(task)
@@ -74,7 +76,7 @@ def get_my_tasks(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    today = date.today()
+    today = ist_today()
 
     tasks = (
         db.query(Task)
@@ -230,7 +232,7 @@ def get_all_tasks(
 ):
     require_role(["owner"], current_user["role"])
 
-    today = date.today()
+    today = ist_today()
 
     tasks = (
         db.query(Task)

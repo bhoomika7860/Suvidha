@@ -28,12 +28,15 @@ from app.schemas.purchase import (
     OwnerPurchaseResponse,
     PaginatedOwnerPurchaseResponse,
 )
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 router = APIRouter(
     prefix="/purchases",
     tags=["Purchases"],
 )
-
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 # ----------------------------------------------------
 # Create Purchase
@@ -132,7 +135,7 @@ def update_purchase(
     data: PurchaseUpdate,
     db: Session = Depends(get_db),
 ):
-    from datetime import datetime
+    
 
     purchase = (
         db.query(Purchase)
@@ -178,7 +181,7 @@ def update_purchase(
             db.query(DailyReport)
             .filter(
                 DailyReport.store_id == purchase.store_id,
-                DailyReport.report_date == date.today(),
+                DailyReport.report_date == ist_today(),
             )
             .first()
         )
@@ -352,7 +355,7 @@ def get_today_purchases(
         func.date(
     func.timezone("Asia/Kolkata", Purchase.purchase_date)
 )
-        == date.today()
+        == ist_today()
     )
 
     if current_user["role"] != "owner":

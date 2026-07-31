@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from app.database import get_db
 from app.models.daily_report import DailyReport
 from app.services.export_service import (
@@ -17,6 +18,8 @@ router = APIRouter(
     tags=["Export"],
 )
 
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 def apply_filters(
     query,
@@ -25,7 +28,7 @@ def apply_filters(
     from_date,
     to_date,
 ):
-    today = date.today()
+    today = ist_today()
 
     # ---------- Store ----------
     if store_id != "all":

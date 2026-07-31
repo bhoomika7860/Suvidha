@@ -7,6 +7,8 @@ from app.database import get_db
 from app.models.purchase_order import PurchaseOrder
 from app.models.purchase_order_item import PurchaseOrderItem
 from datetime import datetime
+
+from zoneinfo import ZoneInfo
 from app.schemas.purchase_order import (
     PurchaseOrderCreate,
 )
@@ -18,7 +20,8 @@ router = APIRouter(
 
 from app.dependencies.auth import get_current_user
 
-
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 # -----------------------------
 # Create Purchase Order
 # -----------------------------
@@ -31,7 +34,8 @@ def create_purchase_order(
     store_id=data.store_id,
     supplier_name=data.supplier_name,
     expected_amount=data.expected_amount,
-    expected_date=date.today(),
+
+    expected_date=ist_today(),
     created_by=data.created_by,
     status="Pending",
 )
@@ -67,7 +71,7 @@ def get_purchase_orders(
 ):
     from sqlalchemy import or_, and_
 
-    today = date.today()
+    today = ist_today()
 
     orders = (
     db.query(PurchaseOrder)

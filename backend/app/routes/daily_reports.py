@@ -24,12 +24,14 @@ from app.models.purchase import Purchase
 from sqlalchemy import func
 from datetime import date
 from app.schemas.daily_report import DeliveryUpdate
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 router = APIRouter(
     prefix="/daily-reports",
     tags=["Daily Reports"]
 )
-
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 # Create daily report
 @router.post("/")
@@ -149,7 +151,7 @@ def get_today_report(
         
         .filter(
             DailyReport.store_id == current_user["store_id"],
-            DailyReport.report_date == date.today(),
+            DailyReport.report_date == ist_today(),
         )
         .first()
     )
@@ -158,7 +160,7 @@ def get_today_report(
         report = DailyReport(
             store_id=current_user["store_id"],
             submitted_by=current_user["user_id"],
-            report_date=date.today(),
+            report_date=ist_today(),
         )
 
         db.add(report)
@@ -529,7 +531,7 @@ def get_today_reports(
         .options(joinedload(DailyReport.store))
         .filter(
             DailyReport.is_submitted == True,
-            func.date(DailyReport.report_date) == date.today(),
+            func.date(DailyReport.report_date) == ist_today(),
         )
         .order_by(DailyReport.store_id)
         .all()

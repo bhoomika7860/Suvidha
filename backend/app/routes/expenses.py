@@ -3,7 +3,8 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
@@ -19,6 +20,8 @@ router = APIRouter(
     tags=["Expenses"],
 )
 
+def ist_today():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 # -----------------------------
 # Create Expense
@@ -92,7 +95,7 @@ def get_expenses(
     query = query.filter(
     func.date(
     func.timezone("Asia/Kolkata", Expense.created_at)
-) == date.today()
+) == ist_today()
 )
 
     expenses = (
