@@ -34,6 +34,11 @@ const menuItems = [
     path: "/manager-expenses",
   },
   {
+  label: "Udhaar",
+  path: "/manager/udhaar",
+  icon: Wallet,
+  },
+  {
     title: "Tasks",
     icon: ClipboardCheck,
     path: "/manager-tasks",

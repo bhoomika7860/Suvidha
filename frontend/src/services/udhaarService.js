@@ -1,24 +1,22 @@
 import api from "../api/api";
 
 const udhaarService = {
-  getAll: async () => {
-    const response = await api.get("/udhaar");
-    return response.data;
+  async getUdhaar() {
+    const res = await api.get("/udhaar");
+    return res.data;
   },
 
-  create: async (data) => {
-    const response = await api.post("/udhaar", data);
-    return response.data;
+  async createUdhaar(data) {
+    const res = await api.post("/udhaar", data);
+    return res.data;
   },
 
-  update: async (id, data) => {
-    const response = await api.put(`/udhaar/${id}`, data);
-    return response.data;
-  },
+  async repayUdhaar(id, amount) {
+    const res = await api.post(`/udhaar/${id}/repay`, {
+      amount,
+    });
 
-  delete: async (id) => {
-    const response = await api.delete(`/udhaar/${id}`);
-    return response.data;
+    return res.data;
   },
 };
 

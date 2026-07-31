@@ -7,6 +7,7 @@ import {
   Building2,
   History,
   X,
+  Wallet,
   LogOut,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -47,6 +48,11 @@ const navItems = [
   label: "Purchases",
   icon: FileText,
   path: "/owner-purchases",
+},
+{
+  label: "Udhaar",
+  path: "/owner/udhaar",
+  icon: Wallet,
 },
   {
     label: "Analytics",

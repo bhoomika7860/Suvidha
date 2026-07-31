@@ -76,7 +76,13 @@ def repay_udhaar(
             status_code=404,
             detail="Udhaar not found"
         )
+    remaining = udhaar.amount - udhaar.paid_amount
 
+    if data.amount > remaining:
+        raise HTTPException(
+        status_code=400,
+        detail="Repayment exceeds remaining amount."
+    )
     udhaar.paid_amount += data.amount
 
     if udhaar.paid_amount == 0:
@@ -99,10 +105,14 @@ def get_all_udhaar(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user["role"] == "owner":
-        return db.query(UdhaarEntry).all()
+    query = db.query(UdhaarEntry).filter(
+        UdhaarEntry.status != "settled"
+    )
 
-    return db.query(UdhaarEntry).filter(
+    if current_user["role"] == "owner":
+        return query.all()
+
+    return query.filter(
         UdhaarEntry.store_id == current_user["store_id"]
     ).all()
 

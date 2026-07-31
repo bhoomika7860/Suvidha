@@ -17,6 +17,8 @@ import PreviousReports from "../pages/manager/PreviousReports";
 import Profile from "../pages/manager/Profile";
 import Tasks from "../pages/owner/Tasks";
 import OwnerPurchases from "../pages/owner/OwnerPurchases";
+import Udhaar from "../pages/manager/Udhaar";
+import OwnerUdhaar from "../pages/owner/OwnerUdhaar";
 // Staff Layout
 import StaffLayout from "../components/layout/StaffLayout";
 
@@ -77,6 +79,12 @@ function AppRoutes() {
     path="/tasks"
     element={<Tasks />}
   />
+
+  <Route
+    path="/owner/udhaar"
+    element={<OwnerUdhaar />}
+/>
+
   <Route
   path="/stores"
   element={<Stores />}
@@ -126,6 +134,10 @@ function AppRoutes() {
     element={<Expenses />}
   />
 
+  <Route
+    path="/manager/udhaar"
+    element={<Udhaar />}
+/>
   
   <Route
   path="/manager-tasks"
