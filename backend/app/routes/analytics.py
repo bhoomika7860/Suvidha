@@ -207,7 +207,6 @@ def dashboard_summary(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -217,76 +216,90 @@ def dashboard_summary(
         store_id = str(current_user["store_id"])
 
     reports = _get_reports(
-    db=db,
-    period=period,
-    store_id=store_id,
-    submitted_only=current_user["role"] == "owner",
-)
+        db=db,
+        period=period,
+        store_id=store_id,
+        submitted_only=current_user["role"] == "owner",
+    )
+
     total_sales = 0
     total_bills = 0
     total_deliveries = 0
-    total_udhaar = 0
     total_purchases = 0
 
     for report in reports:
-
         total_sales += (
             _safe_number(report.cash_sales)
-        + _safe_number(report.upi_sales)
-        + _safe_number(report.card_sales)
-        + _safe_number(report.udhaar_sales)
-    )
+            + _safe_number(report.upi_sales)
+            + _safe_number(report.card_sales)
+            + _safe_number(report.udhaar_sales)
+        )
 
         total_purchases += _safe_number(
-        report.total_purchases
-    )
+            report.total_purchases
+        )
 
         total_bills += report.total_bills or 0
-
         total_deliveries += report.deliveries or 0
 
-        total_udhaar += _safe_number(
-        report.udhaar_sales
+    # ---------------------------
+    # Udhaar
+    # ---------------------------
+
+    udhaar_query = db.query(UdhaarEntry)
+
+    if store_id != "all":
+        udhaar_query = udhaar_query.filter(
+            UdhaarEntry.store_id == int(store_id)
+        )
+
+    total_udhaar = 0
+    recovered_udhaar = 0
+
+    for entry in udhaar_query.all():
+        total_udhaar += (
+            entry.amount - entry.paid_amount
+        )
+        recovered_udhaar += entry.paid_amount
+
+    # ---------------------------
+    # Expenses
+    # ---------------------------
+
+    expense_query = db.query(
+        func.sum(Expense.amount)
     )
-
-# ----------------------------------------------------
-# Expenses are calculated from the Expense table
-# ----------------------------------------------------
-
-    expense_query = db.query(func.sum(Expense.amount))
 
     if store_id != "all":
         expense_query = expense_query.filter(
-        Expense.store_id == int(store_id)
-    )
+            Expense.store_id == int(store_id)
+        )
 
     start_date, end_date = _get_period_bounds(period)
 
     if start_date:
         expense_query = expense_query.filter(
-        func.date(
-    func.datetime(
-        Expense.created_at,
-        "+5 hours",
-        "+30 minutes",
-    )
-) >= start_date
-    )
+            func.date(
+                func.datetime(
+                    Expense.created_at,
+                    "+5 hours",
+                    "+30 minutes",
+                )
+            ) >= start_date
+        )
 
     if end_date:
         expense_query = expense_query.filter(
-        func.date(
-    func.datetime(
-        Expense.created_at,
-        "+5 hours",
-        "+30 minutes",
-    )
-) <= end_date
-    )
+            func.date(
+                func.datetime(
+                    Expense.created_at,
+                    "+5 hours",
+                    "+30 minutes",
+                )
+            ) <= end_date
+        )
 
     total_expenses = expense_query.scalar() or 0
-
-    
 
     average_bill = (
         total_sales / total_bills
@@ -295,44 +308,18 @@ def dashboard_summary(
     )
 
     return {
-
         "total_sales": round(total_sales, 2),
-
         "total_revenue": round(total_sales, 2),
-
-        "total_purchases": round(total_purchases,2,),
-
+        "total_purchases": round(total_purchases, 2),
         "total_deliveries": total_deliveries,
-
         "total_bills": total_bills,
-
-        "average_bill_value": round(
-            average_bill,
-            2,
-        ),
-
-        "average_bill": round(
-            average_bill,
-            2,
-        ),
-
-        "total_expenses": round(
-            total_expenses,
-            2,
-        ),
-
-        "total_udhaar": round(
-            total_udhaar,
-            2,
-        ),
-
-        "outstanding_udhaar": round(
-            total_udhaar,
-            2,
-        ),
-
+        "average_bill_value": round(average_bill, 2),
+        "average_bill": round(average_bill, 2),
+        "total_expenses": round(total_expenses, 2),
+        "total_udhaar": round(total_udhaar, 2),
+        "outstanding_udhaar": round(total_udhaar, 2),
+        "recovered_udhaar": round(recovered_udhaar, 2),
         "growth_rate": 0,
-
         "submitted_reports": len(reports),
     }
 
@@ -343,7 +330,6 @@ def store_summary(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     require_role(
         ["owner", "store_manager"],
         current_user["role"],
@@ -375,11 +361,7 @@ def store_summary(
 
             stores[sid] = {
                 "store_id": sid,
-                "store_name": (
-                    store.name
-                    if store
-                    else f"Store {sid}"
-                ),
+                "store_name": store.name if store else f"Store {sid}",
                 "total_sales": 0,
                 "total_bills": 0,
                 "total_expenses": 0,
@@ -393,38 +375,18 @@ def store_summary(
             + _safe_number(report.udhaar_sales)
         )
 
-        stores[sid]["total_bills"] += (
-            report.total_bills or 0
-        )
-
-        stores[sid]["total_expenses"] += (
-            _safe_number(report.total_expenses)
-        )
-
-        stores[sid]["total_purchases"] += (
-            _safe_number(report.total_purchases)
-        )
+        stores[sid]["total_bills"] += report.total_bills or 0
+        stores[sid]["total_expenses"] += _safe_number(report.total_expenses)
+        stores[sid]["total_purchases"] += _safe_number(report.total_purchases)
 
     for sid in stores:
-
-        stores[sid]["total_sales"] = round(
-            stores[sid]["total_sales"],
-            2,
-        )
-
-        stores[sid]["total_expenses"] = round(
-            stores[sid]["total_expenses"],
-            2,
-        )
-
-        stores[sid]["total_purchases"] = round(
-            stores[sid]["total_purchases"],
-            2,
-        )
-
+        stores[sid]["total_sales"] = round(stores[sid]["total_sales"], 2)
+        stores[sid]["total_expenses"] = round(stores[sid]["total_expenses"], 2)
+        stores[sid]["total_purchases"] = round(stores[sid]["total_purchases"], 2)
         stores[sid]["growth_rate"] = 0
 
     return list(stores.values())
+
 
 @router.get("/payment-breakdown")
 def payment_breakdown(
@@ -596,7 +558,6 @@ def sales_trend(
 )
 
     return _monthly_series(reports)
-
 @router.get("/outstanding-udhaar")
 def outstanding_udhaar(
     period: str = "today",
@@ -609,68 +570,70 @@ def outstanding_udhaar(
         current_user["role"],
     )
 
+    query = db.query(UdhaarEntry)
+
     if current_user["role"] == "store_manager":
-        store_id = str(current_user["store_id"])
-
-    query = db.query(
-        Store.name.label("store_name"),
-        func.sum(DailyReport.udhaar_sales).label("outstanding"),
-    ).join(
-        DailyReport,
-        DailyReport.store_id == Store.id,
-    )
-
-    # ---------- Store Filter ----------
-    if store_id != "all":
         query = query.filter(
-            DailyReport.store_id == int(store_id)
+            UdhaarEntry.store_id == current_user["store_id"]
+        )
+    elif store_id != "all":
+        query = query.filter(
+            UdhaarEntry.store_id == int(store_id)
         )
 
-    # ---------- Period Filter ----------
-    today = date.today()
+    entries = query.all()
 
-    if period == "today":
-        query = query.filter(
-            DailyReport.report_date == today
+    grouped = {}
+
+    for entry in entries:
+
+        store = (
+            db.query(Store)
+            .filter(Store.id == entry.store_id)
+            .first()
         )
 
-    elif period == "last7":
-        query = query.filter(
-            DailyReport.report_date >= today - timedelta(days=7)
+        name = store.name if store else f"Store {entry.store_id}"
+
+        if name not in grouped:
+            grouped[name] = {
+                "pending": 0,
+                "recovered": 0,
+            }
+
+        grouped[name]["pending"] += (
+            entry.amount - entry.paid_amount
         )
 
-    elif period == "last30":
-        query = query.filter(
-            DailyReport.report_date >= today - timedelta(days=30)
+        grouped[name]["recovered"] += (
+            entry.paid_amount
         )
-
-    elif period == "thisMonth":
-        query = query.filter(
-            extract("month", DailyReport.report_date) == today.month,
-            extract("year", DailyReport.report_date) == today.year,
-        )
-
-    elif period == "thisYear":
-        query = query.filter(
-            extract("year", DailyReport.report_date) == today.year,
-        )
-
-    rows = (
-        query.group_by(Store.name)
-        .all()
-    )
 
     return [
         {
-            "store_name": row.store_name,
-            "pending": float(row.outstanding or 0),
-            "recovered": 0,
-            "outstanding": float(row.outstanding or 0),
-            "recovery_rate": 0,
+            "store_name": name,
+            "pending": round(values["pending"], 2),
+            "recovered": round(values["recovered"], 2),
+            "outstanding": round(values["pending"], 2),
+            "recovery_rate": round(
+                (
+                    values["recovered"]
+                    / (
+                        values["pending"]
+                        + values["recovered"]
+                    )
+                    * 100
+                )
+                if (
+                    values["pending"]
+                    + values["recovered"]
+                ) > 0
+                else 0,
+                2,
+            ),
         }
-        for row in rows
+        for name, values in grouped.items()
     ]
-
 
 
 
