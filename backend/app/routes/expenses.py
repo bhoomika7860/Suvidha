@@ -47,20 +47,13 @@ def create_expense(
 
     # Update today's daily report total
     report = (
-        db.query(DailyReport)
-        .filter(
-            DailyReport.store_id == expense.store_id,
-            DailyReport.report_date
-            == func.date(
-                func.datetime(
-                    expense.created_at,
-                    "+5 hours",
-                    "+30 minutes",
-                )
-            ),
-        )
-        .first()
+    db.query(DailyReport)
+    .filter(
+        DailyReport.store_id == expense.store_id,
+        DailyReport.report_date == func.date(expense.created_at),
     )
+    .first()
+)
 
     if report:
         report.total_expenses += expense.amount
@@ -93,17 +86,9 @@ def get_expenses(
             Expense.store_id == current_user["store_id"]
         )
 
-    # Convert UTC -> IST before comparing dates
     query = query.filter(
-        func.date(
-            func.datetime(
-                Expense.created_at,
-                "+5 hours",
-                "+30 minutes",
-            )
-        )
-        == date.today()
-    )
+    func.date(Expense.created_at) == date.today()
+)
 
     expenses = (
         query.order_by(
