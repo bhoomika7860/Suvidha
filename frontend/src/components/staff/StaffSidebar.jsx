@@ -52,7 +52,7 @@ export default function StaffSidebar() {
       <div className="h-24 px-6 border-b flex flex-col justify-center">
 
         <h1 className="text-3xl font-bold text-blue-600">
-          PharmaCore360
+          Suvidha
         </h1>
 
         <p className="text-gray-500 mt-2">

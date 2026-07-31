@@ -41,7 +41,7 @@ export default function DeleteEmployeeModal({
               {employee.full_name}
             </strong>{" "}
             will no longer be able to
-            log into PharmaCore360.
+            log into Suvidha.
 
           </p>
 

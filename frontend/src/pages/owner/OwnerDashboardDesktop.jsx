@@ -413,7 +413,7 @@ console.log("Comparison Data:", comparisonData);
   <div className="flex-1">
     {/* System Title */}
     <p className="text-2xl font-black tracking-[0.12em] text-[#1E40AF] uppercase">
-      PharmaCore360
+      Suvidha
     </p>
 
     {/* Greeting */}

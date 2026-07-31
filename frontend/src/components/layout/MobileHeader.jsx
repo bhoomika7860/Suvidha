@@ -20,7 +20,7 @@ export default function MobileHeader({ onMenuClick }) {
 
         <div>
           <h1 className="font-bold text-lg text-[#2563EB]">
-            PharmaCore360
+            Suvidha
           </h1>
 
           <p className="text-xs text-gray-500">

@@ -27,7 +27,7 @@ def bootstrap_owner(
     db = SessionLocal()
 
     # Secret setup key check
-    if setup_key != "pharmacore_setup_2026":
+    if setup_key != "Suvidha_setup_2026":
         db.close()
         raise HTTPException(
             status_code=403,

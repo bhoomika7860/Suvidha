@@ -100,7 +100,7 @@ function LoginScreen() {
             </div>
             {/* Wordmark – 25% larger than text-2xl (1.5rem → ~1.875rem), bold */}
             <span className="text-[2.0625rem] font-bold text-white tracking-tight leading-none">
-              PharmaCore360
+              Suvidha
             </span>
           </div>
 
@@ -136,7 +136,7 @@ function LoginScreen() {
               Welcome back
             </h1>
             <p className="text-[0.875rem] text-[#6e7480]">
-              Sign in to your PharmaCore360 account
+              Sign in to your Suvidha account
             </p>
           </div>
 

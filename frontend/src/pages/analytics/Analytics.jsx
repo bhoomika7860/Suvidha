@@ -276,7 +276,7 @@ const handleExportExcel = async () => {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "PharmaCore360_Analytics.xlsx";
+    link.download = "Suvidha_Analytics.xlsx";
 
     document.body.appendChild(link);
 
@@ -303,7 +303,7 @@ const handleExportPDF = async () => {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "PharmaCore360_Analytics.pdf";
+    link.download = "Suvidha_Analytics.pdf";
 
     document.body.appendChild(link);
 

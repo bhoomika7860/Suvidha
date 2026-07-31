@@ -63,7 +63,7 @@ export default function Sidebar() {
       <div className="px-5 py-5 border-b border-gray-200">
 
         <h1 className="text-xl font-bold text-blue-600">
-          PharmaCore360
+          Suvidha
         </h1>
 
         <p className="text-sm text-gray-500 mt-1">

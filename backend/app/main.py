@@ -46,7 +46,7 @@ from app.routes import (
 # ----------------------------------------------------
 
 app = FastAPI(
-    title="PharmaCore360 API"
+    title="Suvidha API"
 )
 
 # ----------------------------------------------------
@@ -116,7 +116,7 @@ app.include_router(delivery_assignments.router)
 @app.get("/")
 def home():
     return {
-        "message": "PharmaCore360 Backend Running"
+        "message": "Suvidha Backend Running"
     }
 
 

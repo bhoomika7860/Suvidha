@@ -126,7 +126,7 @@ const roleMap = {
           <div>
 
             <h1 className="text-lg font-bold text-[#0F172A]">
-              PharmaCore360
+              Suvidha
             </h1>
 
             <p className="text-[11px] font-semibold uppercase text-[#1E3A8A]">

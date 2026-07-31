@@ -226,7 +226,7 @@ const handleCreateEmployee = async () => {
       email: e.target.value,
     }))
   }
-  placeholder="employee@pharmacore360.com"
+  placeholder="employee@Suvidha.com"
 />
 
             <div className="flex flex-col gap-1.5">
