@@ -51,23 +51,34 @@ def create_expense(
 
     # Update today's daily report total
     today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-    print("Expense Store:", expense.store_id)
-    print("Looking for report date:", today)
+
+    print("Looking for report")
+    print("Store:", expense.store_id)
+    print("Today:", today)
+
     report = (
-    db.query(DailyReport)
-    .filter(
+        db.query(DailyReport)
+            .filter(
         DailyReport.store_id == expense.store_id,
         DailyReport.report_date == today,
     )
     .first()
 )
-    print("Found report:", report)
+
+    print("REPORT FOUND:", report)
+
     if report:
-            report.total_expenses += expense.amount
-            db.commit()
-            db.refresh(report)
+        print("Before:", report.total_expenses)
+
+        report.total_expenses += expense.amount
+
+        db.commit()
+        db.refresh(report)
+
+        print("After:", report.total_expenses)
+
     else:
-        print("Daily report not found for", today)
+        print("NO REPORT FOUND")
 
     
 
