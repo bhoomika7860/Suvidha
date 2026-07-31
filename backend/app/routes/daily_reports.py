@@ -367,13 +367,7 @@ def get_report_purchases(
         db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
-        func.date(
-            func.datetime(
-                Purchase.purchase_date,
-                "+5 hours",
-                "+30 minutes",
-            )
-        ) == report.report_date,
+        func.date(Purchase.purchase_date) == report.report_date,
         Purchase.status == "completed",
     )
     .order_by(Purchase.purchase_date.desc())
@@ -440,13 +434,8 @@ def get_report_expenses(
         )
         .filter(
             Expense.store_id == report.store_id,
-            func.date(
-                func.datetime(
-                    Expense.created_at,
-                    "+5 hours",
-                    "+30 minutes",
-                )
-            )
+            
+                func.date(Expense.created_at)
             == report.report_date,
         )
         .order_by(
@@ -611,13 +600,7 @@ def get_report(
     db.query(Expense)
     .filter(
         Expense.store_id == report.store_id,
-        func.date(
-            func.datetime(
-                Expense.created_at,
-                "+5 hours",
-                "+30 minutes",
-            )
-        ) == report.report_date,
+        func.date(Expense.created_at) == report.report_date,
     )
     .all()
 )
@@ -626,13 +609,7 @@ def get_report(
     .filter(
         Purchase.store_id == report.store_id,
         Purchase.status == "completed",
-        func.date(
-            func.datetime(
-                Purchase.purchase_date,
-                "+5 hours",
-                "+30 minutes",
-            )
-        ) == report.report_date,
+        func.date(Purchase.purchase_date) == report.report_date,
     )
     .all()
 )
