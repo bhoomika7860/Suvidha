@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Receipt, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
 
@@ -11,7 +11,6 @@ export default function SalesSection() {
     cash_sales: 0,
     upi_sales: 0,
     card_sales: 0,
-    udhaar_sales: 0,
   });
 
   useEffect(() => {
@@ -26,7 +25,6 @@ export default function SalesSection() {
           cash_sales: data.cash_sales || 0,
           upi_sales: data.upi_sales || 0,
           card_sales: data.card_sales || 0,
-          udhaar_sales: data.udhaar_sales || 0,
         });
       } catch (err) {
         console.error(err);
@@ -40,8 +38,7 @@ export default function SalesSection() {
     return (
       Number(form.cash_sales) +
       Number(form.upi_sales) +
-      Number(form.card_sales) +
-      Number(form.udhaar_sales)
+      Number(form.card_sales)
     );
   }, [form]);
 
@@ -57,7 +54,6 @@ export default function SalesSection() {
   async function handleSave() {
     try {
       await dailyReportsService.updateSales(report.id, form);
-
       alert("Sales saved successfully.");
     } catch (err) {
       console.error(err);
@@ -68,122 +64,99 @@ export default function SalesSection() {
 
   return (
     <SectionCard title="Sales">
+      <div className="rounded-2xl border bg-white p-6">
 
-      <div className="grid grid-cols-3 gap-6">
+        <div className="flex items-center gap-2 mb-6">
+          <CreditCard size={20} className="text-blue-600" />
 
-        <div className="col-span-2 border rounded-2xl p-5 bg-gray-50">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Sales & Billing
+          </h3>
+        </div>
 
-          <div className="flex items-center gap-2 mb-5">
-            <CreditCard size={18} className="text-blue-600" />
-            <h3 className="font-semibold text-gray-900">
-              Payment Breakdown
-            </h3>
+        <div className="grid grid-cols-4 gap-6">
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Cash Sales
+            </label>
+
+            <input
+              name="cash_sales"
+              type="number"
+              value={form.cash_sales}
+              onChange={handleChange}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              UPI Sales
+            </label>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Cash Sales
-              </label>
+            <input
+              name="upi_sales"
+              type="number"
+              value={form.upi_sales}
+              onChange={handleChange}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4"
+            />
+          </div>
 
-              <input
-                name="cash_sales"
-                type="number"
-                value={form.cash_sales}
-                onChange={handleChange}
-                className="w-full h-11 rounded-xl border border-gray-200 px-4"
-              />
-            </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Card Sales
+            </label>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                UPI Sales
-              </label>
+            <input
+              name="card_sales"
+              type="number"
+              value={form.card_sales}
+              onChange={handleChange}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4"
+            />
+          </div>
 
-              <input
-                name="upi_sales"
-                type="number"
-                value={form.upi_sales}
-                onChange={handleChange}
-                className="w-full h-11 rounded-xl border border-gray-200 px-4"
-              />
-            </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Total Bills
+            </label>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Card Sales
-              </label>
-
-              <input
-                name="card_sales"
-                type="number"
-                value={form.card_sales}
-                onChange={handleChange}
-                className="w-full h-11 rounded-xl border border-gray-200 px-4"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Udhaar Sales
-              </label>
-
-              <input
-                name="udhaar_sales"
-                type="number"
-                value={form.udhaar_sales}
-                onChange={handleChange}
-                className="w-full h-11 rounded-xl border border-gray-200 px-4"
-              />
-            </div>
-
+            <input
+              name="total_bills"
+              type="number"
+              value={form.total_bills}
+              onChange={handleChange}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4"
+            />
           </div>
 
         </div>
 
-        <div className="border rounded-2xl p-5 bg-gray-50">
+        <div className="mt-8 rounded-2xl bg-blue-50 border border-blue-100 p-6">
 
-          <div className="flex items-center gap-2 mb-5">
-            <Receipt size={18} className="text-green-600" />
-            <h3 className="font-semibold text-gray-900">
-              Billing
-            </h3>
-          </div>
+          <p className="text-sm font-medium text-slate-500">
+            Total Sales Today
+          </p>
 
-          <label className="block text-sm font-medium mb-2">
-            Total Bills
-          </label>
+          <h2 className="mt-2 text-4xl font-bold text-blue-600">
+            ₹{totalSales.toLocaleString("en-IN")}
+          </h2>
 
-          <input
-            name="total_bills"
-            type="number"
-            value={form.total_bills}
-            onChange={handleChange}
-            className="w-full h-11 rounded-xl border border-gray-200 px-4"
-          />
-
-          <div className="mt-6 rounded-xl bg-white border border-gray-200 p-4">
-
-            <p className="text-sm text-gray-500">
-              Estimated Total Sales
-            </p>
-
-            <h2 className="text-2xl font-bold text-blue-600 mt-2">
-              ₹{totalSales.toLocaleString("en-IN")}
-            </h2>
-
-          </div>
+          <p className="mt-2 text-sm text-slate-500">
+            Cash + UPI + Card Sales
+          </p>
 
         </div>
 
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="mt-6 flex justify-end">
 
         <button
           onClick={handleSave}
-          className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+          className="h-11 rounded-xl bg-blue-600 px-8 font-medium text-white transition hover:bg-blue-700"
         >
           Save Sales
         </button>

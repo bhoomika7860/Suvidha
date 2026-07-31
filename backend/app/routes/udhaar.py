@@ -47,6 +47,10 @@ def create_udhaar(
     )
 
     db.add(udhaar)
+
+# Automatically update today's report
+    report.udhaar_sales += data.amount
+
     db.commit()
     db.refresh(udhaar)
     create_audit_log(
