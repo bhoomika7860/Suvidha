@@ -4,11 +4,8 @@ from app.config import DATABASE_URL
 import os
 
 
-print("DATABASE PATH:")
-print(os.path.abspath("Suvidha.db"))
 engine = create_engine(DATABASE_URL)
-print("Current working directory:", os.getcwd())
-print("Absolute DB path:", os.path.abspath("Suvidha.db"))
+
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
