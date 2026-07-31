@@ -15,6 +15,7 @@ export default function ReviewSection() {
         await dailyReportsService.getTodayReport();
 
       setReport(data);
+      console.log("Review total_expenses =", data.total_expenses);
     }
 
     load();

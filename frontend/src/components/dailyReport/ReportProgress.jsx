@@ -32,7 +32,8 @@ export default function ReportProgress() {
     );
   }
 
-  console.log("TODAY REPORT:", report);
+  console.log("TOTAL EXPENSES =", report.total_expenses);
+console.log(report);
 
   const salesCompleted =
     report.total_bills > 0 ||
