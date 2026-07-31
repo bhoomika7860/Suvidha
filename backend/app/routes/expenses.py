@@ -26,15 +26,16 @@ router = APIRouter(
 @router.post("/", response_model=ExpenseResponse)
 def create_expense(
     data: ExpenseCreate,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     expense = Expense(
-        store_id=data.store_id,
-        expense_type=data.expense_type,
-        amount=data.amount,
-        remarks=data.remarks,
-        created_by=data.created_by,
-    )
+    store_id=current_user["store_id"],
+    expense_type=data.expense_type,
+    amount=data.amount,
+    remarks=data.remarks,
+    created_by=current_user["user_id"],
+)
 
     db.add(expense)
     db.commit()

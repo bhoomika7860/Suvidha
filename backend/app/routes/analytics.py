@@ -279,25 +279,13 @@ def dashboard_summary(
 
     if start_date:
         expense_query = expense_query.filter(
-            func.date(
-                func.datetime(
-                    Expense.created_at,
-                    "+5 hours",
-                    "+30 minutes",
-                )
-            ) >= start_date
-        )
+        func.date(Expense.created_at) >= start_date
+    )
 
     if end_date:
         expense_query = expense_query.filter(
-            func.date(
-                func.datetime(
-                    Expense.created_at,
-                    "+5 hours",
-                    "+30 minutes",
-                )
-            ) <= end_date
-        )
+        func.date(Expense.created_at) <= end_date
+    )
 
     total_expenses = expense_query.scalar() or 0
 
@@ -473,25 +461,13 @@ def expense_distribution(
 
     if start_date:
         query = query.filter(
-            func.date(
-    func.datetime(
-        Expense.created_at,
-        "+5 hours",
-        "+30 minutes",
+            func.date(Expense.created_at) >= start_date
     )
-) >= start_date
-        )
 
     if end_date:
         query = query.filter(
-            func.date(
-    func.datetime(
-        Expense.created_at,
-        "+5 hours",
-        "+30 minutes",
+            func.date(Expense.created_at) <= end_date
     )
-) <= end_date
-        )
 
     # ---------- Debug: All Expenses ----------
     all_expenses = db.query(Expense).all()
@@ -810,13 +786,7 @@ def manager_dashboard(
     db.query(Expense)
     .filter(
         Expense.store_id == store_id,
-        func.date(
-    func.datetime(
-        Expense.created_at,
-        "+5 hours",
-        "+30 minutes",
-    )
-) == today,
+        func.date(Expense.created_at) == today,
     )
     .order_by(Expense.created_at.desc())
     .all()
