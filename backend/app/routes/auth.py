@@ -40,6 +40,9 @@ def login(data: LoginRequest):
             .first()
             
         )
+        print("Username entered:", data.username)
+        print("User found:", user)
+
         if not user:
             return {
         "message": "Invalid credentials"
