@@ -29,13 +29,12 @@ export default function HeroCard() {
   }
 
   const completedSections = [
-    report.sales_completed,
-    report.expenses_completed,
-    report.purchases_completed,
-    report.deliveries_completed,
-    
-    
-  ].filter(Boolean).length;
+  report.sales_completed,
+  report.expenses_completed,
+  report.purchases_completed,
+  report.deliveries_completed,
+  report.udhaar_completed,
+].filter(Boolean).length;
 
   const totalSections = 5;
 

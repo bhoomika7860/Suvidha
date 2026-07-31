@@ -1,6 +1,7 @@
 export default function UdhaarTable({
   entries,
   onRepay,
+  isOwner = false,
 }) {
   if (!entries.length) {
     return (
@@ -9,6 +10,11 @@ export default function UdhaarTable({
       </div>
     );
   }
+
+  const totalOutstanding = entries.reduce(
+    (sum, entry) => sum + (entry.amount - entry.paid_amount),
+    0
+  );
 
   return (
     <div className="overflow-hidden rounded-xl border bg-white">
@@ -38,9 +44,11 @@ export default function UdhaarTable({
               Remaining
             </th>
 
-            <th className="px-4 py-3 text-center">
-              Action
-            </th>
+            {!isOwner && (
+              <th className="px-4 py-3 text-center">
+                Action
+              </th>
+            )}
 
           </tr>
         </thead>
@@ -67,27 +75,29 @@ export default function UdhaarTable({
                 </td>
 
                 <td className="px-4 py-3">
-                  ₹{entry.amount}
+                  ₹{entry.amount.toLocaleString("en-IN")}
                 </td>
 
                 <td className="px-4 py-3">
-                  ₹{entry.paid_amount}
+                  ₹{entry.paid_amount.toLocaleString("en-IN")}
                 </td>
 
                 <td className="px-4 py-3 font-semibold text-red-600">
-                  ₹{remaining}
+                  ₹{remaining.toLocaleString("en-IN")}
                 </td>
 
-                <td className="px-4 py-3 text-center">
+                {!isOwner && (
+                  <td className="px-4 py-3 text-center">
 
-                  <button
-                    onClick={() => onRepay(entry)}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                  >
-                    Repay
-                  </button>
+                    <button
+                      onClick={() => onRepay(entry)}
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    >
+                      Repay
+                    </button>
 
-                </td>
+                  </td>
+                )}
 
               </tr>
             );
@@ -96,6 +106,24 @@ export default function UdhaarTable({
         </tbody>
 
       </table>
+
+      {/* Footer */}
+
+      <div className="flex justify-end border-t bg-slate-50 px-6 py-5">
+
+        <div className="text-right">
+
+          <p className="text-sm text-gray-500">
+            Total Outstanding Udhaar
+          </p>
+
+          <h2 className="mt-1 text-3xl font-bold text-blue-600">
+            ₹{totalOutstanding.toLocaleString("en-IN")}
+          </h2>
+
+        </div>
+
+      </div>
 
     </div>
   );

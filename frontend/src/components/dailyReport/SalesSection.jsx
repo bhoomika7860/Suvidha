@@ -132,6 +132,8 @@ export default function SalesSection() {
             />
           </div>
 
+        
+
         </div>
 
         <div className="mt-8 rounded-2xl bg-blue-50 border border-blue-100 p-6">

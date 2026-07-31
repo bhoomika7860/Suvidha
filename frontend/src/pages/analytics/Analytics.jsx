@@ -822,10 +822,7 @@ console.log("Stores:", stores);
               
             </div>
 
-            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-              <SectionHeader title="Business Insights" subtitle="Generated from live analytics" />
-              
-            </div>
+            
           </>
                 )}
       </div>

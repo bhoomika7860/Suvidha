@@ -31,13 +31,12 @@ export default function ReviewSection() {
   }
 
   addSection(
-    "Sales",
-    report.cash_sales +
-      report.upi_sales +
-      report.card_sales +
-      report.udhaar_sales >
-      0
-  );
+  "Sales",
+  report.total_bills > 0 ||
+    report.cash_sales > 0 ||
+    report.upi_sales > 0 ||
+    report.card_sales > 0
+);
 
   addSection(
     "Expenses",
@@ -54,6 +53,10 @@ export default function ReviewSection() {
     report.deliveries > 0
   );
 
+  addSection(
+  "Udhaar",
+  report.udhaar_sales > 0
+);
   
 
   

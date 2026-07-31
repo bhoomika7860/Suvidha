@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 
 import udhaarService from "../../services/udhaarService";
+import dailyReportsService from "../../services/dailyReportsService";
 
 import UdhaarKPIs from "../../components/udhaar/UdhaarKPIs";
 import UdhaarTable from "../../components/udhaar/UdhaarTable";
 import AddUdhaarModal from "../../components/udhaar/AddUdhaarModal";
 import RepayModal from "../../components/udhaar/RepayModal";
 
-import dailyReportsService from "../../services/dailyReportsService";
-
 export default function Udhaar() {
-  const [entries, setEntries] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user"));
 
+  const isOwner = user?.role === "owner";
+
+  const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [showAdd, setShowAdd] = useState(false);
-
   const [showRepay, setShowRepay] = useState(false);
 
   const [selected, setSelected] = useState(null);
@@ -27,34 +28,51 @@ export default function Udhaar() {
   }, []);
 
   async function loadPage() {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const report =
-      await dailyReportsService.getTodayReport();
+      // Managers need today's report to create udhaar.
+      if (!isOwner) {
+        const report =
+          await dailyReportsService.getTodayReport();
 
-    setReportId(report.id);
+        setReportId(report.id);
+      }
 
-    const data =
-      await udhaarService.getUdhaar();
+      const data =
+        await udhaarService.getUdhaar();
 
-    setEntries(data);
+      setEntries(data);
 
-    setLoading(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function addUdhaar(data) {
-    await udhaarService.createUdhaar(data);
+    try {
+      await udhaarService.createUdhaar(data);
 
-    loadPage();
+      setShowAdd(false);
+
+      await loadPage();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function repay(id, amount) {
-    await udhaarService.repayUdhaar(
-      id,
-      amount
-    );
+    try {
+      await udhaarService.repayUdhaar(id, amount);
 
-    loadPage();
+      setShowRepay(false);
+
+      await loadPage();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -68,18 +86,20 @@ export default function Udhaar() {
             Udhaar
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="mt-1 text-slate-500">
             Manage customer credit.
           </p>
 
         </div>
 
-        <button
-          onClick={() => setShowAdd(true)}
-          className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700"
-        >
-          Add Udhaar
-        </button>
+        {!isOwner && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700"
+          >
+            Add Udhaar
+          </button>
+        )}
 
       </div>
 
@@ -92,26 +112,35 @@ export default function Udhaar() {
       ) : (
         <UdhaarTable
           entries={entries}
-          onRepay={(entry) => {
-            setSelected(entry);
-            setShowRepay(true);
-          }}
+          onRepay={
+            isOwner
+              ? undefined
+              : (entry) => {
+                  setSelected(entry);
+                  setShowRepay(true);
+                }
+          }
+          isOwner={isOwner}
         />
       )}
 
-      <AddUdhaarModal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        onSave={addUdhaar}
-        dailyReportId={reportId}
-      />
+      {!isOwner && (
+        <AddUdhaarModal
+          open={showAdd}
+          onClose={() => setShowAdd(false)}
+          onSave={addUdhaar}
+          dailyReportId={reportId}
+        />
+      )}
 
-      <RepayModal
-        open={showRepay}
-        entry={selected}
-        onClose={() => setShowRepay(false)}
-        onRepay={repay}
-      />
+      {!isOwner && (
+        <RepayModal
+          open={showRepay}
+          entry={selected}
+          onClose={() => setShowRepay(false)}
+          onRepay={repay}
+        />
+      )}
 
     </div>
   );

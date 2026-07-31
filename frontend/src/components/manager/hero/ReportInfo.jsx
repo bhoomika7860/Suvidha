@@ -6,6 +6,7 @@ export default function ReportInfo({ report, user }) {
   if (!report.expenses_completed) pending.push("Expenses");
   if (!report.purchases_completed) pending.push("Purchases");
   if (!report.deliveries_completed) pending.push("Deliveries");
+if (!report.udhaar_completed) pending.push("Udhaar");
  
   
 

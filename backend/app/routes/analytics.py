@@ -792,21 +792,19 @@ def manager_hero(
             "status": "Locked" if report.is_locked else "In Progress",
 
             "sales_completed": (
-                (report.cash_sales or 0)
-                + (report.upi_sales or 0)
-                + (report.card_sales or 0)
-                + (report.udhaar_sales or 0)
-            ) > 0,
+    report.total_bills > 0
+    or report.cash_sales > 0
+    or report.upi_sales > 0
+    or report.card_sales > 0
+),
 
-            "expenses_completed": (report.total_expenses or 0) > 0,
+"expenses_completed": report.total_expenses > 0,
 
-            "purchases_completed": (
-                (report.total_purchases or 0) > 0
-                or purchases_count > 0
-            ),
+"purchases_completed": report.total_purchases > 0,
 
-            "deliveries_completed": (report.deliveries or 0) > 0,
+"deliveries_completed": report.deliveries > 0,
 
+"udhaar_completed": report.udhaar_sales > 0,
             
 
             "notes_completed": bool(report.notes),

@@ -219,7 +219,7 @@ def update_sales(
     report.cash_sales = data.cash_sales
     report.upi_sales = data.upi_sales
     report.card_sales = data.card_sales
-    report.udhaar_sales = data.udhaar_sales
+    
 
     db.commit()
     db.refresh(report)
