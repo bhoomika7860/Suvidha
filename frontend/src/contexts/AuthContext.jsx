@@ -33,6 +33,9 @@ export function AuthProvider({ children }) {
   const login = async (username, password) => {
     const result = await authService.login(username, password);
 
+console.log("RESULT:", result);
+console.log("ACCESS TOKEN:", result.access_token);
+
     localStorage.setItem("token", result.access_token);
 
     const currentUser = await authService.getCurrentUser();
