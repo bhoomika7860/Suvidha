@@ -29,6 +29,11 @@ const menuItems = [
     icon: Wallet,
     path: "/staff-expenses",
   },
+  {
+  title: "Udhaar",
+  icon: Wallet,
+  path: "/staff/udhaar",
+},
 ];
 
 export default function StaffSidebar() {

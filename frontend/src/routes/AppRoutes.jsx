@@ -27,7 +27,7 @@ import StaffDashboard from "../pages/staff/StaffDashboard";
 import StaffTasks from "../pages/staff/StaffTasks";
  import StaffPurchases from "../pages/staff/StaffPurchases";
  import StaffExpenses from "../pages/staff/StaffExpenses";
-
+import StaffUdhaar from "../pages/staff/Udhaar";
 //Delivery
 import Delivery from "../pages/delivery/Delivery";
 
@@ -158,6 +158,11 @@ function AppRoutes() {
     path="/staff-dashboard"
     element={<StaffDashboard />}
   />
+
+<Route
+  path="/staff/udhaar"
+  element={<StaffUdhaar />}
+/>
 
   <Route
     path="/staff-tasks"
