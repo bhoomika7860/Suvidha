@@ -18,13 +18,17 @@ const deliveryAssignmentService = {
   },
 
   async createAssignment(payload) {
-    const { data } = await api.post(
-  "/delivery-assignments/",
-  payload
-);
+  console.log("DELIVERY SERVICE CALLED", payload);
 
-    return data;
-  },
+  const { data } = await api.post(
+    "/delivery-assignments/",
+    payload
+  );
+
+  return data;
+}
+
+    
 };
 
 export default deliveryAssignmentService;
