@@ -47,20 +47,21 @@ export default function AddExpenseModal({
     );
 
     onSave({
-      ...(expense && { id: expense.id }),
+    ...(expense && { id: expense.id }),
 
-      store_id: user.store_id,
+    store_id: user.store_id,
 
-      daily_report_id: reportId,
+    daily_report_id:
+  expense?.daily_report_id ?? reportId,
 
-      expense_type: type,
+    expense_type: type,
 
-      amount: Number(amount),
+    amount: Number(amount),
 
-      remarks,
+    remarks,
 
-      created_by: user.user_id,
-    });
+    created_by: user.user_id,
+});
 
     setType("Tea/Snacks");
     setAmount("");

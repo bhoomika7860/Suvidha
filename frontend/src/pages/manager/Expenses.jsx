@@ -4,7 +4,7 @@ import ExpenseStats from "../../components/expenses/ExpenseStats";
 import ExpenseToolbar from "../../components/expenses/ExpenseToolbar";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
 import AddExpenseModal from "../../components/expenses/AddExpenseModal";
-
+import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
 export default function Expenses() {
@@ -13,6 +13,8 @@ export default function Expenses() {
   const [showModal, setShowModal] = useState(false);
 
   const [expenses, setExpenses] = useState([]);
+
+  const [reportId, setReportId] = useState(null);
 
   const [selectedExpense, setSelectedExpense] =
     useState(null);
@@ -27,6 +29,15 @@ export default function Expenses() {
         await expenseService.getExpenses();
 
       setExpenses(data);
+
+      const report =
+  await dailyReportsService.getTodayReport();
+
+setReportId(report.id);
+
+
+
+
 
     } catch (err) {
       console.error(err);
@@ -125,14 +136,15 @@ export default function Expenses() {
       />
 
       <AddExpenseModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setSelectedExpense(null);
-        }}
-        onSave={handleSave}
-        expense={selectedExpense}
-      />
+  isOpen={showModal}
+  onClose={() => {
+    setShowModal(false);
+    setSelectedExpense(null);
+  }}
+  onSave={handleSave}
+  expense={selectedExpense}
+  reportId={reportId}
+/>
 
     </div>
   );

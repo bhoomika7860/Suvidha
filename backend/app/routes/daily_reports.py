@@ -167,6 +167,45 @@ def get_today_report(
         db.commit()
         db.refresh(report)
 
+    expenses_total = (
+        db.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(
+        Expense.store_id == report.store_id,
+        func.date(
+            func.timezone(
+                "Asia/Kolkata",
+                Expense.created_at,
+            )
+        ) == report.report_date,
+    )
+    .scalar()
+)
+
+    udhaar_total = (
+        db.query(func.coalesce(func.sum(UdhaarEntry.amount), 0))
+    .filter(
+        UdhaarEntry.store_id == report.store_id,
+        UdhaarEntry.daily_report_id == report.id,
+        UdhaarEntry.status != "settled",
+    )
+    .scalar()
+)
+
+    purchase_total = (
+        db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
+    .filter(
+        Purchase.store_id == report.store_id,
+        Purchase.status == "completed",
+        func.date(
+            func.timezone(
+                "Asia/Kolkata",
+                Purchase.purchase_date,
+            )
+        ) == report.report_date,
+    )
+    .scalar()
+)
+
     return {
     "id": report.id,
     "store_id": report.store_id,
@@ -178,10 +217,10 @@ def get_today_report(
     "cash_sales": report.cash_sales,
     "upi_sales": report.upi_sales,
     "card_sales": report.card_sales,
-    "udhaar_sales": report.udhaar_sales,
+    "udhaar_sales": udhaar_total,
+"total_expenses": expenses_total,
 
-    "total_expenses": report.total_expenses,
-    "total_purchases": report.total_purchases,
+"total_purchases": purchase_total,
 
     "notes": report.notes,
     "is_locked": report.is_locked,
@@ -221,7 +260,9 @@ def update_sales(
     report.cash_sales = data.cash_sales
     report.upi_sales = data.upi_sales
     report.card_sales = data.card_sales
-    
+
+    report.total_expenses = data.total_expenses
+    report.udhaar_sales = data.udhaar_sales
 
     db.commit()
     db.refresh(report)

@@ -160,7 +160,6 @@ def _monthly_series(
     + _safe_number(report.upi_sales)
     + _safe_number(report.card_sales)
     + _safe_number(report.udhaar_sales)
-    + _safe_number(report.total_expenses)
 )
 
         monthly[month] += revenue
@@ -237,7 +236,6 @@ def dashboard_summary(
     + _safe_number(report.upi_sales)
     + _safe_number(report.card_sales)
     + _safe_number(report.udhaar_sales)
-    + _safe_number(report.total_expenses)
 )
 
         total_purchases += _safe_number(
@@ -407,7 +405,6 @@ def store_summary(
     + _safe_number(report.upi_sales)
     + _safe_number(report.card_sales)
     + _safe_number(report.udhaar_sales)
-    + _safe_number(report.total_expenses)
 )
 
         stores[sid]["total_bills"] += report.total_bills or 0
@@ -790,13 +787,30 @@ def manager_hero(
     or report.card_sales > 0
 ),
 
-"expenses_completed": report.total_expenses > 0,
+"expenses_completed": (
+    db.query(Expense)
+    .filter(
+        Expense.store_id == report.store_id,
+        func.date(
+            func.timezone("Asia/Kolkata", Expense.created_at)
+        ) == report.report_date,
+    )
+    .count()
+) > 0,
 
-"purchases_completed": report.total_purchases > 0,
+"purchases_completed": purchases_count > 0,
 
 "deliveries_completed": report.deliveries > 0,
 
-"udhaar_completed": report.udhaar_sales > 0,
+"udhaar_completed": (
+    db.query(UdhaarEntry)
+    .filter(
+        UdhaarEntry.store_id == report.store_id,
+        UdhaarEntry.daily_report_id == report.id,
+        UdhaarEntry.status != "settled",
+    )
+    .count()
+) > 0,
             
 
             "notes_completed": bool(report.notes),
@@ -853,7 +867,15 @@ def manager_dashboard(
         "cash": report.cash_sales if report else 0,
         "upi": report.upi_sales if report else 0,
         "card": report.card_sales if report else 0,
-        "udhaar": report.udhaar_sales if report else 0,
+        "udhaar": (
+    db.query(func.coalesce(func.sum(UdhaarEntry.amount), 0))
+    .filter(
+        UdhaarEntry.store_id == store_id,
+        UdhaarEntry.daily_report_id == report.id,
+        UdhaarEntry.status != "settled",
+    )
+    .scalar()
+) if report else 0,
     }
 
     progress = {
@@ -995,10 +1017,8 @@ def overview(
     + _safe_number(report.upi_sales)
     + _safe_number(report.card_sales)
     + _safe_number(report.udhaar_sales)
-    + _safe_number(report.total_expenses)
     for report in reports
 )
-
     expenses = sum(
         _safe_number(report.total_expenses)
         for report in reports

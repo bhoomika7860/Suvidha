@@ -11,12 +11,13 @@ export default function ReviewSection() {
 
   useEffect(() => {
     async function load() {
-      const data =
-        await dailyReportsService.getTodayReport();
+  const data =
+    await dailyReportsService.getTodayReport();
 
-      setReport(data);
-      console.log("Review total_expenses =", data.total_expenses);
-    }
+  console.log(data);
+
+  setReport(data);
+}
 
     load();
   }, []);
@@ -40,9 +41,9 @@ export default function ReviewSection() {
 );
 
   addSection(
-    "Expenses",
-    report.total_expenses > 0
-  );
+  "Expenses",
+  report.expenses_count > 0
+);
 
   addSection(
     "Purchases",
@@ -56,7 +57,7 @@ export default function ReviewSection() {
 
   addSection(
   "Udhaar",
-  report.udhaar_sales > 0
+  report.udhaar_count > 0
 );
   
 

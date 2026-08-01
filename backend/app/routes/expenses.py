@@ -37,13 +37,16 @@ def create_expense(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    today = ist_today()
+
     report = (
-        db.query(DailyReport)
-        .filter(
-            DailyReport.id == data.daily_report_id
-        )
-        .first()
+    db.query(DailyReport)
+    .filter(
+        DailyReport.store_id == current_user["store_id"],
+        DailyReport.report_date == today,
     )
+    .first()
+)
 
     if not report:
         raise HTTPException(

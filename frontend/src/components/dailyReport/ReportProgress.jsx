@@ -4,25 +4,61 @@ import {
   Circle,
   Clock3,
 } from "lucide-react";
+import api from "../../api/api";
 import dailyReportsService from "../../services/dailyReportsService";
 
 export default function ReportProgress() {
   const [report, setReport] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data =
-          await dailyReportsService.getTodayReport();
+const [expensesCompleted, setExpensesCompleted] =
+  useState(false);
 
-        setReport(data);
-      } catch (err) {
-        console.error(err);
-      }
+const [purchasesCompleted, setPurchasesCompleted] =
+  useState(false);
+
+const [udhaarCompleted, setUdhaarCompleted] =
+  useState(false);
+
+useEffect(() => {
+  async function load() {
+    try {
+      const data =
+        await dailyReportsService.getTodayReport();
+
+      setReport(data);
+
+      const expenses =
+        await dailyReportsService.getExpenses(
+          data.id
+        );
+
+      setExpensesCompleted(
+        expenses.length > 0
+      );
+
+      const purchases =
+        await dailyReportsService.getPurchases(
+          data.id
+        );
+
+      setPurchasesCompleted(
+        purchases.length > 0
+      );
+
+      const udhaar =
+        await api.get("/udhaar/");
+
+      setUdhaarCompleted(
+        udhaar.data.length > 0
+      );
+
+    } catch (err) {
+      console.error(err);
     }
+  }
 
-    load();
-  }, []);
+  load();
+}, []);
 
   if (!report) {
     return (
@@ -41,17 +77,12 @@ console.log(report);
     report.upi_sales > 0 ||
     report.card_sales > 0;
 
-  const expensesCompleted =
-    report.total_expenses > 0;
-
-  const purchasesCompleted =
-    report.total_purchases > 0;
+  
 
   const deliveriesCompleted =
     report.deliveries > 0;
 
-  const udhaarCompleted =
-    report.udhaar_sales > 0;
+ 
 
   const sections = [
     {
