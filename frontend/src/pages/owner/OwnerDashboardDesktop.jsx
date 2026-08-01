@@ -445,44 +445,73 @@ hover:-translate-y-1">
   
 
   <KpiCard
-    label="Total Sales Today"
-    value={`₹${(dashboardSummary.total_sales || 0).toLocaleString("en-IN")}`}
-    sub={`${totalStores - dashboardSummary.submitted_reports} stores remaining`}
-    color="border-blue-500"
-    bgColor="bg-blue-100"
-    iconColor="text-blue-600"
-    Icon={IndianRupee}
-  />
+  label="Total Sales"
+  value={`₹${(dashboardSummary.total_sales || 0).toLocaleString("en-IN")}`}
+  sub="Gross business across all stores"
+  color="border-blue-500"
+  bgColor="bg-blue-100"
+  iconColor="text-blue-600"
+  Icon={IndianRupee}
+/>
 
   <KpiCard
-    label="Total Purchases Today"
-    value={`₹${(dashboardSummary.total_purchases || 0).toLocaleString("en-IN")}`}
-    sub="Across all submitted reports"
-    color="border-orange-500"
-    bgColor="bg-orange-100"
-    iconColor="text-orange-600"
-    Icon={ShoppingCart}
-  />
+  label="Sales Bills"
+  value={dashboardSummary.total_bills || 0}
+  sub="Across all stores"
+  color="border-violet-500"
+  bgColor="bg-violet-100"
+  iconColor="text-violet-600"
+  Icon={Receipt}
+/>
+
+  <Card className="p-6 border-t-4 border-orange-500 bg-white">
+
+  <div className="w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center mb-4">
+    <ShoppingCart
+      size={20}
+      className="text-orange-600"
+    />
+  </div>
+
+  <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+    Purchases
+  </p>
+
+  <div className="mt-4">
+
+    <p className="text-xs text-slate-500">
+      Total Purchases
+    </p>
+
+    <h2 className="text-2xl font-bold text-slate-900">
+      ₹{(dashboardSummary.total_purchases || 0).toLocaleString("en-IN")}
+    </h2>
+
+  </div>
+
+  <div className="mt-5 border-t pt-4">
+
+    <p className="text-xs text-slate-500">
+      Purchase Bills Completed
+    </p>
+
+    <h2 className="text-2xl font-bold text-slate-900">
+      {dashboardSummary.purchase_bills_completed || 0}
+    </h2>
+
+  </div>
+
+</Card>
 
   <KpiCard
-    label="Total Bills"
-    value={dashboardSummary.total_bills || 0}
-    sub="Bills processed"
-    color="border-violet-500"
-    bgColor="bg-violet-100"
-    iconColor="text-violet-600"
-    Icon={Receipt}
-  />
-
-  <KpiCard
-    label="Daily Expenses"
-    value={`₹${(dashboardSummary.total_expenses || 0).toLocaleString("en-IN")}`}
-    sub="Across all locked reports"
-    color="border-emerald-500"
-    bgColor="bg-emerald-100"
-    iconColor="text-emerald-600"
-    Icon={Wallet}
-  />
+  label="Total Deliveries"
+  value={dashboardSummary.total_deliveries || 0}
+  sub="Completed today"
+  color="border-emerald-500"
+  bgColor="bg-emerald-100"
+  iconColor="text-emerald-600"
+  Icon={Package}
+/>
 
 </div>
 

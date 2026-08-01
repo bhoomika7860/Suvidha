@@ -46,21 +46,7 @@ export default function UdhaarSection() {
 
       </div>
 
-      <div className="mt-8 flex justify-end">
-
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-5 min-w-[190px]">
-
-          <p className="text-sm text-blue-700">
-            Total Udhaar
-          </p>
-
-          <h2 className="mt-2 text-3xl font-bold text-blue-600">
-            ₹{Number(report.udhaar_sales || 0).toLocaleString("en-IN")}
-          </h2>
-
-        </div>
-
-      </div>
+      
     </SectionCard>
   );
 }

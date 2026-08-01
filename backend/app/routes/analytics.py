@@ -156,11 +156,12 @@ def _monthly_series(
         month = report.report_date.strftime("%b")
 
         revenue = (
-            _safe_number(report.cash_sales)
-            + _safe_number(report.upi_sales)
-            + _safe_number(report.card_sales)
-            + _safe_number(report.udhaar_sales)
-        )
+    _safe_number(report.cash_sales)
+    + _safe_number(report.upi_sales)
+    + _safe_number(report.card_sales)
+    + _safe_number(report.udhaar_sales)
+    + _safe_number(report.total_expenses)
+)
 
         monthly[month] += revenue
 
@@ -228,22 +229,60 @@ def dashboard_summary(
     total_bills = 0
     total_deliveries = 0
     total_purchases = 0
+    
 
     for report in reports:
         total_sales += (
-            _safe_number(report.cash_sales)
-            + _safe_number(report.upi_sales)
-            + _safe_number(report.card_sales)
-            + _safe_number(report.udhaar_sales)
-        )
+    _safe_number(report.cash_sales)
+    + _safe_number(report.upi_sales)
+    + _safe_number(report.card_sales)
+    + _safe_number(report.udhaar_sales)
+    + _safe_number(report.total_expenses)
+)
 
         total_purchases += _safe_number(
             report.total_purchases
         )
 
+        
+
         total_bills += report.total_bills or 0
         total_deliveries += report.deliveries or 0
 
+    purchase_bills_completed_query = db.query(Purchase)
+
+    if store_id != "all":
+        purchase_bills_completed_query = purchase_bills_completed_query.filter(
+        Purchase.store_id == int(store_id)
+    )
+
+    start_date, end_date = _get_period_bounds(period)
+
+    if start_date:
+        purchase_bills_completed_query = purchase_bills_completed_query.filter(
+        func.date(
+            func.timezone(
+                "Asia/Kolkata",
+                Purchase.purchase_date,
+            )
+        ) >= start_date
+    )
+
+    if end_date:
+        purchase_bills_completed_query = purchase_bills_completed_query.filter(
+        func.date(
+            func.timezone(
+                "Asia/Kolkata",
+                Purchase.purchase_date,
+            )
+        ) <= end_date
+    )
+
+    purchase_bills_completed_query = purchase_bills_completed_query.filter(
+        Purchase.status == "completed"
+)
+
+    purchase_bills_completed = purchase_bills_completed_query.count()
     # ---------------------------
     # Udhaar
     # ---------------------------
@@ -303,6 +342,7 @@ def dashboard_summary(
 
     return {
         "total_sales": round(total_sales, 2),
+        "purchase_bills_completed": purchase_bills_completed,
         "total_revenue": round(total_sales, 2),
         "total_purchases": round(total_purchases, 2),
         "total_deliveries": total_deliveries,
@@ -363,11 +403,12 @@ def store_summary(
             }
 
         stores[sid]["total_sales"] += (
-            _safe_number(report.cash_sales)
-            + _safe_number(report.upi_sales)
-            + _safe_number(report.card_sales)
-            + _safe_number(report.udhaar_sales)
-        )
+    _safe_number(report.cash_sales)
+    + _safe_number(report.upi_sales)
+    + _safe_number(report.card_sales)
+    + _safe_number(report.udhaar_sales)
+    + _safe_number(report.total_expenses)
+)
 
         stores[sid]["total_bills"] += report.total_bills or 0
         stores[sid]["total_expenses"] += _safe_number(report.total_expenses)
@@ -950,18 +991,13 @@ def overview(
 )
 
     sales = sum(
-
-        _safe_number(report.cash_sales)
-
-        + _safe_number(report.upi_sales)
-
-        + _safe_number(report.card_sales)
-
-        + _safe_number(report.udhaar_sales)
-
-        for report in reports
-
-    )
+    _safe_number(report.cash_sales)
+    + _safe_number(report.upi_sales)
+    + _safe_number(report.card_sales)
+    + _safe_number(report.udhaar_sales)
+    + _safe_number(report.total_expenses)
+    for report in reports
+)
 
     expenses = sum(
         _safe_number(report.total_expenses)

@@ -7,11 +7,13 @@ export default function SalesSection() {
   const [report, setReport] = useState(null);
 
   const [form, setForm] = useState({
-    total_bills: 0,
-    cash_sales: 0,
-    upi_sales: 0,
-    card_sales: 0,
-  });
+  total_bills: 0,
+  cash_sales: 0,
+  upi_sales: 0,
+  card_sales: 0,
+  total_expenses: 0,
+  udhaar_sales: 0,
+});
 
   useEffect(() => {
     async function load() {
@@ -21,11 +23,13 @@ export default function SalesSection() {
         setReport(data);
 
         setForm({
-          total_bills: data.total_bills || 0,
-          cash_sales: data.cash_sales || 0,
-          upi_sales: data.upi_sales || 0,
-          card_sales: data.card_sales || 0,
-        });
+  total_bills: data.total_bills || 0,
+  cash_sales: data.cash_sales || 0,
+  upi_sales: data.upi_sales || 0,
+  card_sales: data.card_sales || 0,
+  total_expenses: data.total_expenses || 0,
+  udhaar_sales: data.udhaar_sales || 0,
+});
       } catch (err) {
         console.error(err);
       }
@@ -35,12 +39,14 @@ export default function SalesSection() {
   }, []);
 
   const totalSales = useMemo(() => {
-    return (
-      Number(form.cash_sales) +
-      Number(form.upi_sales) +
-      Number(form.card_sales)
-    );
-  }, [form]);
+  return (
+    Number(form.cash_sales) +
+    Number(form.upi_sales) +
+    Number(form.card_sales) +
+    Number(form.total_expenses) +
+    Number(form.udhaar_sales)
+  );
+}, [form]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -74,7 +80,7 @@ export default function SalesSection() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-5 gap-6">
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -91,32 +97,52 @@ export default function SalesSection() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              UPI Sales
-            </label>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    UPI + Card Sales
+  </label>
 
-            <input
-              name="upi_sales"
-              type="number"
-              value={form.upi_sales}
-              onChange={handleChange}
-              className="h-11 w-full rounded-xl border border-gray-200 px-4"
-            />
-          </div>
+  <input
+    type="number"
+    value={
+      Number(form.upi_sales) +
+      Number(form.card_sales)
+    }
+    onChange={(e) => {
+      const value = Number(e.target.value);
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Card Sales
-            </label>
+      setForm((prev) => ({
+        ...prev,
+        upi_sales: value,
+        card_sales: 0,
+      }));
+    }}
+    className="h-11 w-full rounded-xl border border-gray-200 px-4"
+  />
+</div>
 
-            <input
-              name="card_sales"
-              type="number"
-              value={form.card_sales}
-              onChange={handleChange}
-              className="h-11 w-full rounded-xl border border-gray-200 px-4"
-            />
-          </div>
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    Expenses
+  </label>
+
+  <input
+    value={form.total_expenses}
+    readOnly
+    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4"
+  />
+</div>
+
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    Udhaar
+  </label>
+
+  <input
+    value={form.udhaar_sales}
+    readOnly
+    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4"
+  />
+</div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -147,7 +173,7 @@ export default function SalesSection() {
           </h2>
 
           <p className="mt-2 text-sm text-slate-500">
-            Cash + UPI + Card Sales
+            Cash + UPI/Card + Expenses + Udhaar
           </p>
 
         </div>
