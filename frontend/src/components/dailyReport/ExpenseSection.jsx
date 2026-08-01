@@ -1,42 +1,104 @@
 import { useEffect, useState } from "react";
-import { Eye, Wallet } from "lucide-react";
+import {
+  Eye,
+  Wallet,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+
 import SectionCard from "./SectionCard";
+import AddExpenseModal from "../expenses/AddExpenseModal";
+
 import dailyReportsService from "../../services/dailyReportsService";
+import expenseService from "../../services/expenseService";
 
 export default function ExpenseSection() {
   const [expenses, setExpenses] = useState([]);
   const [reportId, setReportId] = useState(null);
 
+  const [showModal, setShowModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] =
+    useState(null);
+
   useEffect(() => {
-    async function load() {
+    load();
+  }, []);
+
+  async function load() {
+    try {
       const report =
         await dailyReportsService.getTodayReport();
 
       setReportId(report.id);
 
       const data =
-        await dailyReportsService.getExpenses(report.id);
+        await dailyReportsService.getExpenses(
+          report.id
+        );
 
       setExpenses(data);
-    }
 
-    load();
-  }, []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   const total = expenses.reduce(
     (sum, item) => sum + Number(item.amount),
     0
   );
 
+  async function handleDelete(id) {
+    if (
+      !window.confirm(
+        "Delete this expense?"
+      )
+    )
+      return;
+
+    try {
+      await expenseService.deleteExpense(id);
+
+      await load();
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function handleEdit(expense) {
+    setSelectedExpense(expense);
+    setShowModal(true);
+  }
+
+  async function handleSave(data) {
+    try {
+      if (data.id) {
+        await expenseService.updateExpense(
+          data.id,
+          data
+        );
+      }
+
+      setShowModal(false);
+      setSelectedExpense(null);
+
+      await load();
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <SectionCard title="Expenses">
 
-      <div className="flex items-center justify-between mb-5">
+      <div className="mb-5 flex items-center justify-between">
 
         <div className="flex items-center gap-3">
 
-          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
 
             <Wallet
               size={18}
@@ -52,7 +114,8 @@ export default function ExpenseSection() {
             </h3>
 
             <p className="text-sm text-gray-500">
-              Automatically synced from the Expenses module.
+              Automatically synced from the Expenses
+              module.
             </p>
 
           </div>
@@ -61,7 +124,7 @@ export default function ExpenseSection() {
 
         <Link
           to="/manager-expenses"
-          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
+          className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
         >
           <Eye size={17} />
           View Expenses
@@ -89,6 +152,10 @@ export default function ExpenseSection() {
                 Added By
               </th>
 
+              <th className="px-5 py-3 text-center">
+                Actions
+              </th>
+
             </tr>
 
           </thead>
@@ -103,15 +170,43 @@ export default function ExpenseSection() {
               >
 
                 <td className="px-5 py-3">
-  {expense.expense_type}
-</td>
+                  {expense.expense_type}
+                </td>
 
                 <td className="px-5 py-3 font-medium">
-                  ₹{expense.amount}
+                  ₹{Number(
+                    expense.amount
+                  ).toLocaleString("en-IN")}
                 </td>
 
                 <td className="px-5 py-3">
-                  {expense.created_by}
+                  {expense.created_by_name}
+                </td>
+
+                <td className="px-5 py-3">
+
+                  <div className="flex justify-center gap-2">
+
+                    <button
+                      onClick={() =>
+                        handleEdit(expense)
+                      }
+                      className="rounded-lg bg-amber-500 p-2 text-white hover:bg-amber-600"
+                    >
+                      <Pencil size={16} />
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        handleDelete(expense.id)
+                      }
+                      className="rounded-lg bg-red-600 p-2 text-white hover:bg-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+
+                  </div>
+
                 </td>
 
               </tr>
@@ -126,7 +221,7 @@ export default function ExpenseSection() {
 
       <div className="mt-5 flex justify-end">
 
-        <div className="bg-orange-50 border border-orange-200 rounded-xl px-6 py-3">
+        <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-3">
 
           <p className="text-xs text-orange-700">
             Total Expenses
@@ -139,6 +234,16 @@ export default function ExpenseSection() {
         </div>
 
       </div>
+
+      <AddExpenseModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedExpense(null);
+        }}
+        onSave={handleSave}
+        expense={selectedExpense}
+      />
 
     </SectionCard>
   );

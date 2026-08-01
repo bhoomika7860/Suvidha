@@ -22,6 +22,15 @@ const expenseService = {
     return response.data;
   },
 
+  async updateExpense(id, expense) {
+  const response = await api.put(
+    `/expenses/${id}`,
+    expense
+  );
+
+  return response.data;
+},
+
   async deleteExpense(id) {
     const response = await api.delete(
       `/expenses/${id}`

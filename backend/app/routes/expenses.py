@@ -85,6 +85,51 @@ def create_expense(
     return expense
 
 
+@router.put("/{expense_id}")
+def update_expense(
+    expense_id: int,
+    data: ExpenseCreate,
+    db: Session = Depends(get_db),
+):
+    expense = (
+        db.query(Expense)
+        .filter(Expense.id == expense_id)
+        .first()
+    )
+
+    if not expense:
+        raise HTTPException(
+            status_code=404,
+            detail="Expense not found"
+        )
+
+    difference = data.amount - expense.amount
+
+    expense.expense_type = data.expense_type
+    expense.amount = data.amount
+    expense.remarks = data.remarks
+
+    today = datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    ).date()
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == expense.store_id,
+            DailyReport.report_date == today,
+        )
+        .first()
+    )
+
+    if report:
+        report.total_expenses += difference
+
+    db.commit()
+    db.refresh(expense)
+
+    return expense
+
 # -----------------------------
 # Get Today's Expenses
 # -----------------------------
@@ -177,9 +222,7 @@ def delete_expense(
 ):
     expense = (
         db.query(Expense)
-        .filter(
-            Expense.id == expense_id
-        )
+        .filter(Expense.id == expense_id)
         .first()
     )
 
@@ -188,6 +231,25 @@ def delete_expense(
             status_code=404,
             detail="Expense not found",
         )
+
+    today = datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    ).date()
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == expense.store_id,
+            DailyReport.report_date == today,
+        )
+        .first()
+    )
+
+    if report:
+        report.total_expenses -= expense.amount
+
+        if report.total_expenses < 0:
+            report.total_expenses = 0
 
     db.delete(expense)
     db.commit()

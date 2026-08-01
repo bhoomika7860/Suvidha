@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 const expenseTypes = [
@@ -18,39 +18,53 @@ export default function AddExpenseModal({
   isOpen,
   onClose,
   onSave,
+  expense = null,
 }) {
-
   const [type, setType] = useState("Tea/Snacks");
   const [amount, setAmount] = useState("");
   const [remarks, setRemarks] = useState("");
 
+  useEffect(() => {
+    if (expense) {
+      setType(expense.expense_type);
+      setAmount(expense.amount);
+      setRemarks(expense.remarks || "");
+    } else {
+      setType("Tea/Snacks");
+      setAmount("");
+      setRemarks("");
+    }
+  }, [expense, isOpen]);
+
   if (!isOpen) return null;
 
   function handleSave() {
+    if (!amount) return;
 
-  if (!amount) return;
+    const user = JSON.parse(
+      localStorage.getItem("user")
+    );
 
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
+    onSave({
+      ...(expense && { id: expense.id }),
 
-  onSave({
-    store_id: user.store_id,
+      store_id: user.store_id,
 
-    expense_type: type,
+      expense_type: type,
 
-    amount: Number(amount),
+      amount: Number(amount),
 
-    remarks,
+      remarks,
 
-    created_by: user.user_id,
-  });
+      created_by: user.user_id,
+    });
 
-  setAmount("");
-  setRemarks("");
-  setType("Tea/Snacks");
+    setType("Tea/Snacks");
+    setAmount("");
+    setRemarks("");
 
-}
+    onClose();
+  }
 
   return (
     <>
@@ -60,67 +74,60 @@ export default function AddExpenseModal({
       />
 
       <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="w-[600px] rounded-2xl bg-white shadow-xl">
 
-        <div className="bg-white rounded-2xl shadow-xl w-[600px]">
-
-          <div className="flex justify-between items-center p-6 border-b">
+          <div className="flex items-center justify-between border-b p-6">
 
             <h2 className="text-2xl font-bold">
-
-              Add Expense
-
+              {expense ? "Edit Expense" : "Add Expense"}
             </h2>
 
             <button onClick={onClose}>
-
               <X />
-
             </button>
 
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="space-y-5 p-6">
 
             <div>
 
-              <label className="block mb-2 font-medium">
-
+              <label className="mb-2 block font-medium">
                 Expense Type
-
               </label>
 
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full h-11 border rounded-xl px-4"
+                onChange={(e) =>
+                  setType(e.target.value)
+                }
+                className="h-11 w-full rounded-xl border px-4"
               >
-
-                {expenseTypes.map((expense) => (
-
-                  <option key={expense}>
-
-                    {expense}
-
+                {expenseTypes.map((expenseType) => (
+                  <option
+                    key={expenseType}
+                    value={expenseType}
+                  >
+                    {expenseType}
                   </option>
-
                 ))}
-
               </select>
 
             </div>
 
             <div>
 
-              <label className="block mb-2 font-medium">
-
+              <label className="mb-2 block font-medium">
                 Amount
-
               </label>
 
               <input
+                type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full h-11 border rounded-xl px-4"
+                onChange={(e) =>
+                  setAmount(e.target.value)
+                }
+                className="h-11 w-full rounded-xl border px-4"
                 placeholder="Enter amount"
               />
 
@@ -128,17 +135,17 @@ export default function AddExpenseModal({
 
             <div>
 
-              <label className="block mb-2 font-medium">
-
+              <label className="mb-2 block font-medium">
                 Remarks
-
               </label>
 
               <textarea
                 rows={4}
                 value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                className="w-full border rounded-xl p-4"
+                onChange={(e) =>
+                  setRemarks(e.target.value)
+                }
+                className="w-full rounded-xl border p-4"
                 placeholder="Remarks"
               />
 
@@ -146,20 +153,15 @@ export default function AddExpenseModal({
 
             <button
               onClick={handleSave}
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-medium"
+              className="h-11 w-full rounded-xl bg-blue-600 font-medium text-white hover:bg-blue-700"
             >
-
-              Save Expense
-
+              {expense ? "Update Expense" : "Save Expense"}
             </button>
 
           </div>
 
         </div>
-
       </div>
-
     </>
   );
-
 }
