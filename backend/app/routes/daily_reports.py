@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.models.udhaar_entry import UdhaarEntry
 from app.database import get_db
 from app.models.daily_report import DailyReport
 from app.schemas.daily_report import DailyReportCreate
@@ -514,7 +514,6 @@ def get_all_reports(
         }
         for report in reports
     ]
-
 @router.get("/today/all")
 def get_today_reports(
     current_user: dict = Depends(get_current_user),
@@ -523,7 +522,7 @@ def get_today_reports(
     if current_user["role"] != "owner":
         raise HTTPException(
             status_code=403,
-            detail="Access denied"
+            detail="Access denied",
         )
 
     reports = (
@@ -537,29 +536,74 @@ def get_today_reports(
         .all()
     )
 
-    return [
-        {
-            "id": report.id,
-            "store_id": report.store_id,
-            "store_name": report.store.name,
-            "report_date": report.report_date,
+    response = []
 
-            "total_bills": report.total_bills,
-            "deliveries": report.deliveries,
+    for report in reports:
 
-            "cash_sales": report.cash_sales,
-            "upi_sales": report.upi_sales,
-            "card_sales": report.card_sales,
-            "udhaar_sales": report.udhaar_sales,
+        expenses_total = (
+            db.query(func.coalesce(func.sum(Expense.amount), 0))
+            .filter(
+                Expense.store_id == report.store_id,
+                func.date(
+                    func.timezone(
+                        "Asia/Kolkata",
+                        Expense.created_at,
+                    )
+                )
+                == report.report_date,
+            )
+            .scalar()
+        )
 
-            "total_expenses": report.total_expenses,
-            "total_purchases": report.total_purchases,
+        udhaar_total = (
+            db.query(func.coalesce(func.sum(UdhaarEntry.amount), 0))
+            .filter(
+                UdhaarEntry.store_id == report.store_id,
+                UdhaarEntry.daily_report_id == report.id,
+                UdhaarEntry.status != "settled",
+            )
+            .scalar()
+        )
 
-            "is_locked": report.is_locked,
-        }
-        for report in reports
-    ]
+        purchase_total = (
+            db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
+            .filter(
+                Purchase.store_id == report.store_id,
+                Purchase.status == "completed",
+                func.date(
+                    func.timezone(
+                        "Asia/Kolkata",
+                        Purchase.purchase_date,
+                    )
+                )
+                == report.report_date,
+            )
+            .scalar()
+        )
 
+        response.append(
+            {
+                "id": report.id,
+                "store_id": report.store_id,
+                "store_name": report.store.name,
+                "report_date": report.report_date,
+
+                "total_bills": report.total_bills,
+                "deliveries": report.deliveries,
+
+                "cash_sales": report.cash_sales,
+                "upi_sales": report.upi_sales,
+                "card_sales": report.card_sales,
+
+                "udhaar_sales": udhaar_total,
+                "total_expenses": expenses_total,
+                "total_purchases": purchase_total,
+
+                "is_locked": report.is_locked,
+            }
+        )
+
+    return response
 
 
 # Get reports by store

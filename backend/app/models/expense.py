@@ -26,6 +26,12 @@ class Expense(Base):
         nullable=False,
     )
 
+    daily_report_id = Column(
+    Integer,
+    ForeignKey("daily_reports.id"),
+    nullable=False,
+)
+
     amount = Column(
         Float,
         nullable=False,

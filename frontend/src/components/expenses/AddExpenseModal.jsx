@@ -19,6 +19,7 @@ export default function AddExpenseModal({
   onClose,
   onSave,
   expense = null,
+  reportId,
 }) {
   const [type, setType] = useState("Tea/Snacks");
   const [amount, setAmount] = useState("");
@@ -50,6 +51,8 @@ export default function AddExpenseModal({
 
       store_id: user.store_id,
 
+      daily_report_id: reportId,
+
       expense_type: type,
 
       amount: Number(amount),
@@ -77,7 +80,6 @@ export default function AddExpenseModal({
         <div className="w-[600px] rounded-2xl bg-white shadow-xl">
 
           <div className="flex items-center justify-between border-b p-6">
-
             <h2 className="text-2xl font-bold">
               {expense ? "Edit Expense" : "Add Expense"}
             </h2>
@@ -85,13 +87,11 @@ export default function AddExpenseModal({
             <button onClick={onClose}>
               <X />
             </button>
-
           </div>
 
           <div className="space-y-5 p-6">
 
             <div>
-
               <label className="mb-2 block font-medium">
                 Expense Type
               </label>
@@ -103,20 +103,18 @@ export default function AddExpenseModal({
                 }
                 className="h-11 w-full rounded-xl border px-4"
               >
-                {expenseTypes.map((expenseType) => (
+                {expenseTypes.map((item) => (
                   <option
-                    key={expenseType}
-                    value={expenseType}
+                    key={item}
+                    value={item}
                   >
-                    {expenseType}
+                    {item}
                   </option>
                 ))}
               </select>
-
             </div>
 
             <div>
-
               <label className="mb-2 block font-medium">
                 Amount
               </label>
@@ -130,11 +128,9 @@ export default function AddExpenseModal({
                 className="h-11 w-full rounded-xl border px-4"
                 placeholder="Enter amount"
               />
-
             </div>
 
             <div>
-
               <label className="mb-2 block font-medium">
                 Remarks
               </label>
@@ -148,7 +144,6 @@ export default function AddExpenseModal({
                 className="w-full rounded-xl border p-4"
                 placeholder="Remarks"
               />
-
             </div>
 
             <button
@@ -159,7 +154,6 @@ export default function AddExpenseModal({
             </button>
 
           </div>
-
         </div>
       </div>
     </>

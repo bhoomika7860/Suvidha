@@ -4,15 +4,17 @@ from datetime import datetime
 
 class ExpenseCreate(BaseModel):
     store_id: int
+    daily_report_id: int
     expense_type: str
     amount: float
-    remarks: str | None = None
+    remarks: str |None = None
     created_by: int
 
 
 class ExpenseResponse(BaseModel):
     id: int
     store_id: int
+    daily_report_id: int
     expense_type: str
     amount: float
     remarks: str | None

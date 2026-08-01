@@ -1,10 +1,10 @@
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from datetime import datetime
-from zoneinfo import ZoneInfo
+
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
@@ -20,70 +20,60 @@ router = APIRouter(
     tags=["Expenses"],
 )
 
-def ist_today():
-    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
-# -----------------------------
+def ist_today():
+    return datetime.now(
+        ZoneInfo("Asia/Kolkata")
+    ).date()
+
+
+# ----------------------------------------------------
 # Create Expense
-# -----------------------------
+# ----------------------------------------------------
+
 @router.post("/", response_model=ExpenseResponse)
 def create_expense(
     data: ExpenseCreate,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    expense = Expense(
-    store_id=current_user["store_id"],
-    expense_type=data.expense_type,
-    amount=data.amount,
-    remarks=data.remarks,
-    created_by=current_user["user_id"],
-)
-
-    db.add(expense)
-    db.commit()
-    db.refresh(expense)
-
-    print("Expense created:")
-    print("ID:", expense.id)
-    print("Store:", expense.store_id)
-    print("Created At:", expense.created_at)
-
-    # Update today's daily report total
-    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-
-    print("Looking for report")
-    print("Store:", expense.store_id)
-    print("Today:", today)
-
     report = (
         db.query(DailyReport)
-            .filter(
-        DailyReport.store_id == expense.store_id,
-        DailyReport.report_date == today,
+        .filter(
+            DailyReport.id == data.daily_report_id
+        )
+        .first()
     )
-    .first()
-)
 
-    print("REPORT FOUND:", report)
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail="Daily report not found",
+        )
 
-    if report:
-        print("Before:", report.total_expenses)
+    expense = Expense(
+        store_id=current_user["store_id"],
+        daily_report_id=report.id,
+        expense_type=data.expense_type,
+        amount=data.amount,
+        remarks=data.remarks,
+        created_by=current_user["user_id"],
+    )
 
-        report.total_expenses += expense.amount
+    db.add(expense)
 
-        db.commit()
-        db.refresh(report)
+    report.total_expenses += expense.amount
 
-        print("After:", report.total_expenses)
+    db.commit()
 
-    else:
-        print("NO REPORT FOUND")
-
-    
+    db.refresh(expense)
 
     return expense
 
+
+# ----------------------------------------------------
+# Update Expense
+# ----------------------------------------------------
 
 @router.put("/{expense_id}")
 def update_expense(
@@ -93,14 +83,16 @@ def update_expense(
 ):
     expense = (
         db.query(Expense)
-        .filter(Expense.id == expense_id)
+        .filter(
+            Expense.id == expense_id
+        )
         .first()
     )
 
     if not expense:
         raise HTTPException(
             status_code=404,
-            detail="Expense not found"
+            detail="Expense not found",
         )
 
     difference = data.amount - expense.amount
@@ -109,15 +101,10 @@ def update_expense(
     expense.amount = data.amount
     expense.remarks = data.remarks
 
-    today = datetime.now(
-        ZoneInfo("Asia/Kolkata")
-    ).date()
-
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.store_id == expense.store_id,
-            DailyReport.report_date == today,
+            DailyReport.id == expense.daily_report_id
         )
         .first()
     )
@@ -126,13 +113,16 @@ def update_expense(
         report.total_expenses += difference
 
     db.commit()
+
     db.refresh(expense)
 
     return expense
 
-# -----------------------------
+
+# ----------------------------------------------------
 # Get Today's Expenses
-# -----------------------------
+# ----------------------------------------------------
+
 @router.get("/")
 def get_expenses(
     current_user=Depends(get_current_user),
@@ -155,10 +145,14 @@ def get_expenses(
         )
 
     query = query.filter(
-    func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) == ist_today()
-)
+        func.date(
+            func.timezone(
+                "Asia/Kolkata",
+                Expense.created_at,
+            )
+        )
+        == ist_today()
+    )
 
     expenses = (
         query.order_by(
@@ -167,12 +161,11 @@ def get_expenses(
         .all()
     )
 
-    print("Expenses returned:", len(expenses))
-
     return [
         {
             "id": expense.id,
             "store_id": expense.store_id,
+            "daily_report_id": expense.daily_report_id,
             "expense_type": expense.expense_type,
             "amount": expense.amount,
             "remarks": expense.remarks,
@@ -184,9 +177,10 @@ def get_expenses(
     ]
 
 
-# -----------------------------
+# ----------------------------------------------------
 # Get Single Expense
-# -----------------------------
+# ----------------------------------------------------
+
 @router.get(
     "/{expense_id}",
     response_model=ExpenseResponse,
@@ -203,7 +197,7 @@ def get_expense(
         .first()
     )
 
-    if expense is None:
+    if not expense:
         raise HTTPException(
             status_code=404,
             detail="Expense not found",
@@ -212,9 +206,10 @@ def get_expense(
     return expense
 
 
-# -----------------------------
+# ----------------------------------------------------
 # Delete Expense
-# -----------------------------
+# ----------------------------------------------------
+
 @router.delete("/{expense_id}")
 def delete_expense(
     expense_id: int,
@@ -222,25 +217,22 @@ def delete_expense(
 ):
     expense = (
         db.query(Expense)
-        .filter(Expense.id == expense_id)
+        .filter(
+            Expense.id == expense_id
+        )
         .first()
     )
 
-    if expense is None:
+    if not expense:
         raise HTTPException(
             status_code=404,
             detail="Expense not found",
         )
 
-    today = datetime.now(
-        ZoneInfo("Asia/Kolkata")
-    ).date()
-
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.store_id == expense.store_id,
-            DailyReport.report_date == today,
+            DailyReport.id == expense.daily_report_id
         )
         .first()
     )
@@ -252,6 +244,7 @@ def delete_expense(
             report.total_expenses = 0
 
     db.delete(expense)
+
     db.commit()
 
     return {
