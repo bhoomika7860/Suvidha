@@ -5,10 +5,10 @@ from datetime import date
 
 class UdhaarCreate(BaseModel):
     daily_report_id: int
+    bill_number: str
     customer_name: str
     customer_phone: Optional[str] = None
     amount: float
-
 
 class UdhaarRepayment(BaseModel):
     amount: float
@@ -24,6 +24,7 @@ class UdhaarResponse(BaseModel):
     paid_amount: float
     date_given: date
     status: str
+    bill_number: str
 
     class Config:
         from_attributes = True

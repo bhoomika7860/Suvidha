@@ -41,7 +41,7 @@ export default function Udhaar() {
 
       const data =
         await udhaarService.getUdhaar();
-
+        console.log("UDHAAR DATA:", data);
       setEntries(data);
 
     } catch (err) {

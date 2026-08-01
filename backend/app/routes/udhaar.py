@@ -18,10 +18,12 @@ router = APIRouter(
 
 @router.post("/")
 def create_udhaar(
+    
     data: UdhaarCreate,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    print("Received:", data.dict())   # use model_dump() if you're on Pydantic v2
     report = db.query(DailyReport).filter(
         DailyReport.id == data.daily_report_id
     ).first()
@@ -43,9 +45,11 @@ def create_udhaar(
         daily_report_id=data.daily_report_id,
         customer_name=data.customer_name,
         customer_phone=data.customer_phone,
+        bill_number=getattr(data, "bill_number", None),
         amount=data.amount,
         created_by=current_user["user_id"]
     )
+    print("Before commit:", udhaar.bill_number)
 
     db.add(udhaar)
 
@@ -54,6 +58,7 @@ def create_udhaar(
 
     db.commit()
     db.refresh(udhaar)
+    print("After commit:", udhaar.bill_number)
     create_audit_log(
         db=db,
         user_id=udhaar.created_by,

@@ -23,6 +23,9 @@ export default function UdhaarTable({
 
         <thead className="bg-slate-100">
           <tr>
+            <th className="px-4 py-3 text-left">
+              Bill No.
+            </th>
 
             <th className="px-4 py-3 text-left">
               Customer
@@ -65,6 +68,9 @@ export default function UdhaarTable({
                 key={entry.id}
                 className="border-t"
               >
+                <td className="px-4 py-3">
+                  {entry.bill_number}
+                </td>
 
                 <td className="px-4 py-3">
                   {entry.customer_name}

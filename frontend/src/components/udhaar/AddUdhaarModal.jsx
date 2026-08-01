@@ -14,13 +14,22 @@ export default function AddUdhaarModal({
 
   const [amount, setAmount] =
     useState("");
+  
+  const [billNumber, setBillNumber] = useState("");
 
   if (!open) return null;
 
   async function submit() {
-
+    console.log({
+  daily_report_id: dailyReportId,
+  bill_number: billNumber,
+  customer_name,
+  customer_phone,
+  amount: Number(amount),
+});
     await onSave({
       daily_report_id: dailyReportId,
+       bill_number: billNumber,
       customer_name,
       customer_phone,
       amount: Number(amount),
@@ -63,6 +72,16 @@ export default function AddUdhaarModal({
           onChange={(e)=>setAmount(e.target.value)}
           className="mt-3 w-full rounded-lg border p-3"
         />
+        <label className="block mb-2 font-medium">
+  Bill Number
+</label>
+
+<input
+  value={billNumber}
+  onChange={(e) => setBillNumber(e.target.value)}
+  placeholder="Enter Bill Number"
+  className="w-full h-11 border rounded-xl px-4"
+/>
 
         <div className="mt-6 flex justify-end gap-3">
 

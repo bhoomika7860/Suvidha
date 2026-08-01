@@ -8,6 +8,10 @@ class UdhaarEntry(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
+    bill_number = Column(
+    String,
+    nullable=False,
+)
     store_id = Column(Integer, ForeignKey("stores.id"))
     daily_report_id = Column(Integer, ForeignKey("daily_reports.id"))
     created_by = Column(Integer, ForeignKey("users.id"))
