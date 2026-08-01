@@ -2,16 +2,16 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 const expenseTypes = [
-  "Electricity",
-  "Fuel",
-  "Tea & Snacks",
-  "Internet",
-  "Packaging",
-  "Cleaning",
-  "Maintenance",
-  "Courier",
-  "Miscellaneous",
-  "Other",
+  "Tea/Snacks",
+  "Petrol",
+  "Water Bill",
+  "Electricity Bill",
+  "Bike Service/Repair",
+  "Salary",
+  "Local Purchase",
+  "Repair & Maint",
+  "Porter",
+  "Staff Welfare",
 ];
 
 export default function AddExpenseModal({
@@ -20,7 +20,7 @@ export default function AddExpenseModal({
   onSave,
 }) {
 
-  const [type, setType] = useState("Electricity");
+  const [type, setType] = useState("Tea/Snacks");
   const [amount, setAmount] = useState("");
   const [remarks, setRemarks] = useState("");
 
@@ -48,7 +48,7 @@ export default function AddExpenseModal({
 
   setAmount("");
   setRemarks("");
-  setType("Electricity");
+  setType("Tea/Snacks");
 
 }
 
