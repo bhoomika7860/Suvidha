@@ -114,11 +114,11 @@ def get_pending_purchase_orders(
     {
         "id": order.id,
         "supplier_name": order.supplier_name,
-        "expected_amount": order.expected_amount,
+        
         "expected_date": order.expected_date,
         "label": (
             f"{order.supplier_name} • "
-            f"₹{order.expected_amount:,.0f} • "
+            
             f"{order.created_at.strftime('%d %b')}"
         ),
     }

@@ -20,9 +20,7 @@ export default function PurchaseOrderTable({
 
               
 
-              <th className="text-left px-6 py-4">
-                Expected Amount
-              </th>
+              
 
               <th className="text-left px-6 py-4">
                 Expected Date
@@ -47,9 +45,7 @@ export default function PurchaseOrderTable({
 
                
 
-                <td className="px-6 py-5">
-                  ₹{Number(order.expected_amount).toLocaleString()}
-                </td>
+                
 
                 <td className="px-6 py-5">
                   {formatDate(order.expected_date)}

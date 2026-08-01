@@ -68,19 +68,7 @@ export default function PurchaseOrderDrawer({
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <IndianRupee className="text-blue-600" />
-
-            <div>
-              <p className="text-gray-500 text-sm">
-                Expected Amount
-              </p>
-
-              <p className="font-semibold">
-                ₹{Number(order.expected_amount || 0).toLocaleString()}
-              </p>
-            </div>
-          </div>
+          
 
           <div className="flex gap-4">
             <Calendar className="text-blue-600" />

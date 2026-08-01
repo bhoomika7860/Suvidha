@@ -12,11 +12,8 @@ export default function ReceiveBillModal({
   const [selectedOrderId, setSelectedOrderId] = useState("");
 
   const [party, setParty] = useState("");
-
-  const [billNo, setBillNo] = useState("");
-
   const [amount, setAmount] = useState("");
-
+  const [billNo, setBillNo] = useState("");
   const [billImage, setBillImage] = useState(null);
 
   useEffect(() => {
@@ -49,18 +46,21 @@ export default function ReceiveBillModal({
 
     if (!order) return;
 
+    // Only auto-fill supplier.
+    // Amount must be entered manually.
     setParty(order.supplier_name);
-
-    setAmount(order.expected_amount);
+    setAmount("");
   }
 
   function handleSubmit() {
     if (
       !selectedOrderId ||
-      !billNo ||
-      !amount
-    )
+      !party ||
+      !amount ||
+      !billNo
+    ) {
       return;
+    }
 
     const user = JSON.parse(
       localStorage.getItem("user")
@@ -80,9 +80,7 @@ export default function ReceiveBillModal({
       bill_number: billNo,
 
       received_by: user.full_name,
-
       checked_by: "",
-
       entered_by: "",
 
       status: "waiting_check",
@@ -94,8 +92,8 @@ export default function ReceiveBillModal({
 
     setSelectedOrderId("");
     setParty("");
-    setBillNo("");
     setAmount("");
+    setBillNo("");
     setBillImage(null);
 
     onClose();
@@ -142,41 +140,39 @@ export default function ReceiveBillModal({
 
                 {pendingOrders.map((order) => (
                   <option
-    key={order.id}
-    value={order.id}
->
-    {order.label}
-</option>
+                    key={order.id}
+                    value={order.id}
+                  >
+                    {order.label}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Party Name
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Party Name
-                </label>
+              <input
+                value={party}
+                readOnly
+                className="w-full h-11 border border-gray-200 rounded-xl px-4 bg-gray-50"
+              />
+            </div>
 
-                <input
-                  value={party}
-                  readOnly
-                  className="w-full h-11 border border-gray-200 rounded-xl px-4 bg-gray-50"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Amount
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Amount
-                </label>
-
-                <input
-                  value={amount}
-                  readOnly
-                  className="w-full h-11 border border-gray-200 rounded-xl px-4 bg-gray-50"
-                />
-              </div>
-
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter Purchase Amount"
+                className="w-full h-11 border border-gray-200 rounded-xl px-4"
+              />
             </div>
 
             <div>
@@ -230,7 +226,6 @@ export default function ReceiveBillModal({
                     )
                   }
                 />
-
               </label>
             </div>
 
