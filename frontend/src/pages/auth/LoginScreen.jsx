@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { Eye, EyeOff, Shield } from "lucide-react";
 import { ROLES } from "../../constants/roles";
-
+import { registerForPushNotifications } from "../../services/notificationService";
 
 function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +37,11 @@ function LoginScreen() {
  try {
   const user = await login(username, password);
 
-  switch (user.role) {
+const fcmToken = await registerForPushNotifications();
+
+console.log("FCM Token:", fcmToken);
+
+switch (user.role) {
   case ROLES.OWNER:
     navigate("/owner-dashboard");
     break;
