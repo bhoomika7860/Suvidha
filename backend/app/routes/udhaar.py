@@ -5,6 +5,7 @@ from app.database import get_db
 from app.models.udhaar_entry import UdhaarEntry
 from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
+from sqlalchemy import func
 from app.schemas.udhaar_entry import (
     UdhaarCreate,
     UdhaarRepayment
@@ -53,8 +54,8 @@ def create_udhaar(
 
     db.add(udhaar)
 
-# Automatically update today's report
-    report.udhaar_sales += data.amount
+
+    
 
     db.commit()
     db.refresh(udhaar)
@@ -104,6 +105,31 @@ def repay_udhaar(
     elif udhaar.paid_amount >= udhaar.amount:
         udhaar.status = "settled"
 
+    report = (
+    db.query(DailyReport)
+    .filter(
+        DailyReport.id == udhaar.daily_report_id
+    )
+    .first()
+)
+
+    if report:
+        report.udhaar_sales = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    UdhaarEntry.amount -
+                    UdhaarEntry.paid_amount
+                ),
+                0,
+            )
+        )
+        .filter(
+            UdhaarEntry.daily_report_id == report.id,
+            UdhaarEntry.status != "settled",
+        )
+        .scalar()
+    )
     db.commit()
     db.refresh(udhaar)
 

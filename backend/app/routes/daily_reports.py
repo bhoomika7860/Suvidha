@@ -182,7 +182,14 @@ def get_today_report(
 )
 
     udhaar_total = (
-        db.query(func.coalesce(func.sum(UdhaarEntry.amount), 0))
+    db.query(
+        func.coalesce(
+            func.sum(
+                UdhaarEntry.amount - UdhaarEntry.paid_amount
+            ),
+            0,
+        )
+    )
     .filter(
         UdhaarEntry.store_id == report.store_id,
         UdhaarEntry.daily_report_id == report.id,
@@ -190,6 +197,28 @@ def get_today_report(
     )
     .scalar()
 )
+
+    print("========== UDHAAR DEBUG ==========")
+    print("Report ID:", report.id)
+    print("Store ID:", report.store_id)
+    print("Calculated Udhaar Total:", udhaar_total)
+
+    rows = (
+    db.query(UdhaarEntry)
+    .filter(UdhaarEntry.daily_report_id == report.id)
+    .all()
+)
+
+    for row in rows:
+        print(
+        row.id,
+        row.amount,
+        row.paid_amount,
+        row.status,
+        row.amount - row.paid_amount,
+    )
+
+    print("==================================")
 
     purchase_total = (
         db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
@@ -205,7 +234,23 @@ def get_today_report(
     )
     .scalar()
 )
+    print("REPORT DATE:", report.report_date)
+    print("EXPENSE TOTAL:", expenses_total)
 
+    all_expenses = (
+        db.query(Expense)
+    .filter(Expense.store_id == report.store_id)
+    .all()
+)
+
+    print("ALL EXPENSES")
+    for e in all_expenses:
+        print(
+        e.id,
+        e.amount,
+        e.created_at,
+        e.daily_report_id,
+    )
     return {
     "id": report.id,
     "store_id": report.store_id,
@@ -559,6 +604,7 @@ def get_today_reports(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    print(">>> GET TODAY REPORT CALLED <<<")
     if current_user["role"] != "owner":
         raise HTTPException(
             status_code=403,
@@ -596,15 +642,21 @@ def get_today_reports(
         )
 
         udhaar_total = (
-            db.query(func.coalesce(func.sum(UdhaarEntry.amount), 0))
-            .filter(
-                UdhaarEntry.store_id == report.store_id,
-                UdhaarEntry.daily_report_id == report.id,
-                UdhaarEntry.status != "settled",
-            )
-            .scalar()
+    db.query(
+        func.coalesce(
+            func.sum(
+                UdhaarEntry.amount - UdhaarEntry.paid_amount
+            ),
+            0,
         )
-
+    )
+    .filter(
+        UdhaarEntry.store_id == report.store_id,
+        UdhaarEntry.daily_report_id == report.id,
+        UdhaarEntry.status != "settled",
+    )
+    .scalar()
+)
         purchase_total = (
             db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
             .filter(
@@ -696,6 +748,24 @@ def get_report(
     )
     .all()
 )
+
+    udhaar_total = (
+    db.query(
+        func.coalesce(
+            func.sum(
+                UdhaarEntry.amount - UdhaarEntry.paid_amount
+            ),
+            0,
+        )
+    )
+    .filter(
+        UdhaarEntry.store_id == report.store_id,
+        UdhaarEntry.daily_report_id == report.id,
+        UdhaarEntry.status != "settled",
+    )
+    .scalar()
+)
+    
     purchases = (
     db.query(Purchase)
     .filter(
@@ -757,7 +827,7 @@ def get_report(
                 report.cash_sales
                 + report.upi_sales
                 + report.card_sales
-                + report.udhaar_sales
+                + udhaar_total
             ),
             "bills": report.total_bills,
             "deliveries": report.deliveries,
@@ -791,7 +861,7 @@ def get_report(
             "cash": report.cash_sales,
             "upi": report.upi_sales,
             "card": report.card_sales,
-            "udhaar": report.udhaar_sales,
+            "udhaar": udhaar_total,
         },
 
        "expenses": [

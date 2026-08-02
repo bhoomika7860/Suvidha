@@ -15,30 +15,29 @@ export default function SalesSection() {
   udhaar_sales: 0,
 });
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await dailyReportsService.getTodayReport();
+  async function loadReport() {
+  try {
+    const data =
+      await dailyReportsService.getTodayReport();
 
-        setReport(data);
+    setReport(data);
 
-        setForm({
-  total_bills: data.total_bills || 0,
-  cash_sales: data.cash_sales || 0,
-  upi_sales: data.upi_sales || 0,
-  card_sales: data.card_sales || 0,
+    setForm({
+      total_bills: data.total_bills || 0,
+      cash_sales: data.cash_sales || 0,
+      upi_sales: data.upi_sales || 0,
+      card_sales: data.card_sales || 0,
+      total_expenses: data.total_expenses || 0,
+      udhaar_sales: data.udhaar_sales || 0,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
 
-  // Manual fields
-  total_expenses: 0,
-  udhaar_sales: 0,
-});
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    load();
-  }, []);
+useEffect(() => {
+  loadReport();
+}, []);
 
   const totalSales = useMemo(() => {
   return (
@@ -61,7 +60,12 @@ export default function SalesSection() {
 
   async function handleSave() {
     try {
-      await dailyReportsService.updateSales(report.id, form);
+     await dailyReportsService.updateSales(report.id, {
+  total_bills: form.total_bills,
+  cash_sales: form.cash_sales,
+  upi_sales: form.upi_sales,
+  card_sales: form.card_sales,
+});
       alert("Sales saved successfully.");
     } catch (err) {
       console.error(err);
@@ -128,12 +132,11 @@ export default function SalesSection() {
   </label>
 
   <input
-  name="total_expenses"
-  type="number"
-  value={form.total_expenses}
-  onChange={handleChange}
-  className="h-11 w-full rounded-xl border border-gray-200 px-4"
-/>
+    type="number"
+    value={form.total_expenses}
+    readOnly
+    className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4"
+  />
 </div>
 
 <div>
@@ -142,10 +145,10 @@ export default function SalesSection() {
   </label>
 
   <input
-  name="total_expenses"
+
   type="number"
-  value={form.total_expenses}
-  onChange={handleChange}
+  value={form.udhaar_sales}
+  readOnly
   className="h-11 w-full rounded-xl border border-gray-200 px-4"
 />
 </div>
