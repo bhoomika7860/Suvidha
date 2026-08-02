@@ -65,7 +65,7 @@ def create_expense(
 
     db.add(expense)
 
-    report.total_expenses += expense.amount
+    
 
     db.commit()
 
@@ -98,22 +98,9 @@ def update_expense(
             detail="Expense not found",
         )
 
-    difference = data.amount - expense.amount
-
     expense.expense_type = data.expense_type
     expense.amount = data.amount
     expense.remarks = data.remarks
-
-    report = (
-        db.query(DailyReport)
-        .filter(
-            DailyReport.id == expense.daily_report_id
-        )
-        .first()
-    )
-
-    if report:
-        report.total_expenses += difference
 
     db.commit()
 
@@ -232,19 +219,7 @@ def delete_expense(
             detail="Expense not found",
         )
 
-    report = (
-        db.query(DailyReport)
-        .filter(
-            DailyReport.id == expense.daily_report_id
-        )
-        .first()
-    )
-
-    if report:
-        report.total_expenses -= expense.amount
-
-        if report.total_expenses < 0:
-            report.total_expenses = 0
+    
 
     db.delete(expense)
 
