@@ -11,7 +11,7 @@ from app.models.store import Store
 from app.models.daily_report import DailyReport
 from app.models.expense import Expense
 from app.models.delivery import Delivery
-
+from app.models.cash_denomination import CashDenomination
 from app.models.udhaar_entry import UdhaarEntry
 from app.models.adjustment_request import AdjustmentRequest
 from app.models.audit_log import AuditLog
@@ -23,6 +23,7 @@ from app.models.purchase_order_item import PurchaseOrderItem
 from app.routes import delivery_assignments
 # Import routers
 from app.routes.auth import router as auth_router
+from app.routes import cash_denominations
 from app.routes.stores import router as store_router
 from app.routes.users import router as user_router
 from app.routes.daily_reports import router as daily_report_router
@@ -108,7 +109,8 @@ app.include_router(export.router)
 app.include_router(purchase.router)
 app.include_router(purchase_orders.router)
 app.include_router(delivery_assignments.router)
-
+app.include_router(cash_denominations.router
+)
 # ----------------------------------------------------
 # Health Routes
 # ----------------------------------------------------
