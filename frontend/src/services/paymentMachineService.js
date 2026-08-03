@@ -3,10 +3,13 @@ import api from "../api/api";
 const paymentMachineService = {
 
   async getMachines() {
-    const res =
-      await api.get("/payment-machines/");
-    return res.data;
-  },
+    const res = await api.get("/payment-machines/");
+
+    console.log("RAW AXIOS RESPONSE:", res);
+    console.log("RAW DATA:", res.data);
+
+  return res.data;
+},
 
   async addMachine(data) {
     const res =

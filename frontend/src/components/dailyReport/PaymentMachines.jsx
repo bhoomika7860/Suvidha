@@ -10,31 +10,42 @@ export default function PaymentMachines({
   const [newMachine, setNewMachine] = useState("");
 
   async function loadMachines() {
-    try {
-      const machineList =
-        await paymentMachineService.getMachines();
+  try {
+    console.log("Loading machines...");
+    console.log("Report ID:", reportId);
 
-      const entries =
-        await paymentMachineEntryService.get(reportId);
+    const machineList =
+  await paymentMachineService.getMachines();
 
-      const merged = machineList.map((machine) => {
-        const existing = entries.find(
-          (entry) =>
-            entry.machine_id === machine.id
-        );
+console.log("Machine List:", machineList);
+console.log("Is Array:", Array.isArray(machineList));
+console.log("Length:", machineList.length);
 
-        return {
-          ...machine,
-          amount: existing?.amount || 0,
-        };
-      });
+    console.log("Machine List:", machineList);
 
-      setMachines(merged);
+    const entries =
+      await paymentMachineEntryService.get(reportId);
 
-    } catch (err) {
-      console.error(err);
-    }
+    console.log("Entries:", entries);
+
+    const merged = machineList.map((machine) => {
+      const existing = entries.find(
+        (entry) => entry.machine_id === machine.id
+      );
+
+      return {
+        ...machine,
+        amount: existing?.amount ?? 0,
+      };
+    });
+
+    console.log("Merged:", merged);
+
+    setMachines(merged);
+  } catch (err) {
+    console.error("PaymentMachines Error:", err);
   }
+}
 
   useEffect(() => {
     if (reportId) {
@@ -105,6 +116,10 @@ export default function PaymentMachines({
   }
 
   return (
+  <>
+    <div className="mb-4 rounded-lg bg-red-500 p-4 text-white text-xl font-bold">
+      PAYMENT MACHINES COMPONENT LOADED
+    </div>
     <div className="rounded-2xl border bg-white p-5">
 
       <div className="mb-5 flex items-center justify-between">
@@ -199,5 +214,6 @@ export default function PaymentMachines({
       </div>
 
     </div>
+      </>
   );
 }
