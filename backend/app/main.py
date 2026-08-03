@@ -31,7 +31,7 @@ from app.routes.expenses import router as expense_router
 from app.routes.deliveries import router as delivery_router
 from app.models.payment_machine import PaymentMachine
 from app.models.payment_machine_entry import PaymentMachineEntry
-
+from app.routes import payment_machine_entries
 from app.routes import (
     udhaar,
     adjustments,
@@ -42,6 +42,7 @@ from app.routes import (
     export,
     purchase,
     purchase_orders,
+    payment_machines,
 )
 
 # ----------------------------------------------------
@@ -111,8 +112,9 @@ app.include_router(export.router)
 app.include_router(purchase.router)
 app.include_router(purchase_orders.router)
 app.include_router(delivery_assignments.router)
-app.include_router(cash_denominations.router
-)
+app.include_router(cash_denominations.router)
+app.include_router(payment_machines.router)
+app.include_router(payment_machine_entries.router)
 # ----------------------------------------------------
 # Health Routes
 # ----------------------------------------------------
