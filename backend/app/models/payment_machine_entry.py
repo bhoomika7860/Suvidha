@@ -1,3 +1,4 @@
+print("PAYMENT MACHINE ENTRY MODEL LOADED")
 from sqlalchemy import (
     Column,
     Integer,

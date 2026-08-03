@@ -29,6 +29,8 @@ from app.routes.users import router as user_router
 from app.routes.daily_reports import router as daily_report_router
 from app.routes.expenses import router as expense_router
 from app.routes.deliveries import router as delivery_router
+from app.models.payment_machine import PaymentMachine
+from app.models.payment_machine_entry import PaymentMachineEntry
 
 from app.routes import (
     udhaar,
