@@ -33,10 +33,10 @@ export default function HeroCard() {
   report.expenses_completed,
   report.purchases_completed,
   report.deliveries_completed,
-  report.udhaar_completed,
+  
 ].filter(Boolean).length;
 
-  const totalSections = 5;
+  const totalSections =4 ;
 
   const progress = Math.round(
     (completedSections / totalSections) * 100

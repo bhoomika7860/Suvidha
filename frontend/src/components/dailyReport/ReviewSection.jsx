@@ -55,10 +55,7 @@ export default function ReviewSection() {
     report.deliveries > 0
   );
 
-  addSection(
-  "Udhaar",
-  report.udhaar_count > 0
-);
+  
   
 
   

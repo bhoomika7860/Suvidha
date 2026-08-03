@@ -16,8 +16,6 @@ const [expensesCompleted, setExpensesCompleted] =
 const [purchasesCompleted, setPurchasesCompleted] =
   useState(false);
 
-const [udhaarCompleted, setUdhaarCompleted] =
-  useState(false);
 
 useEffect(() => {
   async function load() {
@@ -45,13 +43,9 @@ useEffect(() => {
         purchases.length > 0
       );
 
-      const udhaar =
-        await api.get("/udhaar/");
+     
 
-      setUdhaarCompleted(
-        udhaar.data.length > 0
-      );
-
+     
     } catch (err) {
       console.error(err);
     }
@@ -109,12 +103,7 @@ console.log(report);
         ? "done"
         : "todo",
     },
-    {
-      title: "Udhaar",
-      status: udhaarCompleted
-        ? "done"
-        : "todo",
-    },
+    
   ];
 
   const completed = sections.filter(
