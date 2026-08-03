@@ -153,6 +153,32 @@ def get_all_udhaar(
     ).all()
 
 
+@router.get("/outstanding")
+def get_outstanding_udhaar(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    total = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    UdhaarEntry.amount -
+                    UdhaarEntry.paid_amount
+                ),
+                0,
+            )
+        )
+        .filter(
+            UdhaarEntry.store_id == current_user["store_id"],
+            UdhaarEntry.status != "settled",
+        )
+        .scalar()
+    )
+
+    return {
+        "outstanding": total
+    }
+
 @router.get("/{udhaar_id}")
 def get_single_udhaar(
     udhaar_id: int,
