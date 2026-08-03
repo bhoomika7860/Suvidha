@@ -3,7 +3,7 @@ import { CreditCard } from "lucide-react";
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
 import cashDenominationService from "../../services/cashDenominationService";
-
+import PaymentMachines from "./PaymentMachines";
 const OPENING_CASH = 20000;
 
 export default function SalesSection() {
@@ -117,12 +117,15 @@ export default function SalesSection() {
 
   async function handleSave() {
   try {
-    await dailyReportsService.updateSales(report.id, {
-      total_bills: form.total_bills,
-      cash_sales: form.cash_sales,
-      upi_sales: form.upi_sales,
-      card_sales: form.card_sales,
-    });
+    await dailyReportsService.updateSales(
+      report.id,
+      {
+        total_bills: form.total_bills,
+        cash_sales: form.cash_sales,
+        upi_sales: form.upi_sales,
+        card_sales: 0,
+      }
+    );
 
     await cashDenominationService.save({
       daily_report_id: report.id,
@@ -130,6 +133,9 @@ export default function SalesSection() {
     });
 
     alert("Sales saved successfully.");
+
+    await loadReport();
+
   } catch (err) {
     console.error(err);
   }
@@ -247,31 +253,16 @@ export default function SalesSection() {
 
     <div className="mt-8 grid grid-cols-2 gap-6">
 
-      <div>
-
-        <label className="mb-2 block font-medium">
-          UPI + Card Sales
-        </label>
-
-        <input
-          type="number"
-          value={
-            Number(form.upi_sales) +
-            Number(form.card_sales)
-          }
-          onChange={(e) => {
-            const value = Number(e.target.value);
-
-            setForm((prev) => ({
-              ...prev,
-              upi_sales: value,
-              card_sales: 0,
-            }));
-          }}
-          className="h-12 w-full rounded-xl border px-4"
-        />
-
-      </div>
+      <PaymentMachines
+  reportId={report.id}
+  onTotalChange={(total) =>
+    setForm((prev) => ({
+      ...prev,
+      upi_sales: total,
+      card_sales: 0,
+    }))
+  }
+/>
 
       <div>
 
