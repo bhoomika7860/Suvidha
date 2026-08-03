@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard } from "lucide-react";
 import SectionCard from "./SectionCard";
+import { useCallback } from "react";
 import dailyReportsService from "../../services/dailyReportsService";
 import cashDenominationService from "../../services/cashDenominationService";
 import PaymentMachines from "./PaymentMachines";
@@ -18,6 +19,14 @@ export default function SalesSection() {
     total_expenses: 0,
     udhaar_sales: 0,
   });
+
+  const handleMachineTotal = useCallback((total) => {
+  setForm((prev) => ({
+    ...prev,
+    upi_sales: total,
+    card_sales: 0,
+  }));
+}, []);
 
   const [cash, setCash] = useState({
     note_500: 0,
@@ -232,15 +241,9 @@ export default function SalesSection() {
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
         <PaymentMachines
-          reportId={report.id}
-          onTotalChange={(total) =>
-            setForm((prev) => ({
-              ...prev,
-              upi_sales: total,
-              card_sales: 0,
-            }))
-          }
-        />
+    reportId={report.id}
+    onTotalChange={handleMachineTotal}
+/>
 
         <div className="rounded-2xl border border-gray-200 p-5">
           <div className="space-y-5">
