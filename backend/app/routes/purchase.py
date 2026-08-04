@@ -159,6 +159,9 @@ def update_purchase(
     if data.entered_by is not None:
         purchase.entered_by = data.entered_by
 
+    if data.grn_number is not None:
+        purchase.grn_number = data.grn_number
+
     if purchase.purchase_order_id:
         purchase_order = (
             db.query(PurchaseOrder)
@@ -170,6 +173,15 @@ def update_purchase(
 
         if purchase_order and purchase.status == "completed":
             purchase_order.status = "Closed"
+
+    if (
+        purchase.status == "completed"
+        and not purchase.grn_number
+):
+        raise HTTPException(
+        status_code=400,
+        detail="GRN Number is required before completing the purchase.",
+    )
 
     if (
         not was_completed

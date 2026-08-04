@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   X,
   Building2,
@@ -17,6 +19,16 @@ export default function PurchaseDrawer({
   isOpen,
   onClose,
 }) {
+
+  const [grnNumber, setGrnNumber] = useState("");
+
+useEffect(() => {
+  if (purchase) {
+    setGrnNumber(purchase.grn_number || "");
+  }
+}, [purchase]);
+
+
   if (!isOpen || !purchase) return null;
   async function moveToNextStage() {
   try {
@@ -36,12 +48,19 @@ export default function PurchaseDrawer({
         status: "waiting-entry",
         entered_by: user.full_name,
       };
-    } else if (purchase.status === "waiting-entry") {
-      payload = {
-        status: "completed",
-      };
-    }
+     } else if (purchase.status === "waiting-entry") {
 
+  if (!grnNumber.trim()) {
+    alert("Please enter the GRN Number before marking this bill as completed.");
+    return;
+  }
+
+  payload = {
+    status: "completed",
+    grn_number: grnNumber.trim(),
+  };
+}
+    
     const updated =
       await purchaseService.updatePurchase(
         purchase.id,
@@ -295,10 +314,50 @@ export default function PurchaseDrawer({
 
           </div>
 
+          {purchase.status === "waiting-entry" && (
+  <div className="border rounded-2xl p-5 bg-blue-50 border-blue-200">
+
+    <h3 className="text-lg font-semibold">
+      System Entry
+    </h3>
+
+    <p className="text-sm text-gray-500 mt-1 mb-4">
+      Enter the GRN Number before completing this purchase.
+    </p>
+
+    <label className="block text-sm font-medium mb-2">
+      GRN Number
+    </label>
+
+    <input
+      required
+      type="text"
+      value={grnNumber}
+      onChange={(e) =>
+        setGrnNumber(e.target.value)
+      }
+      placeholder="Example: GRN-2026-00125"
+      className="
+        w-full
+        h-11
+        rounded-xl
+        border
+        border-gray-300
+        px-4
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-500
+      "
+    />
+
+  </div>
+)}
+
+
           {/* Footer */}
 
           <div className="pt-5 border-t">
-
+            
   {purchase.status === "received" && (
 
     <button
@@ -333,13 +392,29 @@ export default function PurchaseDrawer({
 
   {purchase.status === "completed" && (
 
+  <>
+
+    <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4">
+
+      <p className="text-xs uppercase tracking-wide text-green-700">
+        GRN Number
+      </p>
+
+      <p className="mt-1 text-lg font-semibold text-gray-900">
+        {purchase.grn_number || "-"}
+      </p>
+
+    </div>
+
     <button className="w-full h-11 rounded-xl bg-gray-100 text-gray-600 cursor-default">
 
       Bill Completed
 
     </button>
 
-  )}
+  </>
+
+)}
 
   <button
     onClick={onClose}

@@ -20,6 +20,7 @@ class PurchaseBase(BaseModel):
     received_by: str | None = None
     checked_by: str | None = None
     entered_by: str | None = None
+    grn_number: str | None = None
 
     status: str = "received"
 
@@ -37,6 +38,7 @@ class PurchaseUpdate(BaseModel):
 
     entered_by: str | None = None
 
+    grn_number: str | None = None
 
 class PurchaseResponse(PurchaseBase):
     id: int

@@ -73,6 +73,7 @@ class Purchase(Base):
     received_by = Column(String, nullable=True)
     checked_by = Column(String, nullable=True)
     entered_by = Column(String, nullable=True)
+    grn_number = Column(String,nullable=True,)
 
     bill_image = Column(
         String,
