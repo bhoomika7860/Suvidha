@@ -140,7 +140,11 @@ def get_today_report(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user["role"] not in ["store_manager", "delivery"]:
+    if current_user["role"] not in [
+    "store_manager",
+    "staff",
+    "delivery",
+]:
         raise HTTPException(
         status_code=403,
         detail="Not allowed",

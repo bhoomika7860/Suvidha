@@ -30,47 +30,91 @@ export default function StaffTasks() {
   }
 
   async function completeTask(task) {
-  try {
-    console.log("Task being submitted:", task);
-
-    await taskService.completeTask(task.id, task);
-
-    await loadTasks();
-  } catch (err) {
-    console.error(err);
+    try {
+      await taskService.completeTask(task.id, task);
+      await loadTasks();
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* ================= Desktop ================= */}
 
-      <div>
-        <h1 className="text-3xl font-bold">
-          My Tasks
-        </h1>
+      <div className="hidden lg:block space-y-6">
 
-        <p className="text-gray-500 mt-1">
-          Complete today's assigned work.
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold">
+            My Tasks
+          </h1>
+
+          <p className="text-gray-500 mt-1">
+            Complete today's assigned work.
+          </p>
+        </div>
+
+        <ProgressCard
+          completed={completedTasks.length}
+          total={
+            pendingTasks.length +
+            completedTasks.length
+          }
+        />
+
+        <PendingTasks
+          tasks={pendingTasks}
+          onComplete={completeTask}
+        />
+
+        <CompletedTasks
+          tasks={completedTasks}
+        />
+
       </div>
 
-      <ProgressCard
-        completed={completedTasks.length}
-        total={
-          pendingTasks.length +
-          completedTasks.length
-        }
-      />
+      {/* ================= Mobile ================= */}
 
-      <PendingTasks
-        tasks={pendingTasks}
-        onComplete={completeTask}
-      />
+      <div className="lg:hidden min-h-screen bg-gray-50 pb-24">
 
-      <CompletedTasks
-        tasks={completedTasks}
-      />
+        {/* Header */}
 
-    </div>
+        <div className="bg-white px-5 pt-6 pb-5 border-b">
+
+          <h1 className="text-3xl font-bold">
+            My Tasks
+          </h1>
+
+          <p className="text-gray-500 mt-2">
+            Complete today's assigned work.
+          </p>
+
+        </div>
+
+        {/* Content */}
+
+        <div className="px-4 py-5 space-y-5">
+
+          <ProgressCard
+            completed={completedTasks.length}
+            total={
+              pendingTasks.length +
+              completedTasks.length
+            }
+          />
+
+          <PendingTasks
+            tasks={pendingTasks}
+            onComplete={completeTask}
+          />
+
+          <CompletedTasks
+            tasks={completedTasks}
+          />
+
+        </div>
+
+      </div>
+    </>
   );
 }

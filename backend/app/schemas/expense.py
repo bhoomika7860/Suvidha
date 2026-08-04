@@ -3,12 +3,9 @@ from datetime import datetime
 
 
 class ExpenseCreate(BaseModel):
-    store_id: int
-    daily_report_id: int
     expense_type: str
     amount: float
-    remarks: str |None = None
-    created_by: int
+    remarks: str | None = None
 
 
 class ExpenseResponse(BaseModel):

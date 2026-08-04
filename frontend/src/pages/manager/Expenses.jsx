@@ -14,7 +14,7 @@ export default function Expenses() {
 
   const [expenses, setExpenses] = useState([]);
 
-  const [reportId, setReportId] = useState(null);
+ 
 
   const [selectedExpense, setSelectedExpense] =
     useState(null);
@@ -30,18 +30,18 @@ export default function Expenses() {
 
       setExpenses(data);
 
-      const report =
-  await dailyReportsService.getTodayReport();
-
-setReportId(report.id);
+      
 
 
 
 
 
     } catch (err) {
-      console.error(err);
-    }
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Backend response:", err.response?.data);
+}
   }
 
   async function handleSave(expense) {
@@ -64,8 +64,11 @@ setReportId(report.id);
       setSelectedExpense(null);
 
     } catch (err) {
-      console.error(err);
-    }
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Backend response:", err.response?.data);
+}
   }
 
   async function handleDelete(id) {
@@ -82,8 +85,11 @@ setReportId(report.id);
       await loadExpenses();
 
     } catch (err) {
-      console.error(err);
-    }
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Validation:", err.response?.data);
+}
   }
 
   function handleEdit(expense) {
@@ -143,7 +149,7 @@ setReportId(report.id);
   }}
   onSave={handleSave}
   expense={selectedExpense}
-  reportId={reportId}
+  
 />
 
     </div>

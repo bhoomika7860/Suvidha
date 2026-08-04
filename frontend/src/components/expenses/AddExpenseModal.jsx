@@ -40,35 +40,22 @@ export default function AddExpenseModal({
   if (!isOpen) return null;
 
   function handleSave() {
-    if (!amount) return;
+  if (!amount) return;
 
-    const user = JSON.parse(
-      localStorage.getItem("user")
-    );
-
-    onSave({
+  onSave({
     ...(expense && { id: expense.id }),
 
-    store_id: user.store_id,
-
-    daily_report_id:
-  expense?.daily_report_id ?? reportId,
-
     expense_type: type,
-
     amount: Number(amount),
-
     remarks,
+  });
 
-    created_by: user.user_id,
-});
+  setType("Tea/Snacks");
+  setAmount("");
+  setRemarks("");
 
-    setType("Tea/Snacks");
-    setAmount("");
-    setRemarks("");
-
-    onClose();
-  }
+  onClose();
+}
 
   return (
     <>
