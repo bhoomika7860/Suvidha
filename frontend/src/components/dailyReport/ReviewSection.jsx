@@ -9,15 +9,41 @@ import dailyReportsService from "../../services/dailyReportsService";
 export default function ReviewSection() {
   const [report, setReport] = useState(null);
 
+  const [expensesCompleted, setExpensesCompleted] =
+    useState(false);
+
+  const [purchasesCompleted, setPurchasesCompleted] =
+    useState(false);
+
   useEffect(() => {
     async function load() {
-  const data =
-    await dailyReportsService.getTodayReport();
+      try {
+        const data =
+          await dailyReportsService.getTodayReport();
 
-  console.log(data);
+        setReport(data);
 
-  setReport(data);
-}
+        const expenses =
+          await dailyReportsService.getExpenses(
+            data.id
+          );
+
+        setExpensesCompleted(
+          expenses.length > 0
+        );
+
+        const purchases =
+          await dailyReportsService.getPurchases(
+            data.id
+          );
+
+        setPurchasesCompleted(
+          purchases.length > 0
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
     load();
   }, []);
@@ -28,26 +54,29 @@ export default function ReviewSection() {
   const remaining = [];
 
   function addSection(name, done) {
-    if (done) completed.push(name);
-    else remaining.push(name);
+    if (done) {
+      completed.push(name);
+    } else {
+      remaining.push(name);
+    }
   }
 
   addSection(
-  "Sales",
-  report.total_bills > 0 ||
-    report.cash_sales > 0 ||
-    report.upi_sales > 0 ||
-    report.card_sales > 0
-);
+    "Sales",
+    report.total_bills > 0 ||
+      report.cash_sales > 0 ||
+      report.upi_sales > 0 ||
+      report.card_sales > 0
+  );
 
   addSection(
-  "Expenses",
-  report.expenses_count > 0
-);
+    "Expenses",
+    expensesCompleted
+  );
 
   addSection(
     "Purchases",
-    report.total_purchases > 0
+    purchasesCompleted
   );
 
   addSection(
@@ -55,10 +84,6 @@ export default function ReviewSection() {
     report.deliveries > 0
   );
 
-  
-  
-
-  
   async function submitReport() {
     if (remaining.length > 0) {
       alert(
@@ -80,7 +105,6 @@ export default function ReviewSection() {
         await dailyReportsService.getTodayReport();
 
       setReport(updated);
-
     } catch (err) {
       console.error(err);
     }
