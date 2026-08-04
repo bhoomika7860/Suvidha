@@ -24,12 +24,7 @@ export default function PurchaseStats({
       icon: Inbox,
       color: "text-blue-600 bg-blue-100",
     },
-    {
-      key: "waiting-check",
-      title: "Waiting Check",
-      icon: ClipboardCheck,
-      color: "text-orange-600 bg-orange-100",
-    },
+    
     {
       key: "waiting-entry",
       title: "Waiting Entry",
@@ -138,7 +133,7 @@ export default function PurchaseStats({
 
   return (
 
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-3 gap-4">
 
       {billStats.map((item) => {
 

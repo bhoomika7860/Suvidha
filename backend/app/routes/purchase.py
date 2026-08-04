@@ -52,7 +52,7 @@ async def create_purchase(
     created_by: int = Form(...),
     bill_number: str = Form(...),
     received_by: str | None = Form(None),
-    checked_by: str | None = Form(None),
+    
     entered_by: str | None = Form(None),
     status: str = Form("received"),
     purchase_order_id: int | None = Form(None),
@@ -98,7 +98,7 @@ async def create_purchase(
         created_by=created_by,
         bill_number=bill_number,
         received_by=received_by,
-        checked_by=checked_by,
+        
         entered_by=entered_by,
         status="received",
         purchase_order_id=purchase_order_id,
@@ -153,8 +153,7 @@ def update_purchase(
 
     purchase.status = data.status
 
-    if data.checked_by is not None:
-        purchase.checked_by = data.checked_by
+    
 
     if data.entered_by is not None:
         purchase.entered_by = data.entered_by

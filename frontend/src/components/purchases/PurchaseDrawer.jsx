@@ -38,17 +38,11 @@ useEffect(() => {
 
     let payload = {};
 
-    if (purchase.status === "received") {
-      payload = {
-        status: "waiting-check",
-        checked_by: user.full_name,
-      };
-    } else if (purchase.status === "waiting-check") {
-      payload = {
-        status: "waiting-entry",
-        entered_by: user.full_name,
-      };
-     } else if (purchase.status === "waiting-entry") {
+   if (purchase.status === "received") {
+  payload = {
+    status: "waiting-entry",
+  };
+} else if (purchase.status === "waiting-entry") {
 
   if (!grnNumber.trim()) {
     alert("Please enter the GRN Number before marking this bill as completed.");
@@ -57,6 +51,7 @@ useEffect(() => {
 
   payload = {
     status: "completed",
+    entered_by: user.full_name,
     grn_number: grnNumber.trim(),
   };
 }
@@ -246,37 +241,7 @@ useEffect(() => {
 
               </div>
 
-              <div className="flex gap-3">
-
-                {!purchase.checked_by ? (
-
-                  <Clock3
-                    className="text-orange-500 mt-1"
-                    size={20}
-                  />
-
-                ) : (
-
-                  <CheckCircle2
-                    className="text-green-600 mt-1"
-                    size={20}
-                  />
-
-                )}
-
-                <div>
-
-                  <p className="font-medium">
-                    Bill Checked
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    {purchase.checked_by || "-"}
-                  </p>
-
-                </div>
-
-              </div>
+             
 
               <div className="flex gap-3">
 
@@ -364,20 +329,12 @@ useEffect(() => {
     onClick={moveToNextStage}
     className="w-full h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium"
 >
-    Send for checking
+    Send for System Entry
 </button>
 
   )}
 
-  {purchase.status === "waiting-check" && (
-
-    <button
-    onClick={moveToNextStage}
-    className="w-full h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium"
->
-    Send For System Entry
-</button>
-  )}
+ 
 
   {purchase.status === "waiting-entry" && (
 
