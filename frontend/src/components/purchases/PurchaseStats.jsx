@@ -62,27 +62,14 @@ export default function PurchaseStats({
       icon: Truck,
       color: "text-blue-600 bg-blue-100",
     },
-    {
-  title: "Expected Amount",
-  value:
-    "₹" +
-    purchaseOrders
-      .reduce(
-        (sum, o) =>
-          sum + Number(o.expected_amount || 0),
-        0
-      )
-      .toLocaleString("en-IN"),
-  icon: CircleDollarSign,
-  color: "text-violet-600 bg-violet-100",
-},
+    
   ];
 
   if (activeTab === "orders") {
 
     return (
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
 
         {orderStats.map((item) => {
 

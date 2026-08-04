@@ -57,6 +57,7 @@ async def create_purchase(
     status: str = Form("received"),
     purchase_order_id: int | None = Form(None),
     bill_image: UploadFile | None = File(None),
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -90,12 +91,12 @@ async def create_purchase(
         image_path = f"/uploads/bills/{filename}"
 
     purchase = Purchase(
-        store_id=store_id,
+        store_id=current_user["store_id"],
         product_name=product_name,
         quantity=quantity,
         supplier_name=supplier_name,
         purchase_amount=purchase_amount,
-        created_by=created_by,
+        created_by=current_user["user_id"],
         bill_number=bill_number,
         received_by=received_by,
         
@@ -133,6 +134,7 @@ async def create_purchase(
 def update_purchase(
     purchase_id: int,
     data: PurchaseUpdate,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     
@@ -148,7 +150,14 @@ def update_purchase(
             status_code=404,
             detail="Purchase not found",
         )
-
+    if (
+    current_user["role"] != "owner"
+    and purchase.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
     was_completed = purchase.status == "completed"
 
     purchase.status = data.status
@@ -336,8 +345,17 @@ def get_owner_purchases(
 )
 def get_store_purchases(
     store_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if (
+    current_user["role"] != "owner"
+    and store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
     return (
         db.query(Purchase)
         .filter(

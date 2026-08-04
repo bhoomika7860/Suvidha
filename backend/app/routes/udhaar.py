@@ -35,6 +35,15 @@ def create_udhaar(
             detail="Daily report not found"
         )
 
+    if (
+    current_user["role"] != "owner"
+    and report.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
+
     if report.is_locked:
         raise HTTPException(
             status_code=409,
@@ -76,7 +85,8 @@ def create_udhaar(
 def repay_udhaar(
     udhaar_id: int,
     data: UdhaarRepayment,
-    db: Session = Depends(get_db)
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     udhaar = db.query(UdhaarEntry).filter(
         UdhaarEntry.id == udhaar_id
@@ -87,6 +97,15 @@ def repay_udhaar(
             status_code=404,
             detail="Udhaar not found"
         )
+
+    if (
+    current_user["role"] != "owner"
+    and udhaar.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
     remaining = udhaar.amount - udhaar.paid_amount
 
     if data.amount > remaining:
@@ -182,7 +201,8 @@ def get_outstanding_udhaar(
 @router.get("/{udhaar_id}")
 def get_single_udhaar(
     udhaar_id: int,
-    db: Session = Depends(get_db)
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     udhaar = db.query(UdhaarEntry).filter(
         UdhaarEntry.id == udhaar_id
@@ -193,5 +213,14 @@ def get_single_udhaar(
             status_code=404,
             detail="Udhaar not found"
         )
+
+    if (
+    current_user["role"] != "owner"
+    and udhaar.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
 
     return udhaar

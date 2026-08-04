@@ -82,6 +82,7 @@ def create_expense(
 def update_expense(
     expense_id: int,
     data: ExpenseCreate,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     expense = (
@@ -97,6 +98,14 @@ def update_expense(
             status_code=404,
             detail="Expense not found",
         )
+    if (
+    current_user["role"] != "owner"
+    and expense.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
 
     expense.expense_type = data.expense_type
     expense.amount = data.amount
@@ -177,6 +186,7 @@ def get_expenses(
 )
 def get_expense(
     expense_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     expense = (
@@ -192,6 +202,15 @@ def get_expense(
             status_code=404,
             detail="Expense not found",
         )
+
+    if (
+    current_user["role"] != "owner"
+    and expense.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
 
     return expense
 
@@ -203,6 +222,7 @@ def get_expense(
 @router.delete("/{expense_id}")
 def delete_expense(
     expense_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     expense = (
@@ -219,6 +239,14 @@ def delete_expense(
             detail="Expense not found",
         )
 
+    if (
+    current_user["role"] != "owner"
+    and expense.store_id != current_user["store_id"]
+):
+        raise HTTPException(
+        status_code=403,
+        detail="Not allowed",
+    )
     
 
     db.delete(expense)
