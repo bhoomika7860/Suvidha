@@ -1,7 +1,7 @@
 import HeroCard from "../../components/staff/HeroCard";
 import TaskCard from "../../components/staff/TaskCard";
 import QuickActions from "../../components/staff/QuickActions";
-import RecentActivity from "../../components/staff/RecentActivity";
+
 
 export default function StaffDashboard() {
   return (
@@ -19,7 +19,6 @@ export default function StaffDashboard() {
 
       </div>
 
-      <RecentActivity />
 
     </div>
   );
