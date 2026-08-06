@@ -41,18 +41,18 @@ def create_daily_report(
     db: Session = Depends(get_db)
 ):
     report = DailyReport(
-        store_id=data.store_id,
-        submitted_by=current_user["user_id"],
-        total_bills=data.total_bills,
-        deliveries=data.deliveries,
-        cash_sales=data.cash_sales,
-        upi_sales=data.upi_sales,
-        card_sales=data.card_sales,
-        udhaar_sales=data.udhaar_sales,
-        total_expenses=data.total_expenses,
-        total_purchases=data.total_purchases
-        
-    )
+    store_id=data.store_id,
+    submitted_by=current_user["user_id"],
+    total_bills=data.total_bills,
+    deliveries=data.deliveries,
+    cash_sales=data.cash_sales,
+    upi_sales=data.upi_sales,
+    card_sales=data.card_sales,
+    udhaar_sales=data.udhaar_sales,
+    system_sales=data.system_sales,
+    total_expenses=data.total_expenses,
+    total_purchases=data.total_purchases,
+)
 
     db.add(report)
     db.commit()
@@ -128,6 +128,7 @@ def update_daily_report(
     report.upi_sales = data.upi_sales
     report.card_sales = data.card_sales
     report.udhaar_sales = data.udhaar_sales
+    report.system_sales = data.system_sales
     report.total_expenses = data.total_expenses
 
     db.commit()
@@ -241,6 +242,7 @@ def get_today_report(
         "card_sales": report.card_sales,
 
         "udhaar_sales": udhaar_total,
+        "system_sales": report.system_sales,
         "total_expenses": expenses_total,
         "total_purchases": purchase_total,
 
@@ -402,7 +404,7 @@ def update_sales(
     report.cash_sales = data.cash_sales
     report.upi_sales = data.upi_sales
     report.card_sales = data.card_sales
-
+    report.system_sales = data.system_sales
     
 
     db.commit()
@@ -657,6 +659,7 @@ def get_all_reports(
             "upi_sales": report.upi_sales,
             "card_sales": report.card_sales,
             "udhaar_sales": report.udhaar_sales,
+            "system_sales": report.system_sales,
 
             "total_expenses": report.total_expenses,
             "total_purchases": report.total_purchases,
@@ -751,6 +754,7 @@ def get_today_reports(
                 "card_sales": report.card_sales,
 
                 "udhaar_sales": udhaar_total,
+                "system_sales": report.system_sales,
                 "total_expenses": expenses_total,
                 "total_purchases": purchase_total,
 
@@ -966,6 +970,7 @@ def get_report(
             "upi": report.upi_sales,
             "card": report.card_sales,
             "udhaar": udhaar_total,
+            "system_sales": report.system_sales,
         },
 
        "expenses": [

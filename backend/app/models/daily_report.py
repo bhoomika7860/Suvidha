@@ -30,7 +30,7 @@ class DailyReport(Base):
     upi_sales = Column(Float, default=0)
     card_sales = Column(Float, default=0)
     udhaar_sales = Column(Float, default=0)
-
+    system_sales = Column(Float, default=0)
     total_expenses = Column(Float, default=0)
     total_purchases = Column(Float, default=0)
 

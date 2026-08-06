@@ -9,6 +9,7 @@ class DailyReportCreate(BaseModel):
     upi_sales: float
     card_sales: float
     udhaar_sales: float
+    system_sales: float = 0
     total_expenses: float
     total_purchases: float = 0
 
@@ -20,6 +21,7 @@ class SalesUpdate(BaseModel):
     upi_sales: float
     card_sales: float
     udhaar_sales: float = Field(default=0)
+    system_sales: float = Field(default=0)
 
 class DeliveryUpdate(BaseModel):
     deliveries: int
