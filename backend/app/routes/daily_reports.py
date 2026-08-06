@@ -339,18 +339,17 @@ def get_report_by_date(
     # ----------------------------------------
 
     purchase_total = (
-        db.query(
-            func.coalesce(
-                func.sum(Purchase.purchase_amount),
-                0,
-            )
+    db.query(
+        func.coalesce(
+            func.sum(Purchase.purchase_amount),
+            0,
         )
-        .filter(
-            Purchase.daily_report_id == report.id,
-            Purchase.status == "completed",
-        )
-        .scalar()
     )
+    .filter(
+        Purchase.daily_report_id == report.id,
+    )
+    .scalar()
+)
 
     return {
         "exists": True,
@@ -539,10 +538,9 @@ def get_report_purchases(
 
     purchases = (
         db.query(Purchase)
-        .filter(
-            Purchase.daily_report_id == report.id,
-            Purchase.status == "completed",
-        )
+    .filter(
+        Purchase.daily_report_id == report.id,
+    )
         .order_by(
             Purchase.purchase_date.desc(),
             Purchase.id.desc(),
@@ -877,7 +875,6 @@ def get_report(
     db.query(Purchase)
     .filter(
         Purchase.daily_report_id == report.id,
-        Purchase.status == "completed",
     )
     .order_by(
         Purchase.purchase_date.desc(),
@@ -962,7 +959,6 @@ def get_report(
         "status": purchase.status,
     }
     for purchase in purchases
-    if purchase.status == "completed"
 ],
 
         "payments": {
