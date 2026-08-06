@@ -79,8 +79,17 @@ class OwnerPurchaseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PurchaseSummary(BaseModel):
+    total_purchase_value: float
+    bills_received: int
+    completed: int
+
+
 class PaginatedOwnerPurchaseResponse(BaseModel):
     items: list[OwnerPurchaseResponse]
+
+    summary: PurchaseSummary
+
     total: int
     page: int
     page_size: int

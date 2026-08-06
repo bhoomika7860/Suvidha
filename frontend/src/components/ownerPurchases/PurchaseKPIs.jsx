@@ -37,28 +37,15 @@ function KpiCard({ icon: Icon, title, value, color }) {
   );
 }
 
-export default function PurchaseKPIs({ purchases = [] }) {
-  const totalPurchaseValue = purchases.reduce(
-    (sum, purchase) =>
-      sum + Number(purchase.purchase_amount || 0),
-    0
-  );
+export default function PurchaseKPIs({ summary }) {
+ const totalPurchaseValue =
+  summary?.total_purchase_value ?? 0;
 
-  const billsReceived = purchases.filter(
-    (purchase) => purchase.status === "received"
-  ).length;
+const billsReceived =
+  summary?.bills_received ?? 0;
 
-  const waitingCheck = purchases.filter(
-    (purchase) => purchase.status === "checking"
-  ).length;
-
-  const waitingEntry = purchases.filter(
-    (purchase) => purchase.status === "entered"
-  ).length;
-
-  const completed = purchases.filter(
-    (purchase) => purchase.status === "completed"
-  ).length;
+const completed =
+  summary?.completed ?? 0;
 
   const kpis = [
     {
@@ -73,18 +60,7 @@ export default function PurchaseKPIs({ purchases = [] }) {
       icon: Inbox,
       color: GREEN,
     },
-    {
-      title: "Waiting Check",
-      value: waitingCheck,
-      icon: ClipboardCheck,
-      color: ORANGE,
-    },
-    {
-      title: "Waiting Entry",
-      value: waitingEntry,
-      icon: Database,
-      color: PURPLE,
-    },
+    
     {
       title: "Completed",
       value: completed,
@@ -94,7 +70,7 @@ export default function PurchaseKPIs({ purchases = [] }) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {kpis.map((item) => (
         <KpiCard
           key={item.title}

@@ -235,7 +235,6 @@ def get_all_purchases(
     return purchases
 
 
-
 @router.get(
     "/owner",
     response_model=PaginatedOwnerPurchaseResponse,
@@ -249,6 +248,7 @@ def get_owner_purchases(
     supplier: str | None = Query(None),
     bill_number: str | None = Query(None),
     date: date | None = Query(None),
+
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -288,46 +288,77 @@ def get_owner_purchases(
 
     if date:
         query = query.filter(
-        func.date(
-    func.timezone("Asia/Kolkata", Purchase.purchase_date)
-) == date
+            func.date(
+                func.timezone(
+                    "Asia/Kolkata",
+                    Purchase.purchase_date,
+                )
+            )
+            == date
+        )
+
+    # ---------- KPI SUMMARY (BEFORE PAGINATION) ----------
+
+    summary_rows = query.all()
+
+    total_purchase_value = sum(
+        p.purchase_amount or 0
+        for p, _ in summary_rows
     )
 
-    total = query.count()
+    bills_received = len(summary_rows)
+
+    completed = sum(
+        1
+        for p, _ in summary_rows
+        if p.status == "completed"
+    )
+
+    # ---------- PAGINATION ----------
+
+    total = len(summary_rows)
 
     purchases = (
         query.order_by(
-        Purchase.purchase_date.desc(),
-        Purchase.id.desc(),
+            Purchase.purchase_date.desc(),
+            Purchase.id.desc(),
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
     )
-    .offset((page - 1) * page_size)
-    .limit(page_size)
-    .all()
-)
+
     return {
-    "items": [
-        {
-            "id": purchase.id,
-            "purchase_date": purchase.purchase_date,
-            "store_id": purchase.store_id,
-            "store_name": store_name,
-            "product_name": purchase.product_name,
-            "quantity": purchase.quantity,
-            "supplier_name": purchase.supplier_name,
-            "purchase_amount": purchase.purchase_amount,
-            "bill_number": purchase.bill_number,
-            "status": purchase.status,
-            "received_by": purchase.received_by,
-            "checked_by": purchase.checked_by,
-            "entered_by": purchase.entered_by,
-            "bill_image": purchase.bill_image,
-        }
-        for purchase, store_name in purchases
-    ],
-    "total": total,
-    "page": page,
-    "page_size": page_size,
-}
+        "items": [
+            {
+                "id": purchase.id,
+                "purchase_date": purchase.purchase_date,
+                "store_id": purchase.store_id,
+                "store_name": store_name,
+                "product_name": purchase.product_name,
+                "quantity": purchase.quantity,
+                "supplier_name": purchase.supplier_name,
+                "purchase_amount": purchase.purchase_amount,
+                "bill_number": purchase.bill_number,
+                "status": purchase.status,
+                "received_by": purchase.received_by,
+                "checked_by": purchase.checked_by,
+                "entered_by": purchase.entered_by,
+                "bill_image": purchase.bill_image,
+            }
+            for purchase, store_name in purchases
+        ],
+
+        "summary": {
+            "total_purchase_value": total_purchase_value,
+            "bills_received": bills_received,
+            "completed": completed,
+        },
+
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 # ----------------------------------------------------
 # Get Store Purchases

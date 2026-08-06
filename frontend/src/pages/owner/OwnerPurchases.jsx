@@ -10,6 +10,7 @@ import storeService from "../../services/storeService";
 
 export default function OwnerPurchases() {
   const [purchases, setPurchases] = useState([]);
+const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stores, setStores] = useState([]);
 
@@ -70,7 +71,8 @@ export default function OwnerPurchases() {
       const data = await purchaseService.getOwnerPurchases(filters, page);
 
       setPurchases(data.items);
-      setTotal(data.total);
+setTotal(data.total);
+setSummary(data.summary);
     } catch (err) {
       console.error(err);
     } finally {
@@ -143,7 +145,7 @@ export default function OwnerPurchases() {
 </button>
       </div>
 
-      <PurchaseKPIs purchases={purchases} />
+      <PurchaseKPIs summary={summary} />
 
       <PurchaseFilters
         search={search}
