@@ -33,7 +33,7 @@ export default function KPISection() {
   }
 
   return (
-    <div className="grid grid-cols-6 gap-4">
+    <div className="grid grid-cols-5 gap-4">
 
       <KPICard
         icon={<ShoppingCart size={20} className="text-blue-600" />}
@@ -41,6 +41,26 @@ export default function KPISection() {
         label="Today's Sales"
         iconBg="#EEF4FF"
       />
+
+      <KPICard
+  icon={<Scale size={20} className={
+    summary.sales_difference === 0
+      ? "text-green-600"
+      : "text-red-600"
+  } />}
+  value={`₹${summary.sales_difference.toLocaleString("en-IN")}`}
+  label="Sales Difference"
+  iconBg={
+    summary.sales_difference === 0
+      ? "#ECFDF3"
+      : "#FEF2F2"
+  }
+  valueColor={
+    summary.sales_difference === 0
+      ? "text-green-600"
+      : "text-red-600"
+  }
+/>
 
       <KPICard
   split
@@ -67,25 +87,7 @@ export default function KPISection() {
         iconBg="#FFF7ED"
       />
 
-      <KPICard
-  icon={<Scale size={20} className={
-    summary.sales_difference === 0
-      ? "text-green-600"
-      : "text-red-600"
-  } />}
-  value={`₹${summary.sales_difference.toLocaleString("en-IN")}`}
-  label="Sales Difference"
-  iconBg={
-    summary.sales_difference === 0
-      ? "#ECFDF3"
-      : "#FEF2F2"
-  }
-  valueColor={
-    summary.sales_difference === 0
-      ? "text-green-600"
-      : "text-red-600"
-  }
-/>
+      
 
     </div>
   );
