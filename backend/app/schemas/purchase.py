@@ -4,6 +4,7 @@ from datetime import datetime
 
 class PurchaseBase(BaseModel):
     store_id: int
+    daily_report_id: int
     product_name: str
     quantity: int
 

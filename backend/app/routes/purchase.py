@@ -44,6 +44,7 @@ def ist_today():
 @router.post("/", response_model=PurchaseResponse)
 async def create_purchase(
     store_id: int = Form(...),
+    daily_report_id: int = Form(...),
     product_name: str = Form(...),
     quantity: int = Form(...),
     supplier_name: str | None = Form(None),
@@ -89,21 +90,40 @@ async def create_purchase(
 
         image_path = f"/uploads/bills/{filename}"
 
-    purchase = Purchase(
-        store_id=current_user["store_id"],
-        product_name=product_name,
-        quantity=quantity,
-        supplier_name=supplier_name,
-        purchase_amount=purchase_amount,
-        created_by=current_user["user_id"],
-        bill_number=bill_number,
-        received_by=received_by,
-        
-        entered_by=entered_by,
-        status="received",
-        
-        bill_image=image_path,
+    report = (
+        db.query(DailyReport)
+    .filter(
+        DailyReport.id == daily_report_id,
+        DailyReport.store_id == current_user["store_id"],
     )
+    .first()
+)
+
+    if not report:
+        raise HTTPException(
+        status_code=404,
+        detail="Daily report not found",
+    )
+
+    purchase = Purchase(
+    store_id=current_user["store_id"],
+    daily_report_id=daily_report_id,
+
+    product_name=product_name,
+    quantity=quantity,
+    supplier_name=supplier_name,
+    purchase_amount=purchase_amount,
+
+    created_by=current_user["user_id"],
+
+    bill_number=bill_number,
+    received_by=received_by,
+    entered_by=entered_by,
+
+    status="received",
+
+    bill_image=image_path,
+)
 
     db.add(purchase)
 
@@ -174,13 +194,12 @@ def update_purchase(
         purchase.completed_at = datetime.utcnow()
 
         report = (
-            db.query(DailyReport)
-            .filter(
-                DailyReport.store_id == purchase.store_id,
-                DailyReport.report_date == ist_today(),
-            )
-            .first()
-        )
+    db.query(DailyReport)
+    .filter(
+        DailyReport.id == purchase.daily_report_id
+    )
+    .first()
+)
 
         if report:
             report.total_purchases += purchase.purchase_amount

@@ -102,10 +102,11 @@ export default function Purchases() {
   />
 
   <ReceiveBillModal
-    isOpen={showReceiveModal}
-    onClose={() => setShowReceiveModal(false)}
-    onSave={addPurchase}
-  />
+  isOpen={showReceiveModal}
+  onClose={() => setShowReceiveModal(false)}
+  onSave={addPurchase}
+  reportId={report.id}
+/>
 </>
 
     </div>

@@ -22,6 +22,12 @@ class Purchase(Base):
         nullable=False,
     )
 
+    daily_report_id = Column(
+    Integer,
+    ForeignKey("daily_reports.id"),
+    nullable=False,
+)
+
     product_name = Column(
         String,
         nullable=False,

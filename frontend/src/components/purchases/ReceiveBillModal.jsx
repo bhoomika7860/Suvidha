@@ -134,6 +134,7 @@ export default function ReceiveBillModal({
   isOpen,
   onClose,
   onSave,
+  reportId,
 }) {
 
   const [party, setParty] = useState("");
@@ -276,6 +277,7 @@ function handleKeyDown(e) {
 
     onSave({
       store_id: user.store_id,
+      daily_report_id: reportId,
       product_name: "Purchase Bill",
       quantity: 1,
       supplier_name: party,

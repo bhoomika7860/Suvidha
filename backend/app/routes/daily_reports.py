@@ -141,18 +141,17 @@ def get_today_report(
     db: Session = Depends(get_db),
 ):
     if current_user["role"] not in [
-    "store_manager",
-    "staff",
-    "delivery",
-]:
+        "store_manager",
+        "staff",
+        "delivery",
+    ]:
         raise HTTPException(
-        status_code=403,
-        detail="Not allowed",
-    )
+            status_code=403,
+            detail="Not allowed",
+        )
 
     report = (
         db.query(DailyReport)
-        
         .filter(
             DailyReport.store_id == current_user["store_id"],
             DailyReport.report_date == ist_today(),
@@ -161,6 +160,7 @@ def get_today_report(
     )
 
     if report is None:
+
         report = DailyReport(
             store_id=current_user["store_id"],
             submitted_by=current_user["user_id"],
@@ -171,112 +171,82 @@ def get_today_report(
         db.commit()
         db.refresh(report)
 
+        # ----------------------------------
+        # Carry forward pending purchases
+        # ----------------------------------
+
+        pending_purchases = (
+            db.query(Purchase)
+            .filter(
+                Purchase.store_id == current_user["store_id"],
+                Purchase.status != "completed",
+            )
+            .all()
+        )
+
+        for purchase in pending_purchases:
+            purchase.daily_report_id = report.id
+
+        db.commit()
+
     expenses_total = (
         db.query(func.coalesce(func.sum(Expense.amount), 0))
         .filter(
-        Expense.store_id == report.store_id,
-        func.date(
-            func.timezone(
-                "Asia/Kolkata",
-                Expense.created_at,
-            )
-        ) == report.report_date,
+            Expense.daily_report_id == report.id,
+        )
+        .scalar()
     )
-    .scalar()
-)
 
     udhaar_total = (
-    db.query(
-        func.coalesce(
-            func.sum(
-                UdhaarEntry.amount - UdhaarEntry.paid_amount
-            ),
-            0,
+        db.query(
+            func.coalesce(
+                func.sum(
+                    UdhaarEntry.amount
+                    - UdhaarEntry.paid_amount
+                ),
+                0,
+            )
         )
+        .filter(
+            UdhaarEntry.daily_report_id == report.id,
+            UdhaarEntry.status != "settled",
+        )
+        .scalar()
     )
-    .filter(
-        UdhaarEntry.store_id == report.store_id,
-        UdhaarEntry.daily_report_id == report.id,
-        UdhaarEntry.status != "settled",
-    )
-    .scalar()
-)
-
-    print("========== UDHAAR DEBUG ==========")
-    print("Report ID:", report.id)
-    print("Store ID:", report.store_id)
-    print("Calculated Udhaar Total:", udhaar_total)
-
-    rows = (
-    db.query(UdhaarEntry)
-    .filter(UdhaarEntry.daily_report_id == report.id)
-    .all()
-)
-
-    for row in rows:
-        print(
-        row.id,
-        row.amount,
-        row.paid_amount,
-        row.status,
-        row.amount - row.paid_amount,
-    )
-
-    print("==================================")
 
     purchase_total = (
-        db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
-    .filter(
-        Purchase.store_id == report.store_id,
-        Purchase.status == "completed",
-        func.date(
-            func.timezone(
-                "Asia/Kolkata",
-                Purchase.purchase_date,
+        db.query(
+            func.coalesce(
+                func.sum(Purchase.purchase_amount),
+                0,
             )
-        ) == report.report_date,
+        )
+        .filter(
+            Purchase.daily_report_id == report.id,
+            Purchase.status == "completed",
+        )
+        .scalar()
     )
-    .scalar()
-)
-    print("REPORT DATE:", report.report_date)
-    print("EXPENSE TOTAL:", expenses_total)
 
-    all_expenses = (
-        db.query(Expense)
-    .filter(Expense.store_id == report.store_id)
-    .all()
-)
-
-    print("ALL EXPENSES")
-    for e in all_expenses:
-        print(
-        e.id,
-        e.amount,
-        e.created_at,
-        e.daily_report_id,
-    )
     return {
-    "id": report.id,
-    "store_id": report.store_id,
-    "report_date": report.report_date,
+        "id": report.id,
+        "store_id": report.store_id,
+        "report_date": report.report_date,
 
-    "total_bills": report.total_bills,
-    "deliveries": report.deliveries,
+        "total_bills": report.total_bills,
+        "deliveries": report.deliveries,
 
-    "cash_sales": report.cash_sales,
-    "upi_sales": report.upi_sales,
-    "card_sales": report.card_sales,
-    "udhaar_sales": udhaar_total,
-"total_expenses": expenses_total,
+        "cash_sales": report.cash_sales,
+        "upi_sales": report.upi_sales,
+        "card_sales": report.card_sales,
 
-"total_purchases": purchase_total,
+        "udhaar_sales": udhaar_total,
+        "total_expenses": expenses_total,
+        "total_purchases": purchase_total,
 
-    "notes": report.notes,
-    "is_locked": report.is_locked,
-
-    
-}
-
+        "notes": report.notes,
+        "is_locked": report.is_locked,
+    }
 
 # ----------------------------------------------------
 # Get / Create Report By Date
@@ -297,31 +267,62 @@ def get_report_by_date(
         .first()
     )
 
+    # ----------------------------------------
+    # Create report if it doesn't exist
+    # ----------------------------------------
+
     if report is None:
-        return {
-        "exists": False,
-        "report_date": report_date,
-    }
+
+        report = DailyReport(
+            store_id=current_user["store_id"],
+            submitted_by=current_user["user_id"],
+            report_date=report_date,
+        )
+
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+
+        # ----------------------------------------
+        # Carry forward all pending purchases
+        # ----------------------------------------
+
+        pending_purchases = (
+            db.query(Purchase)
+            .filter(
+                Purchase.store_id == current_user["store_id"],
+                Purchase.status != "completed",
+            )
+            .all()
+        )
+
+        for purchase in pending_purchases:
+            purchase.daily_report_id = report.id
+
+        db.commit()
+
+    # ----------------------------------------
+    # Expenses
+    # ----------------------------------------
 
     expenses_total = (
         db.query(func.coalesce(func.sum(Expense.amount), 0))
         .filter(
-            Expense.store_id == report.store_id,
-            func.date(
-                func.timezone(
-                    "Asia/Kolkata",
-                    Expense.created_at,
-                )
-            ) == report.report_date,
+            Expense.daily_report_id == report.id,
         )
         .scalar()
     )
+
+    # ----------------------------------------
+    # Udhaar
+    # ----------------------------------------
 
     udhaar_total = (
         db.query(
             func.coalesce(
                 func.sum(
-                    UdhaarEntry.amount - UdhaarEntry.paid_amount
+                    UdhaarEntry.amount
+                    - UdhaarEntry.paid_amount
                 ),
                 0,
             )
@@ -333,6 +334,10 @@ def get_report_by_date(
         .scalar()
     )
 
+    # ----------------------------------------
+    # Purchases
+    # ----------------------------------------
+
     purchase_total = (
         db.query(
             func.coalesce(
@@ -341,20 +346,15 @@ def get_report_by_date(
             )
         )
         .filter(
-            Purchase.store_id == report.store_id,
+            Purchase.daily_report_id == report.id,
             Purchase.status == "completed",
-            func.date(
-                func.timezone(
-                    "Asia/Kolkata",
-                    Purchase.purchase_date,
-                )
-            ) == report.report_date,
         )
         .scalar()
     )
 
     return {
         "exists": True,
+
         "id": report.id,
         "store_id": report.store_id,
         "report_date": report.report_date,
@@ -525,18 +525,6 @@ def get_report_purchases(
     report_id: int,
     db: Session = Depends(get_db),
 ):
-    all_purchases = db.query(Purchase).all()
-
-    print("----- ALL PURCHASES -----")
-    for p in all_purchases:
-            print(
-        p.id,
-        p.store_id,
-        p.purchase_date,
-        p.status,
-        p.supplier_name,
-    )
-    print("-------------------------")
     report = (
         db.query(DailyReport)
         .filter(DailyReport.id == report_id)
@@ -548,46 +536,28 @@ def get_report_purchases(
             status_code=404,
             detail="Report not found",
         )
+
     purchases = (
         db.query(Purchase)
-    .filter(
-        Purchase.store_id == report.store_id,
-        func.date(
-    func.timezone("Asia/Kolkata", Purchase.purchase_date)
-) == report.report_date,
-        Purchase.status == "completed",
+        .filter(
+            Purchase.daily_report_id == report.id,
+            Purchase.status == "completed",
+        )
+        .order_by(
+            Purchase.purchase_date.desc(),
+            Purchase.id.desc(),
+        )
+        .all()
     )
-    .order_by(Purchase.purchase_date.desc())
-    .all()
-)
-    print("Report Date:", report.report_date)
 
-    for p in all_purchases:
-     print(
-        p.id,
-        p.purchase_date,
-        p.purchase_date.date(),
-    )
-    print("Report:", report.id)
-    print("Store:", report.store_id)
-    print("Date:", report.report_date)
-    print("Purchases:", len(purchases))
-
-    for p in purchases:
-     print(
-        p.id,
-        p.supplier_name,
-        p.purchase_date,
-        p.status,
-    )
     return [
-        {
-            "id": purchase.id,
-            "product_name": purchase.product_name,
-            "supplier_name": purchase.supplier_name,
-            "quantity": purchase.quantity,
-            "amount": purchase.purchase_amount,
-        }
+    {
+        "id": purchase.id,
+        "product_name": purchase.product_name,
+        "supplier_name": purchase.supplier_name,
+        "quantity": purchase.quantity,
+        "purchase_amount": purchase.purchase_amount,
+    }
         for purchase in purchases
     ]
 
@@ -756,21 +726,18 @@ def get_today_reports(
     .scalar()
 )
         purchase_total = (
-            db.query(func.coalesce(func.sum(Purchase.purchase_amount), 0))
-            .filter(
-                Purchase.store_id == report.store_id,
-                Purchase.status == "completed",
-                func.date(
-                    func.timezone(
-                        "Asia/Kolkata",
-                        Purchase.purchase_date,
-                    )
-                )
-                == report.report_date,
-            )
-            .scalar()
+    db.query(
+        func.coalesce(
+            func.sum(Purchase.purchase_amount),
+            0,
         )
-
+    )
+    .filter(
+        Purchase.daily_report_id == report.id,
+        Purchase.status == "completed",
+    )
+    .scalar()
+)
         response.append(
             {
                 "id": report.id,
@@ -884,10 +851,7 @@ def get_report(
     expenses = (
     db.query(Expense)
     .filter(
-        Expense.store_id == report.store_id,
-        func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) == report.report_date,
+        Expense.daily_report_id == report.id,
     )
     .all()
 )
@@ -912,11 +876,12 @@ def get_report(
     purchases = (
     db.query(Purchase)
     .filter(
-        Purchase.store_id == report.store_id,
+        Purchase.daily_report_id == report.id,
         Purchase.status == "completed",
-        func.date(
-    func.timezone("Asia/Kolkata", Purchase.purchase_date)
-) == report.report_date,
+    )
+    .order_by(
+        Purchase.purchase_date.desc(),
+        Purchase.id.desc(),
     )
     .all()
 )
