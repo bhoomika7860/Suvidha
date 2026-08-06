@@ -51,17 +51,24 @@ export default function Udhaar() {
     }
   }
 
-  async function addUdhaar(data) {
-    try {
-      await udhaarService.createUdhaar(data);
+ async function addUdhaar(entries) {
+  try {
+    await udhaarService.createUdhaar(
+      reportId,
+      entries
+    );
 
-      setShowAdd(false);
+    setShowAdd(false);
 
-      await loadPage();
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    await loadPage();
+
+  } catch (err) {
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Backend:", err.response?.data);
+}
+}
 
   async function repay(id, amount) {
     try {

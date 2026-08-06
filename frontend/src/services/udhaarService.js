@@ -11,10 +11,14 @@ const udhaarService = {
     return res.data;
   },
 
-  async createUdhaar(data) {
-    const res = await api.post("/udhaar/", data);
-    return res.data;
-  },
+  async createUdhaar(dailyReportId, entries) {
+  const res = await api.post("/udhaar/", {
+    daily_report_id: dailyReportId,
+    entries,
+  });
+
+  return res.data;
+},
 
   async repayUdhaar(id, amount) {
     const res = await api.post(

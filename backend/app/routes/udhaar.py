@@ -7,8 +7,9 @@ from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
 from sqlalchemy import func
 from app.schemas.udhaar_entry import (
+    BulkUdhaarCreate,
     UdhaarCreate,
-    UdhaarRepayment
+    UdhaarRepayment,
 )
 
 router = APIRouter(
@@ -19,25 +20,28 @@ router = APIRouter(
 
 @router.post("/")
 def create_udhaar(
-    
-    data: UdhaarCreate,
+    data: BulkUdhaarCreate,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     print("Received:", data.dict())   # use model_dump() if you're on Pydantic v2
-    report = db.query(DailyReport).filter(
+    report = (
+    db.query(DailyReport)
+    .filter(
         DailyReport.id == data.daily_report_id
-    ).first()
+    )
+    .first()
+)
 
     if not report:
         raise HTTPException(
-            status_code=404,
-            detail="Daily report not found"
-        )
+        status_code=404,
+        detail="Daily report not found",
+    )
 
     if (
-    current_user["role"] != "owner"
-    and report.store_id != current_user["store_id"]
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
 ):
         raise HTTPException(
         status_code=403,
@@ -46,39 +50,45 @@ def create_udhaar(
 
     if report.is_locked:
         raise HTTPException(
-            status_code=409,
-            detail="Cannot add udhaar to locked report"
-        )
+        status_code=409,
+        detail="Cannot add udhaar to locked report",
+    )
 
-    udhaar = UdhaarEntry(
+    created_entries = []
+
+    for item in data.entries:
+
+        udhaar = UdhaarEntry(
         store_id=report.store_id,
         daily_report_id=data.daily_report_id,
-        customer_name=data.customer_name,
-        customer_phone=data.customer_phone,
-        bill_number=getattr(data, "bill_number", None),
-        amount=data.amount,
-        created_by=current_user["user_id"]
+        bill_number=item.bill_number,
+        customer_name="",
+        customer_phone=None,
+        amount=item.amount,
+        created_by=current_user["user_id"],
     )
-    print("Before commit:", udhaar.bill_number)
 
     db.add(udhaar)
-
-
-    
+    created_entries.append(udhaar)
 
     db.commit()
-    db.refresh(udhaar)
-    print("After commit:", udhaar.bill_number)
-    create_audit_log(
+
+    for udhaar in created_entries:
+
+        db.refresh(udhaar)
+
+        create_audit_log(
         db=db,
         user_id=udhaar.created_by,
         action="CREATE",
         table_name="udhaar_entries",
         record_id=udhaar.id,
-        description="Created udhaar entry"
+        description="Created udhaar entry",
     )
 
-    return udhaar
+    return {
+    "message": f"{len(created_entries)} entries created"
+}
     
 
 @router.post("/{udhaar_id}/repay")

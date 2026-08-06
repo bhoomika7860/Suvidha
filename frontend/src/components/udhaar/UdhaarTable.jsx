@@ -22,39 +22,32 @@ export default function UdhaarTable({
       <table className="min-w-full">
 
         <thead className="bg-slate-100">
-          <tr>
-            <th className="px-4 py-3 text-left">
-              Bill No.
-            </th>
+  <tr>
 
-            <th className="px-4 py-3 text-left">
-              Customer
-            </th>
+    <th className="px-6 py-4 text-left">
+      Bill No.
+    </th>
 
-            <th className="px-4 py-3 text-left">
-              Phone
-            </th>
+    <th className="px-6 py-4 text-right">
+      Total
+    </th>
 
-            <th className="px-4 py-3 text-left">
-              Total
-            </th>
+    <th className="px-6 py-4 text-right">
+      Paid
+    </th>
 
-            <th className="px-4 py-3 text-left">
-              Paid
-            </th>
+    <th className="px-6 py-4 text-right">
+      Remaining
+    </th>
 
-            <th className="px-4 py-3 text-left">
-              Remaining
-            </th>
+    {!isOwner && (
+      <th className="px-6 py-4 text-center">
+        Action
+      </th>
+    )}
 
-            {!isOwner && (
-              <th className="px-4 py-3 text-center">
-                Action
-              </th>
-            )}
-
-          </tr>
-        </thead>
+  </tr>
+</thead>
 
         <tbody>
 
@@ -65,47 +58,40 @@ export default function UdhaarTable({
 
             return (
               <tr
-                key={entry.id}
-                className="border-t"
-              >
-                <td className="px-4 py-3">
-                  {entry.bill_number}
-                </td>
+  key={entry.id}
+  className="border-t hover:bg-gray-50 transition"
+>
 
-                <td className="px-4 py-3">
-                  {entry.customer_name}
-                </td>
+  <td className="px-6 py-4 font-medium">
+    {entry.bill_number}
+  </td>
 
-                <td className="px-4 py-3">
-                  {entry.customer_phone}
-                </td>
+  <td className="px-6 py-4 text-right">
+    ₹{entry.amount.toLocaleString("en-IN")}
+  </td>
 
-                <td className="px-4 py-3">
-                  ₹{entry.amount.toLocaleString("en-IN")}
-                </td>
+  <td className="px-6 py-4 text-right text-green-600">
+    ₹{entry.paid_amount.toLocaleString("en-IN")}
+  </td>
 
-                <td className="px-4 py-3">
-                  ₹{entry.paid_amount.toLocaleString("en-IN")}
-                </td>
+  <td className="px-6 py-4 text-right font-semibold text-red-600">
+    ₹{remaining.toLocaleString("en-IN")}
+  </td>
 
-                <td className="px-4 py-3 font-semibold text-red-600">
-                  ₹{remaining.toLocaleString("en-IN")}
-                </td>
+  {!isOwner && (
+    <td className="px-6 py-4 text-center">
 
-                {!isOwner && (
-                  <td className="px-4 py-3 text-center">
+      <button
+        onClick={() => onRepay(entry)}
+        className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+      >
+        Repay
+      </button>
 
-                    <button
-                      onClick={() => onRepay(entry)}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                    >
-                      Repay
-                    </button>
+    </td>
+  )}
 
-                  </td>
-                )}
-
-              </tr>
+</tr>
             );
           })}
 

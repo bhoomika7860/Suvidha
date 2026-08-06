@@ -35,21 +35,21 @@ export default function RepayModal({
           Repay Udhaar
         </h2>
 
-        <p className="mt-4">
-          Customer
-        </p>
+        <p className="mt-4 text-sm text-gray-500">
+  Bill Number
+</p>
 
-        <div className="font-semibold">
-          {entry.customer_name}
-        </div>
+<div className="font-semibold text-lg">
+  {entry.bill_number}
+</div>
 
-        <p className="mt-4">
-          Remaining
-        </p>
+        <p className="mt-5 text-sm text-gray-500">
+  Remaining Amount
+</p>
 
-        <div className="font-bold text-red-600">
-          ₹{remaining}
-        </div>
+<div className="text-2xl font-bold text-red-600">
+  ₹{remaining.toLocaleString("en-IN")}
+</div>
 
         <input
           type="number"
