@@ -8,8 +8,11 @@ import PaymentMachines from "./PaymentMachines";
 import udhaarService from "../../services/udhaarService";
 const OPENING_CASH = 20000;
 
-export default function SalesSection() {
-  const [report, setReport] = useState(null);
+export default function SalesSection({
+  report,
+  refreshReport,
+}) {
+ 
 
   const [form, setForm] = useState({
     total_bills: 0,
@@ -40,47 +43,8 @@ export default function SalesSection() {
     coin_1: 0,
   });
 
-  async function loadReport() {
-  try {
-    const data = await dailyReportsService.getTodayReport();
-    const outstanding =
-      await udhaarService.getOutstanding();
+  
 
-    setReport(data);
-
-    setForm({
-      total_bills: data.total_bills || 0,
-      cash_sales: data.cash_sales || 0,
-      upi_sales: data.upi_sales || 0,
-      card_sales: data.card_sales || 0,
-      total_expenses: data.total_expenses || 0,
-      udhaar_sales: outstanding.outstanding || 0,
-    });
-
-    const saved =
-      await cashDenominationService.get(data.id);
-
-    if (saved) {
-      setCash({
-        note_500: saved.note_500,
-        note_200: saved.note_200,
-        note_100: saved.note_100,
-        note_50: saved.note_50,
-        note_20: saved.note_20,
-        note_10: saved.note_10,
-        coin_5: saved.coin_5,
-        coin_2: saved.coin_2,
-        coin_1: saved.coin_1,
-      });
-    }
-
-  } catch (err) {
-    console.error(err);
-  }
-}
-  useEffect(() => {
-    loadReport();
-  }, []);
 
   const cashCounted =
     cash.note_500 * 500 +
@@ -94,6 +58,51 @@ export default function SalesSection() {
     cash.coin_1;
 
   const calculatedCashSales = cashCounted - OPENING_CASH;
+
+  useEffect(() => {
+  if (!report) return;
+
+  async function loadSection() {
+    try {
+      const outstanding =
+        await udhaarService.getOutstanding();
+
+      setForm({
+        total_bills: report.total_bills || 0,
+        cash_sales: report.cash_sales || 0,
+        upi_sales: report.upi_sales || 0,
+        card_sales: report.card_sales || 0,
+        total_expenses: report.total_expenses || 0,
+        udhaar_sales: outstanding.outstanding || 0,
+      });
+
+      const saved =
+        await cashDenominationService.get(
+          report.id
+        );
+
+      if (saved) {
+        setCash({
+          note_500: saved.note_500,
+          note_200: saved.note_200,
+          note_100: saved.note_100,
+          note_50: saved.note_50,
+          note_20: saved.note_20,
+          note_10: saved.note_10,
+          coin_5: saved.coin_5,
+          coin_2: saved.coin_2,
+          coin_1: saved.coin_1,
+        });
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadSection();
+
+}, [report]);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -147,7 +156,7 @@ export default function SalesSection() {
 
     alert("Sales saved successfully.");
 
-    await loadReport();
+    await refreshReport();
 
   } catch (err) {
     console.error(err);

@@ -13,36 +13,34 @@ import AddExpenseModal from "../expenses/AddExpenseModal";
 import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
-export default function ExpenseSection() {
+export default function ExpenseSection({
+  report,
+  refreshReport,
+}) {
   const [expenses, setExpenses] = useState([]);
-  const [reportId, setReportId] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
-  useEffect(() => {
-    load();
-  }, []);
 
-  async function load() {
-    try {
-      const report =
-        await dailyReportsService.getTodayReport();
+  async function loadExpenses() {
+  if (!report) return;
 
-      setReportId(report.id);
+  try {
+    const data = await dailyReportsService.getExpenses(
+      report.id
+    );
 
-      const data =
-        await dailyReportsService.getExpenses(
-          report.id
-        );
-
-      setExpenses(data);
-
-    } catch (err) {
-      console.error(err);
-    }
+    setExpenses(data);
+  } catch (err) {
+    console.error(err);
   }
+}
+
+useEffect(() => {
+  loadExpenses();
+}, [report]);
 
   const total = expenses.reduce(
     (sum, item) => sum + Number(item.amount),
@@ -60,7 +58,8 @@ export default function ExpenseSection() {
     try {
       await expenseService.deleteExpense(id);
 
-      await load();
+      await refreshReport();
+await loadExpenses();
 
     } catch (err) {
       console.error(err);
@@ -84,7 +83,8 @@ export default function ExpenseSection() {
       setShowModal(false);
       setSelectedExpense(null);
 
-      await load();
+      await refreshReport();
+await loadExpenses();
 
     } catch (err) {
       console.error(err);
@@ -110,7 +110,7 @@ export default function ExpenseSection() {
           <div>
 
             <h3 className="font-semibold">
-              Today's Expenses
+               Expenses
             </h3>
 
             <p className="text-sm text-gray-500">

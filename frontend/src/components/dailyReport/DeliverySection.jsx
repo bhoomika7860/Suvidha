@@ -14,8 +14,10 @@ import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
 import deliveryAssignmentService from "../../services/deliveryAssignmentService";
 
-export default function DeliverySection() {
-  const [report, setReport] = useState(null);
+export default function DeliverySection({
+  report,
+  refreshReport,
+}) {
   const [deliveryBoys, setDeliveryBoys] = useState([]);
 
   const [rows, setRows] = useState([
@@ -26,12 +28,9 @@ export default function DeliverySection() {
   ]);
 
   const load = useCallback(async () => {
+    if (!report) return;
+
     try {
-      const today =
-        await dailyReportsService.getTodayReport();
-
-      setReport(today);
-
       const boys =
         await deliveryAssignmentService.getDeliveryBoys();
 
@@ -39,7 +38,7 @@ export default function DeliverySection() {
 
       const assignments =
         await deliveryAssignmentService.getAssignments(
-          today.id
+          report.id
         );
 
       if (assignments.length > 0) {
@@ -61,7 +60,7 @@ export default function DeliverySection() {
     } catch (err) {
       console.error(err);
     }
-  }, []);
+  }, [report]);
 
   useEffect(() => {
     load();
@@ -76,7 +75,7 @@ export default function DeliverySection() {
     );
   }, [rows]);
 
-  const addRow = () => {
+  function addRow() {
     setRows((prev) => [
       ...prev,
       {
@@ -84,19 +83,15 @@ export default function DeliverySection() {
         deliveries_completed: "",
       },
     ]);
-  };
+  }
 
-  const removeRow = (index) => {
+  function removeRow(index) {
     setRows((prev) =>
       prev.filter((_, i) => i !== index)
     );
-  };
+  }
 
-  const updateRow = (
-    index,
-    field,
-    value
-  ) => {
+  function updateRow(index, field, value) {
     setRows((prev) =>
       prev.map((row, i) =>
         i === index
@@ -107,7 +102,7 @@ export default function DeliverySection() {
           : row
       )
     );
-  };
+  }
 
   async function handleSave() {
     try {
@@ -130,6 +125,7 @@ export default function DeliverySection() {
         totalDeliveries
       );
 
+      await refreshReport();
       await load();
 
       alert("Deliveries saved.");
@@ -145,7 +141,6 @@ export default function DeliverySection() {
       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
 
         <div className="mb-5 flex items-center justify-between">
-
           <div className="flex items-center gap-2">
             <Truck
               size={18}
@@ -153,7 +148,7 @@ export default function DeliverySection() {
             />
 
             <h3 className="font-semibold">
-              Delivery Summary
+              Deliveries
             </h3>
           </div>
 
@@ -164,11 +159,9 @@ export default function DeliverySection() {
             <Plus size={16} />
             Add Delivery Boy
           </button>
-
         </div>
 
         <div className="space-y-3">
-
           {rows.map((row, index) => {
             const selectedIds = rows
               .filter((_, i) => i !== index)
@@ -181,7 +174,6 @@ export default function DeliverySection() {
                 key={index}
                 className="grid grid-cols-12 items-center gap-3"
               >
-
                 <select
                   value={row.delivery_boy_id}
                   onChange={(e) =>
@@ -193,7 +185,6 @@ export default function DeliverySection() {
                   }
                   className="col-span-6 h-11 rounded-xl border px-4"
                 >
-
                   <option value="">
                     Select Delivery Boy
                   </option>
@@ -217,7 +208,6 @@ export default function DeliverySection() {
                         {boy.full_name}
                       </option>
                     ))}
-
                 </select>
 
                 <input
@@ -246,38 +236,30 @@ export default function DeliverySection() {
                     className="text-red-500"
                   />
                 </button>
-
               </div>
             );
           })}
-
         </div>
 
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
-
           <p className="text-sm text-gray-500">
-            Today's Deliveries
+            Deliveries
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-violet-600">
             {totalDeliveries}
           </h2>
-
         </div>
-
       </div>
 
       <div className="mt-6 flex justify-end">
-
         <button
           onClick={handleSave}
           className="h-11 rounded-xl bg-blue-600 px-8 font-medium text-white hover:bg-blue-700"
         >
           Save Deliveries
         </button>
-
       </div>
-
     </SectionCard>
   );
 }

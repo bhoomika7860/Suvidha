@@ -60,6 +60,30 @@ getTodayReport: async () => {
   return response.data;
 },
 
+async getReportByDate(reportDate) {
+  const res = await api.get(
+    `/daily-reports/date/${reportDate}`
+  );
+
+  return res.data;
+},
+
+async getOrCreateReport(reportDate) {
+  const res = await api.get(
+    `/daily-reports/date/${reportDate}`
+  );
+
+  return res.data;
+},
+
+async getCalendarStatus(year, month) {
+  const res = await api.get(
+    `/daily-reports/calendar/${year}/${month}`
+  );
+
+  return res.data;
+},
+
 getTodayReports: async () => {
   const response = await api.get("/daily-reports/today/all");
   return response.data;
@@ -120,13 +144,6 @@ getBouncedProducts: async (reportId) => {
   return response.data;
 },
 
-submitReport: async (reportId) => {
-  const response = await api.post(
-    `/daily-reports/${reportId}/submit`
-  );
-
-  return response.data;
-},
 formatReports,
 
 };

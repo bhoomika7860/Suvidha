@@ -2,68 +2,49 @@ import { useEffect, useState } from "react";
 import {
   CheckCircle2,
   Circle,
-  Clock3,
 } from "lucide-react";
-import api from "../../api/api";
 import dailyReportsService from "../../services/dailyReportsService";
 
-export default function ReportProgress() {
-  const [report, setReport] = useState(null);
+export default function ReportProgress({
+  report,
+}) {
+  const [expensesCompleted, setExpensesCompleted] =
+    useState(false);
 
-const [expensesCompleted, setExpensesCompleted] =
-  useState(false);
+  const [purchasesCompleted, setPurchasesCompleted] =
+    useState(false);
 
-const [purchasesCompleted, setPurchasesCompleted] =
-  useState(false);
+  useEffect(() => {
+    if (!report) return;
 
+    async function loadProgress() {
+      try {
+        const expenses =
+          await dailyReportsService.getExpenses(
+            report.id
+          );
 
-useEffect(() => {
-  async function load() {
-    try {
-      const data =
-        await dailyReportsService.getTodayReport();
-
-      setReport(data);
-
-      const expenses =
-        await dailyReportsService.getExpenses(
-          data.id
+        setExpensesCompleted(
+          expenses.length > 0
         );
 
-      setExpensesCompleted(
-        expenses.length > 0
-      );
+        const purchases =
+          await dailyReportsService.getPurchases(
+            report.id
+          );
 
-      const purchases =
-        await dailyReportsService.getPurchases(
-          data.id
+        setPurchasesCompleted(
+          purchases.length > 0
         );
-
-      setPurchasesCompleted(
-        purchases.length > 0
-      );
-
-     
-
-     
-    } catch (err) {
-      console.error(err);
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }
 
-  load();
-}, []);
+    loadProgress();
+  }, [report]);
 
-  if (!report) {
-    return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        Loading...
-      </div>
-    );
-  }
-
-  console.log("TOTAL EXPENSES =", report.total_expenses);
-console.log(report);
+  if (!report) return null;
 
   const salesCompleted =
     report.total_bills > 0 ||
@@ -71,43 +52,30 @@ console.log(report);
     report.upi_sales > 0 ||
     report.card_sales > 0;
 
-  
-
   const deliveriesCompleted =
     report.deliveries > 0;
-
- 
 
   const sections = [
     {
       title: "Sales",
-      status: salesCompleted
-        ? "done"
-        : "todo",
+      status: salesCompleted,
     },
     {
       title: "Expenses",
-      status: expensesCompleted
-        ? "done"
-        : "todo",
+      status: expensesCompleted,
     },
     {
       title: "Purchases",
-      status: purchasesCompleted
-        ? "done"
-        : "todo",
+      status: purchasesCompleted,
     },
     {
       title: "Deliveries",
-      status: deliveriesCompleted
-        ? "done"
-        : "todo",
+      status: deliveriesCompleted,
     },
-    
   ];
 
   const completed = sections.filter(
-    (section) => section.status === "done"
+    (s) => s.status
   ).length;
 
   const percentage =
@@ -119,15 +87,13 @@ console.log(report);
       <div className="mb-4 flex items-center justify-between">
 
         <div>
-
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold">
             Report Progress
           </h2>
 
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500">
             {completed} of {sections.length} sections completed
           </p>
-
         </div>
 
         <span
@@ -144,7 +110,7 @@ console.log(report);
 
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="h-2 overflow-hidden rounded-full bg-gray-200">
 
         <div
           className="h-full rounded-full bg-blue-600 transition-all"
@@ -157,39 +123,28 @@ console.log(report);
 
       <div className="mt-5 flex flex-wrap gap-3">
 
-        {sections.map((section) => {
+        {sections.map((section) => (
 
-          const isDone =
-            section.status === "done";
+          <div
+            key={section.title}
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${
+              section.status
+                ? "border-green-200 bg-green-50 text-green-700"
+                : "border-gray-200 bg-gray-50 text-gray-500"
+            }`}
+          >
 
-          const isPending =
-            section.status === "pending";
+            {section.status ? (
+              <CheckCircle2 size={15} />
+            ) : (
+              <Circle size={15} />
+            )}
 
-          return (
-            <div
-              key={section.title}
-              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${
-                isDone
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : isPending
-                  ? "border-orange-200 bg-orange-50 text-orange-700"
-                  : "border-gray-200 bg-gray-50 text-gray-500"
-              }`}
-            >
+            {section.title}
 
-              {isDone ? (
-                <CheckCircle2 size={15} />
-              ) : isPending ? (
-                <Clock3 size={15} />
-              ) : (
-                <Circle size={15} />
-              )}
+          </div>
 
-              {section.title}
-
-            </div>
-          );
-        })}
+        ))}
 
       </div>
 

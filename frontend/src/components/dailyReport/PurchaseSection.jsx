@@ -4,28 +4,40 @@ import { useEffect, useState } from "react";
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
 
-export default function PurchaseSection() {
+export default function PurchaseSection({
+  report,
+  refreshReport,
+}) {
   const [purchases, setPurchases] = useState([]);
 
-  useEffect(() => {
-    async function load() {
-      const report =
-        await dailyReportsService.getTodayReport();
+useEffect(() => {
+  if (!report) return;
 
+  async function loadPurchases() {
+    try {
       const data =
-        await dailyReportsService.getPurchases(report.id);
-        console.log("Purchases API:", data);
-      setPurchases(data);
-    }
+        await dailyReportsService.getPurchases(
+          report.id
+        );
 
-    load();
-  }, []);
+      console.log("Purchases API:", data);
+
+      setPurchases(data);
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadPurchases();
+
+}, [report]);
 
   const total = purchases.reduce(
-    (sum, purchase) =>
-      sum + Number(purchase.amount),
-    0
-  );
+  (sum, purchase) =>
+    sum + Number(purchase.purchase_amount),
+  0
+);
 
   return (
     <SectionCard title="Purchases">
@@ -46,7 +58,7 @@ export default function PurchaseSection() {
           <div>
 
             <h3 className="font-semibold">
-              Today's Purchases
+              Purchases
             </h3>
 
             <p className="text-sm text-gray-500">
@@ -109,7 +121,7 @@ export default function PurchaseSection() {
                 </td>
 
                 <td className="px-5 py-3 font-medium">
-                  ₹{Number(purchase.amount).toLocaleString("en-IN")}
+                  ₹{Number(purchase.purchase_amount).toLocaleString("en-IN")}
                 </td>
 
               </tr>

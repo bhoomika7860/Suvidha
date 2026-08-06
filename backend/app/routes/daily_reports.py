@@ -16,7 +16,7 @@ from sqlalchemy.orm import joinedload
 
 
 from app.models.user import User
-from datetime import date
+
 from app.models.store import Store
 
 from app.schemas.daily_report import SalesUpdate
@@ -278,7 +278,105 @@ def get_today_report(
 }
 
 
+# ----------------------------------------------------
+# Get / Create Report By Date
+# ----------------------------------------------------
 
+@router.get("/date/{report_date}")
+def get_report_by_date(
+    report_date: date,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == current_user["store_id"],
+            DailyReport.report_date == report_date,
+        )
+        .first()
+    )
+
+    if report is None:
+        report = DailyReport(
+            store_id=current_user["store_id"],
+            submitted_by=current_user["user_id"],
+            report_date=report_date,
+        )
+
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+
+    expenses_total = (
+        db.query(func.coalesce(func.sum(Expense.amount), 0))
+        .filter(
+            Expense.store_id == report.store_id,
+            func.date(
+                func.timezone(
+                    "Asia/Kolkata",
+                    Expense.created_at,
+                )
+            ) == report.report_date,
+        )
+        .scalar()
+    )
+
+    udhaar_total = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    UdhaarEntry.amount - UdhaarEntry.paid_amount
+                ),
+                0,
+            )
+        )
+        .filter(
+            UdhaarEntry.daily_report_id == report.id,
+            UdhaarEntry.status != "settled",
+        )
+        .scalar()
+    )
+
+    purchase_total = (
+        db.query(
+            func.coalesce(
+                func.sum(Purchase.purchase_amount),
+                0,
+            )
+        )
+        .filter(
+            Purchase.store_id == report.store_id,
+            Purchase.status == "completed",
+            func.date(
+                func.timezone(
+                    "Asia/Kolkata",
+                    Purchase.purchase_date,
+                )
+            ) == report.report_date,
+        )
+        .scalar()
+    )
+
+    return {
+        "id": report.id,
+        "store_id": report.store_id,
+        "report_date": report.report_date,
+
+        "total_bills": report.total_bills,
+        "deliveries": report.deliveries,
+
+        "cash_sales": report.cash_sales,
+        "upi_sales": report.upi_sales,
+        "card_sales": report.card_sales,
+
+        "udhaar_sales": udhaar_total,
+        "total_expenses": expenses_total,
+        "total_purchases": purchase_total,
+
+        "notes": report.notes,
+        "is_locked": report.is_locked,
+    }
 
 @router.put("/{report_id}/sales")
 def update_sales(
@@ -719,6 +817,51 @@ def get_store_reports(
 
     return reports
 
+
+
+from calendar import monthrange
+
+
+@router.get("/calendar/{year}/{month}")
+def get_calendar_status(
+    year: int,
+    month: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    first_day = date(year, month, 1)
+
+    last_day = date(
+        year,
+        month,
+        monthrange(year, month)[1],
+    )
+
+    reports = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.store_id == current_user["store_id"],
+            DailyReport.report_date >= first_day,
+            DailyReport.report_date <= last_day,
+        )
+        .all()
+    )
+
+    response = []
+
+    for report in reports:
+        response.append(
+            {
+                "date": report.report_date,
+                "is_locked": report.is_locked,
+                "is_submitted": report.is_submitted,
+                "report_id": report.id,
+            }
+        )
+
+    return response
+
+
 @router.get("/{report_id}")
 def get_report(
     report_id: int,
@@ -904,5 +1047,3 @@ def get_report(
         "notes": report.notes,
     }
 
-
-    
