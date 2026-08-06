@@ -28,31 +28,32 @@ export default function Udhaar() {
   }, []);
 
   async function loadPage() {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      // Managers need today's report to create udhaar.
-      if (!isOwner) {
-        const report =
-          await dailyReportsService.getTodayReport();
+    if (!isOwner) {
+      const report = await dailyReportsService.getTodayReport();
+      setReportId(report.id);
+    }
 
-        setReportId(report.id);
-      }
+    const data = await udhaarService.getUdhaar();
 
-      const data =
-        await udhaarService.getUdhaar();
-        console.log("UDHAAR DATA:", data);
-      setEntries(data);
+    console.log("UDHAAR DATA:", data);
 
-    } catch (err) {
-  console.error(err);
+    setEntries(data);
 
-  console.log("Status:", err.response?.status);
-  console.log("Headers:", err.response?.headers);
-  console.log("Backend Response:");
-  console.log(JSON.stringify(err.response?.data, null, 2));
-}
+  } catch (err) {
+    console.error(err);
+
+    console.log("Status:", err.response?.status);
+    console.log("Headers:", err.response?.headers);
+    console.log("Backend Response:");
+    console.log(JSON.stringify(err.response?.data, null, 2));
+
+  } finally {
+    setLoading(false);
   }
+}
 
  async function addUdhaar(entries) {
   try {
