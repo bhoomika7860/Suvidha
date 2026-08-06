@@ -16,10 +16,6 @@ const purchaseService = {
     return response.data;
   },
   
-  async getPendingPurchaseOrders() {
-  const response = await api.get("/purchase-orders/pending");
-  return response.data;
-},
   createPurchase: async (purchase) => {
   const formData = new FormData();
 
@@ -58,10 +54,7 @@ const purchaseService = {
 
   return response.data;
 },
-  getPurchaseOrders: async () => {
-  const response = await api.get("/purchase-orders/");
-  return response.data;
-},
+  
 
 
   getOwnerPurchases: async (filters = {}, page = 1, pageSize = 10) => {
@@ -76,30 +69,9 @@ const purchaseService = {
   return response.data;
 },
 
-createPurchaseOrder: async (order) => {
-  console.log("Sending Purchase Order:", order);
 
-  const response = await api.post(
-    "/purchase-orders/",
-    order
-  );
 
-  return response.data;
-},
 
-updatePurchaseOrderStatus: async (id, status) => {
-  const response = await api.put(
-    `/purchase-orders/${id}/status`,
-    null,
-    {
-      params: {
-        status,
-      },
-    }
-  );
-
-  return response.data;
-},
 
 
 };

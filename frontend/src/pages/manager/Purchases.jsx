@@ -5,25 +5,17 @@ import purchaseService from "../../services/purchaseService";
 import PurchaseStats from "../../components/purchases/PurchaseStats";
 import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
 import PurchaseTable from "../../components/purchases/PurchaseTable";
-import PurchaseOrders from "../../components/purchases/orders/PurchaseOrders";
+
 import ReceiveBillModal from "../../components/purchases/ReceiveBillModal";
 
 export default function Purchases() {
   const [search, setSearch] = useState("");
 
-  const [activeTab, setActiveTab] = useState("orders");
-
   const [activeFilter, setActiveFilter] =
     useState("received");
 
-  const [showOrderModal, setShowOrderModal] =
-    useState(false);
-
   const [showReceiveModal, setShowReceiveModal] =
     useState(false);
-
-  const [purchaseOrders, setPurchaseOrders] =
-    useState([]);
 
   const [purchases, setPurchases] =
     useState([]);
@@ -33,24 +25,15 @@ export default function Purchases() {
   }, []);
 
   async function loadData() {
-    try {
-      const [
-  purchaseData,
-  purchaseOrderData,
-] = await Promise.all([
-  purchaseService.getTodayPurchases(),
-  purchaseService.getPurchaseOrders(),
-]);
+  try {
+    const purchaseData =
+      await purchaseService.getTodayPurchases();
 
-console.log("Purchase Orders:", purchaseOrderData);
-
-setPurchases(purchaseData);
-setPurchaseOrders(purchaseOrderData);
-
-    } catch (err) {
-      console.error(err);
-    }
+    setPurchases(purchaseData);
+  } catch (err) {
+    console.error(err);
   }
+}
 
   async function addPurchase(purchase) {
     try {
@@ -100,45 +83,30 @@ setPurchaseOrders(purchaseOrderData);
       </div>
 
       <PurchaseStats
-        purchases={purchases}
-        purchaseOrders={purchaseOrders}
-        activeFilter={activeFilter}
-        setActiveFilter={setActiveFilter}
-        activeTab={activeTab}
-      />
+  purchases={purchases}
+  activeFilter={activeFilter}
+  setActiveFilter={setActiveFilter}
+/>
 
       <PurchaseToolbar
-        search={search}
-        setSearch={setSearch}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onCreatePO={() => setShowOrderModal(true)}
-        onReceiveBill={() => setShowReceiveModal(true)}
-      />
+  search={search}
+  setSearch={setSearch}
+  onReceiveBill={() => setShowReceiveModal(true)}
+/>
 
-      {activeTab === "orders" ? (
-        <PurchaseOrders
-          purchaseOrders={purchaseOrders}
-          setPurchaseOrders={setPurchaseOrders}
-          showModal={showOrderModal}
-          setShowModal={setShowOrderModal}
-          setActiveTab={setActiveTab}
-        />
-      ) : (
-        <>
-          <PurchaseTable
-            purchases={filteredPurchases}
-            allPurchases={purchases}
-            setPurchases={setPurchases}
-          />
+      <>
+  <PurchaseTable
+    purchases={filteredPurchases}
+    allPurchases={purchases}
+    setPurchases={setPurchases}
+  />
 
-          <ReceiveBillModal
-            isOpen={showReceiveModal}
-            onClose={() => setShowReceiveModal(false)}
-            onSave={addPurchase}
-          />
-        </>
-      )}
+  <ReceiveBillModal
+    isOpen={showReceiveModal}
+    onClose={() => setShowReceiveModal(false)}
+    onSave={addPurchase}
+  />
+</>
 
     </div>
   );

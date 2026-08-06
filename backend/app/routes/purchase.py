@@ -20,7 +20,6 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
 from app.models.purchase import Purchase
-from app.models.purchase_order import PurchaseOrder
 from app.schemas.purchase import (
     PurchaseCreate,
     PurchaseResponse,
@@ -55,7 +54,7 @@ async def create_purchase(
     
     entered_by: str | None = Form(None),
     status: str = Form("received"),
-    purchase_order_id: int | None = Form(None),
+    
     bill_image: UploadFile | None = File(None),
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -102,24 +101,11 @@ async def create_purchase(
         
         entered_by=entered_by,
         status="received",
-        purchase_order_id=purchase_order_id,
+        
         bill_image=image_path,
     )
 
     db.add(purchase)
-
-    if purchase_order_id:
-
-        purchase_order = (
-            db.query(PurchaseOrder)
-            .filter(
-                PurchaseOrder.id == purchase_order_id
-            )
-            .first()
-        )
-
-        if purchase_order:
-            purchase_order.status = "Received"
 
     db.commit()
     db.refresh(purchase)
@@ -170,17 +156,7 @@ def update_purchase(
     if data.grn_number is not None:
         purchase.grn_number = data.grn_number
 
-    if purchase.purchase_order_id:
-        purchase_order = (
-            db.query(PurchaseOrder)
-            .filter(
-                PurchaseOrder.id == purchase.purchase_order_id
-            )
-            .first()
-        )
-
-        if purchase_order and purchase.status == "completed":
-            purchase_order.status = "Closed"
+  
 
     if (
         purchase.status == "completed"
@@ -325,7 +301,6 @@ def get_owner_purchases(
             "received_by": purchase.received_by,
             "checked_by": purchase.checked_by,
             "entered_by": purchase.entered_by,
-            "purchase_order_id": purchase.purchase_order_id,
             "bill_image": purchase.bill_image,
         }
         for purchase, store_name in purchases
