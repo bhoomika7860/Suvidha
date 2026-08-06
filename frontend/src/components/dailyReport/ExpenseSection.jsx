@@ -123,7 +123,7 @@ await loadExpenses();
         </div>
 
         <Link
-          to="/manager-expenses"
+  to={`/manager-expenses?report=${report.id}`}
           className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
         >
           <Eye size={17} />

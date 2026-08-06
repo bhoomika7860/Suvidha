@@ -1,15 +1,16 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+
 from app.models.daily_report import DailyReport
 from app.models.expense import Expense
 from app.models.user import User
+
 from app.schemas.expense import (
     ExpenseCreate,
     ExpenseResponse,
@@ -37,16 +38,13 @@ def create_expense(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    today = ist_today()
-
     report = (
-    db.query(DailyReport)
-    .filter(
-        DailyReport.store_id == current_user["store_id"],
-        DailyReport.report_date == today,
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == data.daily_report_id
+        )
+        .first()
     )
-    .first()
-)
 
     if not report:
         raise HTTPException(
@@ -54,8 +52,23 @@ def create_expense(
             detail="Daily report not found",
         )
 
+    if (
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
+
     expense = Expense(
-        store_id=current_user["store_id"],
+        store_id=report.store_id,
         daily_report_id=report.id,
         expense_type=data.expense_type,
         amount=data.amount,
@@ -64,11 +77,7 @@ def create_expense(
     )
 
     db.add(expense)
-
-    
-
     db.commit()
-
     db.refresh(expense)
 
     return expense
@@ -98,32 +107,47 @@ def update_expense(
             status_code=404,
             detail="Expense not found",
         )
+
     if (
-    current_user["role"] != "owner"
-    and expense.store_id != current_user["store_id"]
-):
+        current_user["role"] != "owner"
+        and expense.store_id != current_user["store_id"]
+    ):
         raise HTTPException(
-        status_code=403,
-        detail="Not allowed",
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == expense.daily_report_id
+        )
+        .first()
     )
+
+    if report and report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
 
     expense.expense_type = data.expense_type
     expense.amount = data.amount
     expense.remarks = data.remarks
 
     db.commit()
-
     db.refresh(expense)
 
     return expense
 
 
 # ----------------------------------------------------
-# Get Today's Expenses
+# Get Expenses For Report
 # ----------------------------------------------------
 
 @router.get("/")
 def get_expenses(
+    report_id: int = Query(...),
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -136,22 +160,15 @@ def get_expenses(
             User,
             Expense.created_by == User.id,
         )
+        .filter(
+            Expense.daily_report_id == report_id
+        )
     )
 
     if current_user["role"] != "owner":
         query = query.filter(
             Expense.store_id == current_user["store_id"]
         )
-
-    query = query.filter(
-        func.date(
-            func.timezone(
-                "Asia/Kolkata",
-                Expense.created_at,
-            )
-        )
-        == ist_today()
-    )
 
     expenses = (
         query.order_by(
@@ -204,13 +221,13 @@ def get_expense(
         )
 
     if (
-    current_user["role"] != "owner"
-    and expense.store_id != current_user["store_id"]
-):
+        current_user["role"] != "owner"
+        and expense.store_id != current_user["store_id"]
+    ):
         raise HTTPException(
-        status_code=403,
-        detail="Not allowed",
-    )
+            status_code=403,
+            detail="Not allowed",
+        )
 
     return expense
 
@@ -240,17 +257,29 @@ def delete_expense(
         )
 
     if (
-    current_user["role"] != "owner"
-    and expense.store_id != current_user["store_id"]
-):
+        current_user["role"] != "owner"
+        and expense.store_id != current_user["store_id"]
+    ):
         raise HTTPException(
-        status_code=403,
-        detail="Not allowed",
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == expense.daily_report_id
+        )
+        .first()
     )
-    
+
+    if report and report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
+        )
 
     db.delete(expense)
-
     db.commit()
 
     return {

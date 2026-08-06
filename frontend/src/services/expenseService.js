@@ -1,8 +1,10 @@
 import api from "../api/api";
 
 const expenseService = {
-  async getExpenses() {
-    const response = await api.get("/expenses/");
+  async getExpenses(reportId) {
+    const response = await api.get(
+    `/expenses/?report_id=${reportId}`
+);
     return response.data;
   },
 

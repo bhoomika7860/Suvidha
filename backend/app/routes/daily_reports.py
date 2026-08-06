@@ -298,15 +298,10 @@ def get_report_by_date(
     )
 
     if report is None:
-        report = DailyReport(
-            store_id=current_user["store_id"],
-            submitted_by=current_user["user_id"],
-            report_date=report_date,
-        )
-
-        db.add(report)
-        db.commit()
-        db.refresh(report)
+        return {
+        "exists": False,
+        "report_date": report_date,
+    }
 
     expenses_total = (
         db.query(func.coalesce(func.sum(Expense.amount), 0))
@@ -359,6 +354,7 @@ def get_report_by_date(
     )
 
     return {
+        "exists": True,
         "id": report.id,
         "store_id": report.store_id,
         "report_date": report.report_date,

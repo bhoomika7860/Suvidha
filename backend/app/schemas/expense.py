@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 class ExpenseCreate(BaseModel):
+    daily_report_id: int
     expense_type: str
     amount: float
     remarks: str | None = None

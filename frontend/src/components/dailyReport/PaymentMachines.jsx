@@ -5,12 +5,15 @@ import paymentMachineEntryService from "../../services/paymentMachineEntryServic
 export default function PaymentMachines({
   reportId,
   onTotalChange,
+  onMachinesChange,
 }) {
   const [machines, setMachines] = useState([]);
   const [newMachine, setNewMachine] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
   async function loadMachines() {
+    if (!reportId) return;
+
     try {
       const machineList =
         await paymentMachineService.getMachines();
@@ -25,7 +28,7 @@ export default function PaymentMachines({
 
         return {
           ...machine,
-          amount: existing?.amount || 0,
+          amount: existing?.amount ?? 0,
         };
       });
 
@@ -36,9 +39,7 @@ export default function PaymentMachines({
   }
 
   useEffect(() => {
-    if (reportId) {
-      loadMachines();
-    }
+    loadMachines();
   }, [reportId]);
 
   const total = useMemo(() => {
@@ -50,8 +51,17 @@ export default function PaymentMachines({
   }, [machines]);
 
   useEffect(() => {
-    onTotalChange(total);
+    onTotalChange?.(total);
   }, [total, onTotalChange]);
+
+  useEffect(() => {
+    onMachinesChange?.(
+      machines.map((machine) => ({
+        machine_id: machine.id,
+        amount: Number(machine.amount || 0),
+      }))
+    );
+  }, [machines, onMachinesChange]);
 
   function changeAmount(id, value) {
     setMachines((prev) =>
@@ -77,7 +87,7 @@ export default function PaymentMachines({
       setNewMachine("");
       setShowAdd(false);
 
-      loadMachines();
+      await loadMachines();
     } catch (err) {
       console.error(err);
     }
@@ -90,21 +100,7 @@ export default function PaymentMachines({
     try {
       await paymentMachineService.deleteMachine(id);
 
-      loadMachines();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function saveMachines() {
-    try {
-      await paymentMachineEntryService.save({
-        daily_report_id: reportId,
-        entries: machines.map((machine) => ({
-          machine_id: machine.id,
-          amount: Number(machine.amount),
-        })),
-      });
+      await loadMachines();
     } catch (err) {
       console.error(err);
     }

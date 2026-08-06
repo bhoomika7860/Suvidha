@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { useSearchParams } from "react-router-dom";
 import ExpenseStats from "../../components/expenses/ExpenseStats";
 import ExpenseToolbar from "../../components/expenses/ExpenseToolbar";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
@@ -14,6 +14,9 @@ export default function Expenses() {
 
   const [expenses, setExpenses] = useState([]);
 
+  const [searchParams] = useSearchParams();
+
+  const reportId = searchParams.get("report");
  
 
   const [selectedExpense, setSelectedExpense] =
@@ -26,7 +29,7 @@ export default function Expenses() {
   async function loadExpenses() {
     try {
       const data =
-        await expenseService.getExpenses();
+        await expenseService.getExpenses(reportId);
 
       setExpenses(data);
 
@@ -52,9 +55,11 @@ export default function Expenses() {
           expense
         );
       } else {
-        await expenseService.createExpense(
-          expense
-        );
+        await expenseService.createExpense({
+    ...expense,
+    daily_report_id: Number(reportId),
+});
+          
       }
 
       await loadExpenses();
