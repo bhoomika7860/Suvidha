@@ -8,6 +8,10 @@ class ExpenseCreate(BaseModel):
     amount: float
     remarks: str | None = None
 
+class ExpenseUpdate(BaseModel):
+    expense_type: str
+    amount: float
+    remarks: str | None = None
 
 class ExpenseResponse(BaseModel):
     id: int

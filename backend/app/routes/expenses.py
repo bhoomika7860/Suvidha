@@ -3,6 +3,11 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from app.schemas.expense import (
+    ExpenseCreate,
+    ExpenseUpdate,
+    ExpenseResponse,
+)
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -90,7 +95,7 @@ def create_expense(
 @router.put("/{expense_id}")
 def update_expense(
     expense_id: int,
-    data: ExpenseCreate,
+    data: ExpenseUpdate,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
