@@ -24,6 +24,7 @@ def create_udhaar(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    print("===== ROUTE HIT =====")
     print("Received:", data.dict())   # use model_dump() if you're on Pydantic v2
     report = (
     db.query(DailyReport)

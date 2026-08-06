@@ -45,10 +45,13 @@ export default function Udhaar() {
       setEntries(data);
 
     } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Headers:", err.response?.headers);
+  console.log("Backend Response:");
+  console.log(JSON.stringify(err.response?.data, null, 2));
+}
   }
 
  async function addUdhaar(entries) {
@@ -66,7 +69,9 @@ export default function Udhaar() {
   console.error(err);
 
   console.log("Status:", err.response?.status);
-  console.log("Backend:", err.response?.data);
+  console.log("Headers:", err.response?.headers);
+  console.log("Backend Response:");
+  console.log(JSON.stringify(err.response?.data, null, 2));
 }
 }
 
@@ -78,8 +83,13 @@ export default function Udhaar() {
 
       await loadPage();
     } catch (err) {
-      console.error(err);
-    }
+  console.error(err);
+
+  console.log("Status:", err.response?.status);
+  console.log("Headers:", err.response?.headers);
+  console.log("Backend Response:");
+  console.log(JSON.stringify(err.response?.data, null, 2));
+}
   }
 
   return (
