@@ -16,28 +16,42 @@ export default function Expenses() {
 
   const [searchParams] = useSearchParams();
 
-  const reportId = searchParams.get("report");
+  const [reportId, setReportId] = useState(null);
  
 
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
   useEffect(() => {
-    loadExpenses();
-  }, []);
+  initializePage();
+}, []);
 
-  async function loadExpenses() {
+
+  async function initializePage() {
+  try {
+    let id = searchParams.get("report");
+
+    if (!id) {
+      const report =
+        await dailyReportsService.getTodayReport();
+
+      id = report.id;
+    }
+
+    setReportId(id);
+
+    await loadExpenses(id);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+  async function loadExpenses(id = reportId) {
     try {
       const data =
-        await expenseService.getExpenses(reportId);
+  await expenseService.getExpenses(id);
 
       setExpenses(data);
-
-      
-
-
-
-
 
     } catch (err) {
   console.error(err);
