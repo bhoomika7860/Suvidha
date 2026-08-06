@@ -68,8 +68,8 @@ def create_udhaar(
         created_by=current_user["user_id"],
     )
 
-    db.add(udhaar)
-    created_entries.append(udhaar)
+        db.add(udhaar)
+        created_entries.append(udhaar)
 
     db.commit()
 

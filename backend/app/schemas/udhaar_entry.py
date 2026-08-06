@@ -10,9 +10,14 @@ class UdhaarCreate(BaseModel):
     customer_phone: Optional[str] = None
     amount: float
 
+class UdhaarEntryCreate(BaseModel):
+    bill_number: str
+    amount: float
+
+
 class BulkUdhaarCreate(BaseModel):
     daily_report_id: int
-    entries: list[UdhaarCreate]
+    entries: list[UdhaarEntryCreate]
 
 class UdhaarRepayment(BaseModel):
     amount: float

@@ -88,6 +88,9 @@ export default function AddUdhaarModal({
 
   if (!entries.length) return;
 
+console.log("dailyReportId =", dailyReportId);
+console.log("entries =", entries);
+
   await onSave(entries);
 
   setRows([
