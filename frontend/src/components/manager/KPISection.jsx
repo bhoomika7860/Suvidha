@@ -6,6 +6,7 @@ import {
   Wallet,
   Package,
   CreditCard,
+  Scale,
 } from "lucide-react";
 
 import KPICard from "./KPICard";
@@ -42,18 +43,15 @@ export default function KPISection() {
       />
 
       <KPICard
-        icon={<BadgeDollarSign size={20} className="text-green-600" />}
-        value={summary.total_bills}
-        label="Today's Bills"
-        iconBg="#ECFDF3"
-      />
+  split
+  topIcon={<BadgeDollarSign size={18} className="text-green-600" />}
+  topValue={summary.total_bills}
+  topLabel="Today's Bills"
 
-      <KPICard
-        icon={<Truck size={20} className="text-violet-600" />}
-        value={summary.total_deliveries ?? 0}
-        label="Today's Deliveries"
-        iconBg="#F5F3FF"
-      />
+  bottomIcon={<Truck size={18} className="text-violet-600" />}
+  bottomValue={summary.total_deliveries ?? 0}
+  bottomLabel="Today's Deliveries"
+/>
 
       <KPICard
         icon={<Wallet size={20} className="text-orange-500" />}
@@ -70,11 +68,24 @@ export default function KPISection() {
       />
 
       <KPICard
-        icon={<CreditCard size={20} className="text-red-600" />}
-        value={`₹${summary.total_udhaar.toLocaleString()}`}
-        label="Today's Udhaar"
-        iconBg="#FEF2F2"
-      />
+  icon={<Scale size={20} className={
+    summary.sales_difference === 0
+      ? "text-green-600"
+      : "text-red-600"
+  } />}
+  value={`₹${summary.sales_difference.toLocaleString("en-IN")}`}
+  label="Sales Difference"
+  iconBg={
+    summary.sales_difference === 0
+      ? "#ECFDF3"
+      : "#FEF2F2"
+  }
+  valueColor={
+    summary.sales_difference === 0
+      ? "text-green-600"
+      : "text-red-600"
+  }
+/>
 
     </div>
   );

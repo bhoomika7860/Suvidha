@@ -21,6 +21,8 @@ const formatReports = (reports) => {
       (r.card_sales || 0) +
       (r.udhaar_sales || 0),
 
+    systemSales: r.system_sales || 0,
+
     expenses: r.total_expenses,
 
     purchases: r.total_purchases,

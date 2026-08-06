@@ -353,6 +353,14 @@ def dashboard_summary(
         "recovered_udhaar": round(recovered_udhaar, 2),
         "growth_rate": 0,
         "submitted_reports": len(reports),
+        "sales_difference": (
+    report.cash_sales
+    + report.upi_sales
+    + report.card_sales
+    + report.total_expenses
+    + report.udhaar_sales
+    - report.system_sales
+),
     }
 
 @router.get("/store-summary")

@@ -22,13 +22,14 @@ export default function SalesSection({
   refreshReport,
 }) {
   const [form, setForm] = useState({
-    total_bills: 0,
-    cash_sales: 0,
-    upi_sales: 0,
-    card_sales: 0,
-    total_expenses: 0,
-    udhaar_sales: 0,
-  });
+  total_bills: 0,
+  cash_sales: 0,
+  upi_sales: 0,
+  card_sales: 0,
+  total_expenses: 0,
+  udhaar_sales: 0,
+  system_sales: 0,
+});
 
   const [machineEntries, setMachineEntries] = useState([]);
 
@@ -69,6 +70,7 @@ const denominationRefs = useRef([]);
           card_sales: report.card_sales || 0,
           total_expenses: report.total_expenses || 0,
           udhaar_sales: outstanding.outstanding || 0,
+          system_sales: report.system_sales || 0,
         });
 
         const savedCash =
@@ -136,6 +138,9 @@ const denominationRefs = useRef([]);
       Number(form.udhaar_sales)
     );
   }, [form]);
+  const balance = useMemo(() => {
+  return totalSales - Number(form.system_sales || 0);
+}, [totalSales, form.system_sales]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -174,17 +179,18 @@ const denominationRefs = useRef([]);
       });
 
       await dailyReportsService.updateSales(
-        report.id,
-        {
-          total_bills: form.total_bills,
-          cash_sales: calculatedCashSales,
-          upi_sales: machineEntries.reduce(
-            (sum, item) => sum + Number(item.amount),
-            0
-          ),
-          card_sales: 0,
-        }
-      );
+  report.id,
+  {
+    total_bills: form.total_bills,
+    cash_sales: calculatedCashSales,
+    upi_sales: machineEntries.reduce(
+      (sum, item) => sum + Number(item.amount),
+      0
+    ),
+    card_sales: 0,
+    system_sales: form.system_sales,
+  }
+);
 
       await refreshReport();
 
@@ -341,6 +347,20 @@ const denominationRefs = useRef([]);
                 />
               </div>
 
+              <div>
+  <label className="mb-2 block font-medium">
+    System Sales
+  </label>
+
+  <input
+    name="system_sales"
+    type="number"
+    value={form.system_sales}
+    onChange={handleChange}
+    className="h-12 w-full rounded-xl border px-4"
+  />
+</div>
+
             </div>
           </div>
 
@@ -359,6 +379,28 @@ const denominationRefs = useRef([]);
             Cash + UPI/Card + Expenses + Udhaar
           </p>
         </div>
+
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
+
+  <p className="text-sm text-gray-500">
+    Sales Difference
+  </p>
+
+  <h2
+    className={`mt-2 text-4xl font-bold ${
+      balance === 0
+        ? "text-green-600"
+        : "text-red-600"
+    }`}
+  >
+    ₹{balance.toLocaleString("en-IN")}
+  </h2>
+
+  <p className="mt-2 text-sm text-gray-500">
+    Actual Sales − System Sales
+  </p>
+
+</div>
 
       </div>
 
