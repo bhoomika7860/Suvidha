@@ -29,18 +29,35 @@ export default function Purchases() {
 
   async function loadData() {
     try {
+      /*
+       * We still need today's report because a newly
+       * received purchase must be attached to today's
+       * daily report.
+       */
       const currentReport =
         await dailyReportsService.getTodayReport();
 
       setReport(currentReport);
 
+      /*
+       * IMPORTANT:
+       *
+       * Do NOT use getTodayPurchases() here.
+       *
+       * That endpoint only returns purchases created today.
+       *
+       * We want the complete purchase workflow for
+       * this store, including purchases from previous days.
+       */
       const purchaseData =
-        await purchaseService.getTodayPurchases();
+        await purchaseService.getStorePurchases(
+          currentReport.store_id
+        );
 
       setPurchases(purchaseData);
 
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load purchases:", err);
     }
   }
 
@@ -48,15 +65,24 @@ export default function Purchases() {
     try {
       await purchaseService.createPurchase({
         ...purchase,
+
+        /*
+         * New purchases still belong to today's
+         * daily report.
+         */
         daily_report_id: report.id,
       });
 
+      /*
+       * Reload the complete store purchase list
+       * after receiving a new bill.
+       */
       await loadData();
 
       setShowReceiveModal(false);
 
     } catch (err) {
-      console.error(err);
+      console.error("Failed to create purchase:", err);
     }
   }
 
@@ -84,8 +110,9 @@ export default function Purchases() {
   return (
     <div className="space-y-6">
 
-      <div>
+      {/* Header */}
 
+      <div>
         <h1 className="text-3xl font-bold">
           Purchase Workflow
         </h1>
@@ -93,14 +120,19 @@ export default function Purchases() {
         <p className="mt-1 text-gray-500">
           Manage supplier purchase bills.
         </p>
-
       </div>
+
+
+      {/* Statistics */}
 
       <PurchaseStats
         purchases={purchases}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
+
+
+      {/* Toolbar */}
 
       <PurchaseToolbar
         search={search}
@@ -110,11 +142,17 @@ export default function Purchases() {
         }
       />
 
+
+      {/* Purchase Table */}
+
       <PurchaseTable
         purchases={filteredPurchases}
         allPurchases={purchases}
         setPurchases={setPurchases}
       />
+
+
+      {/* Receive New Bill */}
 
       {report && (
         <ReceiveBillModal
