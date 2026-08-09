@@ -59,6 +59,12 @@ class Purchase(Base):
         server_default=func.now(),
     )
 
+    received_date = Column(
+    DateTime(timezone=True),
+    server_default=func.now(),
+    nullable=False,
+)
+
     purchase_order_id = Column(
         Integer,
         ForeignKey("purchase_orders.id"),

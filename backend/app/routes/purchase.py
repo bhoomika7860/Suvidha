@@ -55,7 +55,7 @@ async def create_purchase(
     
     entered_by: str | None = Form(None),
     status: str = Form("received"),
-    
+    purchase_date: datetime | None = Form(None),
     bill_image: UploadFile | None = File(None),
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -120,9 +120,13 @@ async def create_purchase(
     received_by=received_by,
     entered_by=entered_by,
 
+    purchase_date=purchase_date,
+
     status="received",
 
     bill_image=image_path,
+
+    received_date=datetime.now(ZoneInfo("Asia/Kolkata")),
 )
 
     db.add(purchase)
@@ -291,7 +295,7 @@ def get_owner_purchases(
             func.date(
                 func.timezone(
                     "Asia/Kolkata",
-                    Purchase.purchase_date,
+                    Purchase.received_date,
                 )
             )
             == date
@@ -333,6 +337,7 @@ def get_owner_purchases(
             {
                 "id": purchase.id,
                 "purchase_date": purchase.purchase_date,
+                "received_date": purchase.received_date,
                 "store_id": purchase.store_id,
                 "store_name": store_name,
                 "product_name": purchase.product_name,
@@ -407,9 +412,11 @@ def get_today_purchases(
 ):
     query = db.query(Purchase).filter(
         func.date(
-    func.timezone("Asia/Kolkata", Purchase.purchase_date)
-)
-        == ist_today()
+    func.timezone(
+        "Asia/Kolkata",
+        Purchase.received_date
+    )
+) == ist_today()
     )
 
     if current_user["role"] != "owner":

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
+const [purchaseDate, setPurchaseDate] = useState("");
+
 
 const SUPPLIERS = [
 "AARBRO AGENCIES PRIVATE LIMITED",
@@ -162,6 +164,15 @@ const filteredSuppliers = SUPPLIERS.filter(
 
 
   useEffect(() => {
+  if (isOpen) {
+    const today = new Date()
+      .toLocaleDateString("en-CA");
+
+    setPurchaseDate(today);
+  }
+}, [isOpen]);
+
+  useEffect(() => {
     function handleClickOutside(event) {
       if (
         modalRef.current &&
@@ -287,13 +298,14 @@ function handleKeyDown(e) {
       received_by: user.full_name,
       entered_by: "",
       status: "received",
-
+      purchase_date: purchaseDate,
       bill_image: billImage,
     });
 
     setParty("");
     setAmount("");
     setBillNo("");
+    setPurchaseDate("");
     setBillImage(null);
 
     onClose();
@@ -374,6 +386,21 @@ function handleKeyDown(e) {
 
     )}
 
+</div>
+
+          <div>
+  <label className="mb-2 block text-sm font-medium">
+    Purchase Date
+  </label>
+
+  <input
+    type="date"
+    value={purchaseDate}
+    onChange={(e) =>
+      setPurchaseDate(e.target.value)
+    }
+    className="h-11 w-full rounded-xl border border-gray-200 px-4"
+  />
 </div>
 
           <div>

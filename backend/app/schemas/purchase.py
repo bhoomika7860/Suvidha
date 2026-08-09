@@ -27,6 +27,7 @@ class PurchaseBase(BaseModel):
 
     purchase_order_id: int | None = None
 
+    purchase_date: datetime | None = None
 
 class PurchaseCreate(PurchaseBase):
     pass
@@ -45,6 +46,8 @@ class PurchaseResponse(PurchaseBase):
     id: int
 
     purchase_date: datetime
+    received_date: datetime
+
 
     class Config:
         from_attributes = True
@@ -53,6 +56,7 @@ class OwnerPurchaseResponse(BaseModel):
     id: int
 
     purchase_date: datetime
+    received_date: datetime
 
     store_id: int
     store_name: str
@@ -61,11 +65,8 @@ class OwnerPurchaseResponse(BaseModel):
     quantity: int
 
     supplier_name: str | None = None
-
     purchase_amount: float
-
     bill_number: str
-
     status: str
 
     received_by: str | None = None
@@ -73,7 +74,6 @@ class OwnerPurchaseResponse(BaseModel):
     entered_by: str | None = None
 
     purchase_order_id: int | None = None
-
     bill_image: str | None = None
 
     class Config:
