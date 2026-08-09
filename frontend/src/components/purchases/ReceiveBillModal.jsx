@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
-const [purchaseDate, setPurchaseDate] = useState("");
+
 
 
 const SUPPLIERS = [
@@ -138,7 +138,7 @@ export default function ReceiveBillModal({
   onSave,
   reportId,
 }) {
-
+  const [purchaseDate, setPurchaseDate] = useState("");
   const [party, setParty] = useState("");
   const [amount, setAmount] = useState("");
   const [billNo, setBillNo] = useState("");
