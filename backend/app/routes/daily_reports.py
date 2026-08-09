@@ -769,19 +769,28 @@ def get_today_reports(
 @router.get("/store/{store_id}")
 def get_store_reports(
     store_id: int,
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if current_user["role"] != "owner":
+        if store_id != current_user["store_id"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed",
+            )
+
     reports = (
         db.query(DailyReport)
         .filter(
             DailyReport.store_id == store_id
         )
-        .order_by(DailyReport.report_date.desc())
+        .order_by(
+            DailyReport.report_date.desc()
+        )
         .all()
     )
 
     return reports
-
 
 
 from calendar import monthrange
@@ -827,23 +836,87 @@ def get_calendar_status(
     return response
 
 
+@router.get("/history")
+def get_report_history(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(DailyReport)
+        .options(
+            joinedload(DailyReport.store)
+        )
+        .filter(
+            DailyReport.is_submitted == True,
+            DailyReport.is_locked == True,
+        )
+    )
+
+    # Store managers can ONLY see their own store.
+    if current_user["role"] != "owner":
+        query = query.filter(
+            DailyReport.store_id == current_user["store_id"]
+        )
+
+    reports = (
+        query
+        .order_by(
+            DailyReport.report_date.desc(),
+            DailyReport.id.desc(),
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": report.id,
+            "store_id": report.store_id,
+            "store_name": report.store.name,
+            "report_date": report.report_date,
+
+            "total_bills": report.total_bills,
+            "deliveries": report.deliveries,
+
+            "cash_sales": report.cash_sales,
+            "upi_sales": report.upi_sales,
+            "card_sales": report.card_sales,
+            "udhaar_sales": report.udhaar_sales,
+            "system_sales": report.system_sales,
+
+            "total_expenses": report.total_expenses,
+            "total_purchases": report.total_purchases,
+
+            "is_submitted": report.is_submitted,
+            "is_locked": report.is_locked,
+        }
+        for report in reports
+    ]
+
 @router.get("/{report_id}")
 def get_report(
     report_id: int,
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
 
-    report = (
-        db.query(DailyReport)
-        .options(
-    joinedload(DailyReport.store),
-    joinedload(DailyReport.submitted_by_user),
-
-    joinedload(DailyReport.adjustment_requests)
-)
-        .filter(DailyReport.id == report_id)
-        .first()
+    report_query = (
+    db.query(DailyReport)
+    .options(
+        joinedload(DailyReport.store),
+        joinedload(DailyReport.submitted_by_user),
+        joinedload(DailyReport.adjustment_requests),
     )
+    .filter(
+        DailyReport.id == report_id
+    )
+)
+
+    if current_user["role"] != "owner":
+        report_query = report_query.filter(
+        DailyReport.store_id == current_user["store_id"]
+    )
+
+    report = report_query.first()
 
     if report is None:
         raise HTTPException(

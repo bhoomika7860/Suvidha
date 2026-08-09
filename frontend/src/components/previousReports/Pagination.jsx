@@ -8,20 +8,24 @@ export default function Pagination({
   totalPages,
   onPageChange,
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   const pages = Array.from(
     { length: totalPages },
-    (_, i) => i + 1
+    (_, index) => index + 1
   );
 
   return (
-    <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-6 py-4">
+    <div className="flex items-center justify-center gap-3">
 
       <button
         disabled={currentPage === 1}
         onClick={() =>
-          onPageChange(currentPage - 1)
+          onPageChange(
+            currentPage - 1
+          )
         }
         className={`flex items-center gap-2 px-4 h-10 rounded-xl border transition ${
           currentPage === 1
@@ -29,13 +33,17 @@ export default function Pagination({
             : "hover:bg-gray-50"
         }`}
       >
+
         <ChevronLeft size={18} />
+
         Previous
+
       </button>
 
       <div className="flex items-center gap-2">
 
         {pages.map((page) => (
+
           <button
             key={page}
             onClick={() =>
@@ -49,14 +57,19 @@ export default function Pagination({
           >
             {page}
           </button>
+
         ))}
 
       </div>
 
       <button
-        disabled={currentPage === totalPages}
+        disabled={
+          currentPage === totalPages
+        }
         onClick={() =>
-          onPageChange(currentPage + 1)
+          onPageChange(
+            currentPage + 1
+          )
         }
         className={`flex items-center gap-2 px-4 h-10 rounded-xl border transition ${
           currentPage === totalPages
@@ -64,8 +77,11 @@ export default function Pagination({
             : "hover:bg-gray-50"
         }`}
       >
+
         Next
+
         <ChevronRight size={18} />
+
       </button>
 
     </div>

@@ -125,6 +125,11 @@ function AppRoutes() {
   />
 
   <Route
+  path="/manager-previous-reports"
+  element={<PreviousReports />}
+  />
+
+  <Route
     path="/manager-purchases"
     element={<Purchases />}
   />

@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   ClipboardList,
+  History,
   Package,
   Wallet,
   ClipboardCheck,
@@ -18,26 +19,37 @@ const menuItems = [
     icon: LayoutDashboard,
     path: "/manager-dashboard",
   },
+
   {
     title: "Daily Report",
     icon: ClipboardList,
     path: "/daily-report",
   },
+
+  {
+    title: "Previous Reports",
+    icon: History,
+    path: "/manager-previous-reports",
+  },
+
   {
     title: "Purchases",
     icon: Package,
     path: "/manager-purchases",
   },
+
   {
     title: "Expenses",
     icon: Wallet,
     path: "/manager-expenses",
   },
+
   {
     title: "Udhaar",
     icon: Wallet,
     path: "/manager/udhaar",
   },
+
   {
     title: "Tasks",
     icon: ClipboardCheck,

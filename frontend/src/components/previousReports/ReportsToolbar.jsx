@@ -5,7 +5,7 @@ export default function ReportsToolbar({
   setSearch,
 }) {
   return (
-    <div className="bg-white border rounded-2xl p-5 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
 
       <div className="relative">
 
@@ -20,7 +20,7 @@ export default function ReportsToolbar({
             setSearch(e.target.value)
           }
           placeholder="Search by date..."
-          className="w-full h-11 border rounded-xl pl-11 pr-4"
+          className="w-full h-12 border border-gray-300 rounded-xl pl-11 pr-4 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
 
       </div>
