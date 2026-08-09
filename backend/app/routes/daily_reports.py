@@ -566,6 +566,7 @@ def get_report_purchases(
 @router.get("/{report_id}/expenses")
 def get_report_expenses(
     report_id: int,
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     report = (
@@ -582,6 +583,16 @@ def get_report_expenses(
             detail="Report not found",
         )
 
+    # Store isolation
+    if (
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
     expenses = (
         db.query(
             Expense,
@@ -592,12 +603,7 @@ def get_report_expenses(
             Expense.created_by == User.id,
         )
         .filter(
-            Expense.store_id == report.store_id,
-            
-                func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-)
-            == report.report_date,
+            Expense.daily_report_id == report.id,
         )
         .order_by(
             Expense.created_at.desc()
@@ -611,7 +617,7 @@ def get_report_expenses(
             "expense_type": expense.expense_type,
             "amount": expense.amount,
             "remarks": expense.remarks,
-            "created_by": created_by_name,
+            "created_by_name": created_by_name,
         }
         for expense, created_by_name in expenses
     ]
