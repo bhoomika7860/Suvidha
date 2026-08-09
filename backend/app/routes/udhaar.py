@@ -165,45 +165,69 @@ def repay_udhaar(
 
     return udhaar
 
-
 @router.get("/")
 def get_all_udhaar(
+    report_id: int | None = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(UdhaarEntry).filter(
         UdhaarEntry.status != "settled"
     )
 
-    if current_user["role"] == "owner":
-        return query.all()
+    # --------------------------------------------------
+    # Store isolation
+    # --------------------------------------------------
 
-    return query.filter(
-        UdhaarEntry.store_id == current_user["store_id"]
+    if current_user["role"] != "owner":
+        query = query.filter(
+            UdhaarEntry.store_id == current_user["store_id"]
+        )
+
+    # --------------------------------------------------
+    # Filter by daily report
+    # --------------------------------------------------
+
+    if report_id is not None:
+        query = query.filter(
+            UdhaarEntry.daily_report_id == report_id
+        )
+
+    return query.order_by(
+        UdhaarEntry.id.desc()
     ).all()
-
 
 @router.get("/outstanding")
 def get_outstanding_udhaar(
+    report_id: int | None = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    total = (
-        db.query(
-            func.coalesce(
-                func.sum(
-                    UdhaarEntry.amount -
-                    UdhaarEntry.paid_amount
-                ),
-                0,
-            )
+    query = db.query(
+        func.coalesce(
+            func.sum(
+                UdhaarEntry.amount -
+                UdhaarEntry.paid_amount
+            ),
+            0,
         )
-        .filter(
-            UdhaarEntry.store_id == current_user["store_id"],
-            UdhaarEntry.status != "settled",
-        )
-        .scalar()
+    ).filter(
+        UdhaarEntry.status != "settled"
     )
+
+    # Store isolation
+    if current_user["role"] != "owner":
+        query = query.filter(
+            UdhaarEntry.store_id == current_user["store_id"]
+        )
+
+    # Historical report filtering
+    if report_id is not None:
+        query = query.filter(
+            UdhaarEntry.daily_report_id == report_id
+        )
+
+    total = query.scalar()
 
     return {
         "outstanding": total

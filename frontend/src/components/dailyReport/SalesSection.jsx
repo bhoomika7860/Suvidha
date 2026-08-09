@@ -61,7 +61,7 @@ const denominationRefs = useRef([]);
     async function loadSection() {
       try {
         const outstanding =
-          await udhaarService.getOutstanding();
+          await udhaarService.getOutstanding(report.id);
 
         setForm({
           total_bills: report.total_bills || 0,

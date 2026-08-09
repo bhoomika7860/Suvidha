@@ -1,6 +1,7 @@
 import { Eye, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
 
@@ -10,34 +11,37 @@ export default function PurchaseSection({
 }) {
   const [purchases, setPurchases] = useState([]);
 
-useEffect(() => {
-  if (!report) return;
+  useEffect(() => {
+    if (!report?.id) return;
 
-  async function loadPurchases() {
-    try {
-      const data =
-        await dailyReportsService.getPurchases(
-          report.id
+    async function loadPurchases() {
+      try {
+        const data =
+          await dailyReportsService.getPurchases(
+            report.id
+          );
+
+        setPurchases(data);
+
+      } catch (err) {
+        console.error(
+          "Failed to load purchases:",
+          err
         );
-
-      console.log("Purchases API:", data);
-
-      setPurchases(data);
-
-    } catch (err) {
-      console.error(err);
+      }
     }
-  }
 
-  loadPurchases();
-
-}, [report]);
+    loadPurchases();
+  }, [report?.id]);
 
   const total = purchases.reduce(
-  (sum, purchase) =>
-    sum + Number(purchase.purchase_amount),
-  0
-);
+    (sum, purchase) =>
+      sum +
+      Number(
+        purchase.purchase_amount || 0
+      ),
+    0
+  );
 
   return (
     <SectionCard title="Purchases">
@@ -62,7 +66,7 @@ useEffect(() => {
             </h3>
 
             <p className="text-sm text-gray-500">
-              Automatically synced from the Purchase module.
+              Purchases for this report.
             </p>
 
           </div>
@@ -70,7 +74,7 @@ useEffect(() => {
         </div>
 
         <Link
-          to="/manager-purchases"
+          to={`/manager-purchases?report=${report.id}`}
           className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
         >
           <Eye size={17} />
@@ -105,28 +109,46 @@ useEffect(() => {
 
           <tbody>
 
-            {purchases.map((purchase) => (
+            {purchases.length === 0 ? (
 
-              <tr
-                key={purchase.id}
-                className="border-t"
-              >
-
-                <td className="px-5 py-3">
-                  {purchase.product_name}
+              <tr>
+                <td
+                  colSpan={3}
+                  className="px-5 py-8 text-center text-gray-500"
+                >
+                  No purchases recorded for this report.
                 </td>
-
-                <td className="px-5 py-3">
-                  {purchase.supplier_name || "-"}
-                </td>
-
-                <td className="px-5 py-3 font-medium">
-                  ₹{Number(purchase.purchase_amount).toLocaleString("en-IN")}
-                </td>
-
               </tr>
 
-            ))}
+            ) : (
+
+              purchases.map((purchase) => (
+
+                <tr
+                  key={purchase.id}
+                  className="border-t"
+                >
+
+                  <td className="px-5 py-3">
+                    {purchase.product_name}
+                  </td>
+
+                  <td className="px-5 py-3">
+                    {purchase.supplier_name || "-"}
+                  </td>
+
+                  <td className="px-5 py-3 font-medium">
+                    ₹
+                    {Number(
+                      purchase.purchase_amount || 0
+                    ).toLocaleString("en-IN")}
+                  </td>
+
+                </tr>
+
+              ))
+
+            )}
 
           </tbody>
 

@@ -354,26 +354,28 @@ def get_report_by_date(
 )
 
     return {
-        "exists": True,
+    "exists": True,
 
-        "id": report.id,
-        "store_id": report.store_id,
-        "report_date": report.report_date,
+    "id": report.id,
+    "store_id": report.store_id,
+    "report_date": report.report_date,
 
-        "total_bills": report.total_bills,
-        "deliveries": report.deliveries,
+    "total_bills": report.total_bills,
+    "deliveries": report.deliveries,
 
-        "cash_sales": report.cash_sales,
-        "upi_sales": report.upi_sales,
-        "card_sales": report.card_sales,
+    "cash_sales": report.cash_sales,
+    "upi_sales": report.upi_sales,
+    "card_sales": report.card_sales,
 
-        "udhaar_sales": udhaar_total,
-        "total_expenses": expenses_total,
-        "total_purchases": purchase_total,
+    "udhaar_sales": udhaar_total,
+    "system_sales": report.system_sales,
 
-        "notes": report.notes,
-        "is_locked": report.is_locked,
-    }
+    "total_expenses": expenses_total,
+    "total_purchases": purchase_total,
+
+    "notes": report.notes,
+    "is_locked": report.is_locked,
+}
 
 @router.put("/{report_id}/sales")
 def update_sales(

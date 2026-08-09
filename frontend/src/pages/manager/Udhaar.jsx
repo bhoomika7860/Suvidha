@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import udhaarService from "../../services/udhaarService";
 import dailyReportsService from "../../services/dailyReportsService";
@@ -9,92 +10,248 @@ import AddUdhaarModal from "../../components/udhaar/AddUdhaarModal";
 import RepayModal from "../../components/udhaar/RepayModal";
 
 export default function Udhaar() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
   const isOwner = user?.role === "owner";
 
+  const [searchParams] = useSearchParams();
+
   const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [showRepay, setShowRepay] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [selected, setSelected] = useState(null);
+  const [showAdd, setShowAdd] =
+    useState(false);
 
-  const [reportId, setReportId] = useState(null);
+  const [showRepay, setShowRepay] =
+    useState(false);
+
+  const [selected, setSelected] =
+    useState(null);
+
+  const [reportId, setReportId] =
+    useState(null);
+
+  // --------------------------------------------------
+  // Initialize page
+  // --------------------------------------------------
 
   useEffect(() => {
-    loadPage();
-  }, []);
+    initializePage();
+  }, [searchParams]);
 
-  async function loadPage() {
-  try {
-    setLoading(true);
+  async function initializePage() {
+    try {
+      setLoading(true);
 
-    if (!isOwner) {
-      const report = await dailyReportsService.getTodayReport();
-      setReportId(report.id);
+      let id =
+        searchParams.get("report");
+
+      /*
+       * If the page was opened from a
+       * previous report, use that report.
+       *
+       * Example:
+       * /manager/udhaar?report=20
+       *
+       * Otherwise use today's report.
+       */
+
+      if (!id) {
+        const report =
+          await dailyReportsService.getTodayReport();
+
+        id = report.id;
+      }
+
+      id = Number(id);
+
+      setReportId(id);
+
+      await loadUdhaar(id);
+
+    } catch (err) {
+      console.error(
+        "Failed to initialize Udhaar:",
+        err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend Response:",
+        err.response?.data
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // --------------------------------------------------
+  // Load Udhaar for selected report
+  // --------------------------------------------------
+
+  async function loadUdhaar(id = reportId) {
+    if (!id) return;
+
+    try {
+      const data =
+        await udhaarService.getUdhaar(
+          Number(id)
+        );
+
+      console.log(
+        "UDHAAR DATA:",
+        data
+      );
+
+      setEntries(data);
+
+    } catch (err) {
+      console.error(
+        "Failed to load Udhaar:",
+        err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Headers:",
+        err.response?.headers
+      );
+
+      console.log(
+        "Backend Response:"
+      );
+
+      console.log(
+        JSON.stringify(
+          err.response?.data,
+          null,
+          2
+        )
+      );
+
+      setEntries([]);
+    }
+  }
+
+  // --------------------------------------------------
+  // Add Udhaar
+  // --------------------------------------------------
+
+  async function addUdhaar(newEntries) {
+    if (!reportId) {
+      console.error(
+        "Cannot add Udhaar: report ID is missing."
+      );
+      return;
     }
 
-    const data = await udhaarService.getUdhaar();
+    try {
+      await udhaarService.createUdhaar(
+        Number(reportId),
+        newEntries
+      );
 
-    console.log("UDHAAR DATA:", data);
+      setShowAdd(false);
 
-    setEntries(data);
+      await loadUdhaar(reportId);
 
-  } catch (err) {
-    console.error(err);
+    } catch (err) {
+      console.error(
+        "Failed to add Udhaar:",
+        err
+      );
 
-    console.log("Status:", err.response?.status);
-    console.log("Headers:", err.response?.headers);
-    console.log("Backend Response:");
-    console.log(JSON.stringify(err.response?.data, null, 2));
+      console.log(
+        "Status:",
+        err.response?.status
+      );
 
-  } finally {
-    setLoading(false);
+      console.log(
+        "Headers:",
+        err.response?.headers
+      );
+
+      console.log(
+        "Backend Response:"
+      );
+
+      console.log(
+        JSON.stringify(
+          err.response?.data,
+          null,
+          2
+        )
+      );
+    }
   }
-}
 
- async function addUdhaar(entries) {
-  try {
-    await udhaarService.createUdhaar(
-      reportId,
-      entries
-    );
-
-    setShowAdd(false);
-
-    await loadPage();
-
-  } catch (err) {
-  console.error(err);
-
-  console.log("Status:", err.response?.status);
-  console.log("Headers:", err.response?.headers);
-  console.log("Backend Response:");
-  console.log(JSON.stringify(err.response?.data, null, 2));
-}
-}
+  // --------------------------------------------------
+  // Repay Udhaar
+  // --------------------------------------------------
 
   async function repay(id, amount) {
     try {
-      await udhaarService.repayUdhaar(id, amount);
+      await udhaarService.repayUdhaar(
+        id,
+        amount
+      );
 
       setShowRepay(false);
+      setSelected(null);
 
-      await loadPage();
+      await loadUdhaar(reportId);
+
     } catch (err) {
-  console.error(err);
+      console.error(
+        "Failed to repay Udhaar:",
+        err
+      );
 
-  console.log("Status:", err.response?.status);
-  console.log("Headers:", err.response?.headers);
-  console.log("Backend Response:");
-  console.log(JSON.stringify(err.response?.data, null, 2));
-}
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Headers:",
+        err.response?.headers
+      );
+
+      console.log(
+        "Backend Response:"
+      );
+
+      console.log(
+        JSON.stringify(
+          err.response?.data,
+          null,
+          2
+        )
+      );
+    }
   }
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
 
   return (
     <div className="space-y-6">
+
+      {/* Header */}
 
       <div className="flex items-center justify-between">
 
@@ -112,8 +269,15 @@ export default function Udhaar() {
 
         {!isOwner && (
           <button
-            onClick={() => setShowAdd(true)}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700"
+            onClick={() =>
+              setShowAdd(true)
+            }
+            disabled={!reportId}
+            className={`rounded-xl px-5 py-2.5 font-semibold text-white ${
+              reportId
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "cursor-not-allowed bg-gray-400"
+            }`}
           >
             Add Udhaar
           </button>
@@ -121,7 +285,13 @@ export default function Udhaar() {
 
       </div>
 
-      <UdhaarKPIs entries={entries} />
+      {/* KPIs */}
+
+      <UdhaarKPIs
+        entries={entries}
+      />
+
+      {/* Table */}
 
       {loading ? (
         <div className="rounded-xl bg-white p-10 text-center">
@@ -142,20 +312,29 @@ export default function Udhaar() {
         />
       )}
 
+      {/* Add Udhaar */}
+
       {!isOwner && (
         <AddUdhaarModal
           open={showAdd}
-          onClose={() => setShowAdd(false)}
+          onClose={() =>
+            setShowAdd(false)
+          }
           onSave={addUdhaar}
           dailyReportId={reportId}
         />
       )}
 
+      {/* Repay */}
+
       {!isOwner && (
         <RepayModal
           open={showRepay}
           entry={selected}
-          onClose={() => setShowRepay(false)}
+          onClose={() => {
+            setShowRepay(false);
+            setSelected(null);
+          }}
           onRepay={repay}
         />
       )}

@@ -1,132 +1,243 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
 import ExpenseStats from "../../components/expenses/ExpenseStats";
 import ExpenseToolbar from "../../components/expenses/ExpenseToolbar";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
 import AddExpenseModal from "../../components/expenses/AddExpenseModal";
+
 import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
 export default function Expenses() {
   const [search, setSearch] = useState("");
 
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] =
+    useState(false);
 
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] =
+    useState([]);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams] =
+    useSearchParams();
 
-  const [reportId, setReportId] = useState(null);
- 
+  const [reportId, setReportId] =
+    useState(null);
 
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
-  useEffect(() => {
-  initializePage();
-}, []);
+  // --------------------------------------------------
+  // Initialize page
+  // --------------------------------------------------
 
+  useEffect(() => {
+    initializePage();
+  }, [searchParams]);
 
   async function initializePage() {
-  try {
-    let id = searchParams.get("report");
+    try {
+      let id = searchParams.get("report");
 
-    if (!id) {
-      const report =
-        await dailyReportsService.getTodayReport();
+      // If no report was supplied in the URL,
+      // use today's report.
+      if (!id) {
+        const report =
+          await dailyReportsService.getTodayReport();
 
-      id = report.id;
+        id = report.id;
+      }
+
+      id = Number(id);
+
+      setReportId(id);
+
+      await loadExpenses(id);
+
+    } catch (err) {
+      console.error(
+        "Failed to initialize expenses page:",
+        err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
     }
-
-    setReportId(id);
-
-    await loadExpenses(id);
-
-  } catch (err) {
-    console.error(err);
   }
-}
+
+  // --------------------------------------------------
+  // Load expenses for selected report
+  // --------------------------------------------------
+
   async function loadExpenses(id = reportId) {
+    if (!id) return;
+
     try {
       const data =
-  await expenseService.getExpenses(id);
+        await expenseService.getExpenses(
+          Number(id)
+        );
 
       setExpenses(data);
 
     } catch (err) {
-  console.error(err);
+      console.error(
+        "Failed to load expenses:",
+        err
+      );
 
-  console.log("Status:", err.response?.status);
-  console.log("Backend response:", err.response?.data);
-}
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
+    }
   }
 
+  // --------------------------------------------------
+  // Save expense
+  // --------------------------------------------------
+
   async function handleSave(expense) {
+    if (!reportId) {
+      console.error(
+        "Cannot save expense: report ID is missing."
+      );
+      return;
+    }
+
     try {
       if (expense.id) {
+        // Update existing expense.
+        // daily_report_id is included because
+        // the backend ExpenseCreate schema requires it.
         await expenseService.updateExpense(
           expense.id,
-          expense
+          {
+            ...expense,
+            daily_report_id: Number(reportId),
+          }
         );
+
       } else {
+        // Create new expense for the
+        // currently selected report.
         await expenseService.createExpense({
-    ...expense,
-    daily_report_id: Number(reportId),
-});
-          
+          ...expense,
+          daily_report_id: Number(reportId),
+        });
       }
 
-      await loadExpenses();
+      await loadExpenses(reportId);
 
       setShowModal(false);
-
       setSelectedExpense(null);
 
     } catch (err) {
-  console.error(err);
+      console.error(
+        "Failed to save expense:",
+        err
+      );
 
-  console.log("Status:", err.response?.status);
-  console.log("Backend response:", err.response?.data);
-}
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
+    }
   }
+
+  // --------------------------------------------------
+  // Delete expense
+  // --------------------------------------------------
 
   async function handleDelete(id) {
     if (
       !window.confirm(
         "Delete this expense?"
       )
-    )
+    ) {
       return;
+    }
 
     try {
       await expenseService.deleteExpense(id);
 
-      await loadExpenses();
+      await loadExpenses(reportId);
 
     } catch (err) {
-  console.error(err);
+      console.error(
+        "Failed to delete expense:",
+        err
+      );
 
-  console.log("Status:", err.response?.status);
-  console.log("Validation:", err.response?.data);
-}
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
+    }
   }
+
+  // --------------------------------------------------
+  // Edit expense
+  // --------------------------------------------------
 
   function handleEdit(expense) {
     setSelectedExpense(expense);
-
     setShowModal(true);
   }
 
-  const filteredExpenses = expenses.filter(
-    (expense) =>
-      expense.expense_type
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+  // --------------------------------------------------
+  // Search
+  // --------------------------------------------------
 
-      expense.created_by_name
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  );
+  const filteredExpenses =
+    expenses.filter((expense) => {
+
+      const expenseType =
+        expense.expense_type || "";
+
+      const createdBy =
+        expense.created_by_name || "";
+
+      return (
+        expenseType
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          ) ||
+
+        createdBy
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+      );
+    });
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
 
   return (
     <div className="space-y-6">
@@ -143,7 +254,9 @@ export default function Expenses() {
 
       </div>
 
-      <ExpenseStats expenses={expenses} />
+      <ExpenseStats
+        expenses={expenses}
+      />
 
       <ExpenseToolbar
         search={search}
@@ -161,15 +274,19 @@ export default function Expenses() {
       />
 
       <AddExpenseModal
-  isOpen={showModal}
-  onClose={() => {
-    setShowModal(false);
-    setSelectedExpense(null);
-  }}
-  onSave={handleSave}
-  expense={selectedExpense}
-  
-/>
+        isOpen={showModal}
+
+        onClose={() => {
+          setShowModal(false);
+          setSelectedExpense(null);
+        }}
+
+        onSave={handleSave}
+
+        expense={selectedExpense}
+
+        dailyReportId={reportId}
+      />
 
     </div>
   );

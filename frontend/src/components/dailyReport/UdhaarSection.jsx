@@ -1,43 +1,32 @@
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+
 import SectionCard from "./SectionCard";
-import dailyReportsService from "../../services/dailyReportsService";
 
-export default function UdhaarSection() {
-  const [report, setReport] = useState(null);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await dailyReportsService.getTodayReport();
-        setReport(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    load();
-  }, []);
-
+export default function UdhaarSection({
+  report,
+}) {
   if (!report) return null;
 
   return (
     <SectionCard title="Udhaar">
+
       <div className="flex items-center justify-between">
 
         <div>
+
           <h3 className="text-lg font-semibold">
-            Today's Udhaar
+            Udhaar
           </h3>
 
           <p className="mt-1 text-sm text-gray-500">
-            Customer credit entries are managed from the Udhaar module.
+            Customer credit entries for this report.
           </p>
+
         </div>
 
         <Link
-          to="/manager/udhaar"
+          to={`/manager/udhaar?report=${report.id}`}
           className="flex items-center gap-2 rounded-xl border border-gray-200 px-5 py-2.5 font-medium hover:bg-gray-50"
         >
           Open Udhaar
@@ -46,7 +35,6 @@ export default function UdhaarSection() {
 
       </div>
 
-      
     </SectionCard>
   );
 }

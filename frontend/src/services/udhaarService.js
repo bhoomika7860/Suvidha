@@ -1,10 +1,17 @@
 import api from "../api/api";
 
 const udhaarService = {
-  async getUdhaar() {
-    const res = await api.get("/udhaar/");
-    return res.data;
-  },
+  async getUdhaar(reportId = null) {
+  const res = await api.get("/udhaar/", {
+    params: reportId
+      ? {
+          report_id: reportId,
+        }
+      : {},
+  });
+
+  return res.data;
+},
 
   async getOutstanding() {
     const res = await api.get("/udhaar/outstanding");
@@ -15,6 +22,18 @@ const udhaarService = {
   const res = await api.post("/udhaar/", {
     daily_report_id: dailyReportId,
     entries,
+  });
+
+  return res.data;
+},
+
+async getOutstanding(reportId = null) {
+  const res = await api.get("/udhaar/outstanding", {
+    params: reportId
+      ? {
+          report_id: reportId,
+        }
+      : {},
   });
 
   return res.data;

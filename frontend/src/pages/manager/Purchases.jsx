@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import purchaseService from "../../services/purchaseService";
 import dailyReportsService from "../../services/dailyReportsService";
@@ -23,66 +24,77 @@ export default function Purchases() {
   const [report, setReport] =
     useState(null);
 
+  const [searchParams] =
+    useSearchParams();
+
+  const reportIdFromUrl =
+    searchParams.get("report");
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [reportIdFromUrl]);
 
   async function loadData() {
     try {
-      /*
-       * We still need today's report because a newly
-       * received purchase must be attached to today's
-       * daily report.
-       */
-      const currentReport =
-        await dailyReportsService.getTodayReport();
+      let currentReport;
+
+      if (reportIdFromUrl) {
+        currentReport =
+          await dailyReportsService.getReport(
+            Number(reportIdFromUrl)
+          );
+      } else {
+        currentReport =
+          await dailyReportsService.getTodayReport();
+      }
 
       setReport(currentReport);
 
-      /*
-       * IMPORTANT:
-       *
-       * Do NOT use getTodayPurchases() here.
-       *
-       * That endpoint only returns purchases created today.
-       *
-       * We want the complete purchase workflow for
-       * this store, including purchases from previous days.
-       */
       const purchaseData =
-        await purchaseService.getStorePurchases(
-          currentReport.store_id
+        await dailyReportsService.getPurchases(
+          currentReport.id
         );
 
       setPurchases(purchaseData);
 
     } catch (err) {
-      console.error("Failed to load purchases:", err);
+      console.error(
+        "Failed to load purchases:",
+        err
+      );
     }
   }
 
   async function addPurchase(purchase) {
+    if (!report?.id) {
+      console.error(
+        "Cannot create purchase without report ID."
+      );
+      return;
+    }
+
     try {
       await purchaseService.createPurchase({
         ...purchase,
-
-        /*
-         * New purchases still belong to today's
-         * daily report.
-         */
         daily_report_id: report.id,
       });
 
-      /*
-       * Reload the complete store purchase list
-       * after receiving a new bill.
-       */
       await loadData();
 
       setShowReceiveModal(false);
 
     } catch (err) {
-      console.error("Failed to create purchase:", err);
+      console.error(err);
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
     }
   }
 
@@ -108,11 +120,10 @@ export default function Purchases() {
     });
 
   return (
-    <div className="space-y-6">
-
-      {/* Header */}
+    <div>
 
       <div>
+
         <h1 className="text-3xl font-bold">
           Purchase Workflow
         </h1>
@@ -120,19 +131,14 @@ export default function Purchases() {
         <p className="mt-1 text-gray-500">
           Manage supplier purchase bills.
         </p>
+
       </div>
-
-
-      {/* Statistics */}
 
       <PurchaseStats
         purchases={purchases}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
-
-
-      {/* Toolbar */}
 
       <PurchaseToolbar
         search={search}
@@ -142,17 +148,11 @@ export default function Purchases() {
         }
       />
 
-
-      {/* Purchase Table */}
-
       <PurchaseTable
         purchases={filteredPurchases}
         allPurchases={purchases}
         setPurchases={setPurchases}
       />
-
-
-      {/* Receive New Bill */}
 
       {report && (
         <ReceiveBillModal
