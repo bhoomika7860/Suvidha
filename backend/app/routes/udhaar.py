@@ -60,14 +60,15 @@ def create_udhaar(
     for item in data.entries:
 
         udhaar = UdhaarEntry(
-        store_id=report.store_id,
-        daily_report_id=data.daily_report_id,
-        bill_number=item.bill_number,
-        customer_name="",
-        customer_phone=None,
-        amount=item.amount,
-        created_by=current_user["user_id"],
-    )
+    store_id=report.store_id,
+    daily_report_id=data.daily_report_id,
+    bill_number=item.bill_number,
+    customer_name="",
+    customer_phone=None,
+    amount=item.amount,
+    created_by=current_user["user_id"],
+    date_given=report.report_date,
+)
 
         db.add(udhaar)
         created_entries.append(udhaar)

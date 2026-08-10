@@ -253,7 +253,6 @@ def get_today_report(
 # ----------------------------------------------------
 # Get / Create Report By Date
 # ----------------------------------------------------
-
 @router.get("/date/{report_date}")
 def get_report_by_date(
     report_date: date,
@@ -274,7 +273,6 @@ def get_report_by_date(
     # ----------------------------------------
 
     if report is None:
-
         report = DailyReport(
             store_id=current_user["store_id"],
             submitted_by=current_user["user_id"],
@@ -285,30 +283,37 @@ def get_report_by_date(
         db.commit()
         db.refresh(report)
 
-        # ----------------------------------------
-        # Carry forward all pending purchases
-        # ----------------------------------------
+    # ----------------------------------
+# Carry forward pending purchases
+# from previous reports into today
+# ----------------------------------
 
-        pending_purchases = (
-            db.query(Purchase)
-            .filter(
-                Purchase.store_id == current_user["store_id"],
-                Purchase.status != "completed",
-            )
-            .all()
-        )
+    pending_purchases = (
+    db.query(Purchase)
+    .filter(
+        Purchase.store_id == current_user["store_id"],
+        Purchase.status != "completed",
+        Purchase.daily_report_id != report.id,
+    )
+    .all()
+)
 
-        for purchase in pending_purchases:
-            purchase.daily_report_id = report.id
+    for purchase in pending_purchases:
+        purchase.daily_report_id = report.id
 
-        db.commit()
+    db.commit()
 
     # ----------------------------------------
-    # Expenses
+    # Expenses for THIS report only
     # ----------------------------------------
 
     expenses_total = (
-        db.query(func.coalesce(func.sum(Expense.amount), 0))
+        db.query(
+            func.coalesce(
+                func.sum(Expense.amount),
+                0,
+            )
+        )
         .filter(
             Expense.daily_report_id == report.id,
         )
@@ -316,7 +321,7 @@ def get_report_by_date(
     )
 
     # ----------------------------------------
-    # Udhaar
+    # Udhaar for THIS report only
     # ----------------------------------------
 
     udhaar_total = (
@@ -330,6 +335,7 @@ def get_report_by_date(
             )
         )
         .filter(
+            UdhaarEntry.store_id == report.store_id,
             UdhaarEntry.daily_report_id == report.id,
             UdhaarEntry.status != "settled",
         )
@@ -337,45 +343,48 @@ def get_report_by_date(
     )
 
     # ----------------------------------------
-    # Purchases
+    # Purchases for THIS report only
     # ----------------------------------------
 
     purchase_total = (
-    db.query(
-        func.coalesce(
-            func.sum(Purchase.purchase_amount),
-            0,
+        db.query(
+            func.coalesce(
+                func.sum(
+                    Purchase.purchase_amount
+                ),
+                0,
+            )
         )
+        .filter(
+            Purchase.daily_report_id == report.id,
+            Purchase.status == "completed",
+        )
+        .scalar()
     )
-    .filter(
-        Purchase.daily_report_id == report.id,
-    )
-    .scalar()
-)
 
     return {
-    "exists": True,
+        "exists": True,
 
-    "id": report.id,
-    "store_id": report.store_id,
-    "report_date": report.report_date,
+        "id": report.id,
+        "store_id": report.store_id,
+        "report_date": report.report_date,
 
-    "total_bills": report.total_bills,
-    "deliveries": report.deliveries,
+        "total_bills": report.total_bills,
+        "deliveries": report.deliveries,
 
-    "cash_sales": report.cash_sales,
-    "upi_sales": report.upi_sales,
-    "card_sales": report.card_sales,
+        "cash_sales": report.cash_sales,
+        "upi_sales": report.upi_sales,
+        "card_sales": report.card_sales,
 
-    "udhaar_sales": udhaar_total,
-    "system_sales": report.system_sales,
+        "udhaar_sales": udhaar_total,
+        "system_sales": report.system_sales,
 
-    "total_expenses": expenses_total,
-    "total_purchases": purchase_total,
+        "total_expenses": expenses_total,
+        "total_purchases": purchase_total,
 
-    "notes": report.notes,
-    "is_locked": report.is_locked,
-}
+        "notes": report.notes,
+        "is_locked": report.is_locked,
+    }
 
 @router.put("/{report_id}/sales")
 def update_sales(
@@ -1059,6 +1068,7 @@ def get_report(
             "purchases": sum(
     purchase.purchase_amount
     for purchase in purchases
+    if purchase.status == "completed"
 ),
             "expenses": sum(
     expense.amount

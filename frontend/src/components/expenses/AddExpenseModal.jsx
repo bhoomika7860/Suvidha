@@ -108,14 +108,15 @@ export default function AddExpenseModal({
               </label>
 
               <input
-                type="number"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(e.target.value)
-                }
-                className="h-11 w-full rounded-xl border px-4"
-                placeholder="Enter amount"
-              />
+  type="number"
+  min="0"
+  value={amount}
+  onChange={(e) =>
+    setAmount(e.target.value)
+  }
+  className="h-11 w-full rounded-xl border px-4"
+  placeholder="Enter amount"
+/>
             </div>
 
             <div>

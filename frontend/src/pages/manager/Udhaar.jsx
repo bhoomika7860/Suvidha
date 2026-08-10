@@ -40,8 +40,8 @@ export default function Udhaar() {
   // --------------------------------------------------
 
   useEffect(() => {
-    initializePage();
-  }, [searchParams]);
+  loadPage();
+}, [searchParams]);
 
   async function initializePage() {
     try {
@@ -202,7 +202,7 @@ export default function Udhaar() {
 
       setShowAdd(false);
 
-      await loadUdhaar(reportId);
+      await loadPage();
 
     } catch (err) {
       console.error(
@@ -248,7 +248,7 @@ export default function Udhaar() {
       setShowRepay(false);
       setSelected(null);
 
-      await loadUdhaar(reportId);
+      await loadPage();
 
     } catch (err) {
       console.error(

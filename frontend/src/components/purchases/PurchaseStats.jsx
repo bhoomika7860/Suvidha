@@ -10,34 +10,44 @@ export default function PurchaseStats({
   setActiveFilter,
 }) {
   const stats = [
-    {
-      key: "received",
-      title: "Received",
-      icon: Inbox,
-      color: "text-blue-600 bg-blue-100",
-    },
-    {
-      key: "waiting-entry",
-      title: "Waiting Entry",
-      icon: Database,
-      color: "text-violet-600 bg-violet-100",
-    },
-    {
-      key: "completed",
-      title: "Completed",
-      icon: CheckCircle2,
-      color: "text-green-600 bg-green-100",
-    },
-  ];
+  {
+    key: "all",
+    title: "All",
+    icon: Inbox,
+    color: "text-blue-600 bg-blue-100",
+  },
+  {
+    key: "received",
+    title: "Received",
+    icon: Inbox,
+    color: "text-blue-600 bg-blue-100",
+  },
+  {
+    key: "waiting-entry",
+    title: "Waiting Entry",
+    icon: Database,
+    color: "text-violet-600 bg-violet-100",
+  },
+  {
+    key: "completed",
+    title: "Completed",
+    icon: CheckCircle2,
+    color: "text-green-600 bg-green-100",
+  },
+];
 
   return (
     <div className="grid grid-cols-3 gap-4">
       {stats.map((item) => {
         const Icon = item.icon;
 
-        const count = purchases.filter(
-          (purchase) => purchase.status === item.key
-        ).length;
+        const count =
+  item.key === "all"
+    ? purchases.length
+    : purchases.filter(
+        (purchase) =>
+          purchase.status === item.key
+      ).length;
 
         return (
           <button

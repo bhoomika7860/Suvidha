@@ -28,7 +28,11 @@ export default function PaymentMachines({
 
         return {
           ...machine,
-          amount: existing?.amount ?? 0,
+          amount:
+  existing?.amount !== undefined &&
+  existing?.amount !== null
+    ? String(existing.amount)
+    : "",
         };
       });
 
@@ -43,38 +47,38 @@ export default function PaymentMachines({
   }, [reportId]);
 
   const total = useMemo(() => {
-    return machines.reduce(
-      (sum, machine) =>
-        sum + Number(machine.amount || 0),
-      0
-    );
-  }, [machines]);
+  return machines.reduce(
+    (sum, machine) =>
+      sum + Number(machine.amount || 0),
+    0
+  );
+}, [machines]);
 
   useEffect(() => {
     onTotalChange?.(total);
   }, [total, onTotalChange]);
 
   useEffect(() => {
-    onMachinesChange?.(
-      machines.map((machine) => ({
-        machine_id: machine.id,
-        amount: Number(machine.amount || 0),
-      }))
-    );
-  }, [machines, onMachinesChange]);
+  onMachinesChange?.(
+    machines.map((machine) => ({
+      machine_id: machine.id,
+      amount: Number(machine.amount || 0),
+    }))
+  );
+}, [machines, onMachinesChange]);
 
   function changeAmount(id, value) {
-    setMachines((prev) =>
-      prev.map((machine) =>
-        machine.id === id
-          ? {
-              ...machine,
-              amount: Number(value),
-            }
-          : machine
-      )
-    );
-  }
+  setMachines((prev) =>
+    prev.map((machine) =>
+      machine.id === id
+        ? {
+            ...machine,
+            amount: value,
+          }
+        : machine
+    )
+  );
+}
 
   async function addMachine() {
     if (!newMachine.trim()) return;

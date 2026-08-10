@@ -105,6 +105,19 @@ async def create_purchase(
         detail="Daily report not found",
     )
 
+    if report.is_locked:
+        raise HTTPException(
+        status_code=409,
+        detail="Report is locked",
+    )
+
+    report_datetime = datetime.combine(
+    report.report_date,
+    datetime.min.time(),
+).replace(
+    tzinfo=ZoneInfo("Asia/Kolkata")
+)
+
     purchase = Purchase(
     store_id=current_user["store_id"],
     daily_report_id=daily_report_id,
@@ -120,13 +133,13 @@ async def create_purchase(
     received_by=received_by,
     entered_by=entered_by,
 
-    purchase_date=purchase_date,
+    purchase_date=purchase_date or report_datetime,
 
     status="received",
 
     bill_image=image_path,
 
-    received_date=datetime.now(ZoneInfo("Asia/Kolkata")),
+    received_date=report_datetime,
 )
 
     db.add(purchase)

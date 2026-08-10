@@ -8,28 +8,33 @@ export default function DeliverySection({
   report,
   refreshReport,
 }) {
-  const [deliveries, setDeliveries] = useState(0);
+  const [deliveries, setDeliveries] = useState("");
 
   useEffect(() => {
-    if (!report) return;
+  if (!report) return;
 
-    setDeliveries(report.deliveries || 0);
-  }, [report]);
+  setDeliveries(
+    report.deliveries !== null &&
+      report.deliveries !== undefined
+      ? String(report.deliveries)
+      : ""
+  );
+}, [report]);
 
   async function handleSave() {
-    try {
-      await dailyReportsService.updateDeliveries(
-        report.id,
-        Number(deliveries)
-      );
+  try {
+    await dailyReportsService.updateDeliveries(
+      report.id,
+      Number(deliveries || 0)
+    );
 
-      await refreshReport();
+    await refreshReport();
 
-      alert("Deliveries saved.");
-    } catch (err) {
-      console.error(err);
-    }
+    alert("Deliveries saved.");
+  } catch (err) {
+    console.error(err);
   }
+}
 
   if (!report) return null;
 

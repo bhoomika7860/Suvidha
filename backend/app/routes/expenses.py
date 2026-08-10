@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime,time
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -73,13 +73,17 @@ def create_expense(
         )
 
     expense = Expense(
-        store_id=report.store_id,
-        daily_report_id=report.id,
-        expense_type=data.expense_type,
-        amount=data.amount,
-        remarks=data.remarks,
-        created_by=current_user["user_id"],
-    )
+    store_id=report.store_id,
+    daily_report_id=report.id,
+    expense_type=data.expense_type,
+    amount=data.amount,
+    remarks=data.remarks,
+    created_by=current_user["user_id"],
+    created_at=datetime.combine(
+        report.report_date,
+        time.min,
+    ),
+)
 
     db.add(expense)
     db.commit()
