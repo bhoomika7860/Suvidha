@@ -60,147 +60,186 @@ export default function SalesSection({
   );
 
   useEffect(() => {
-    if (!report?.id) return;
+  if (!report?.id) return;
 
-    async function loadSection() {
-      try {
-        const outstanding =
-          await udhaarService.getOutstanding(
-            report.id
-          );
+  let cancelled = false;
 
-        setForm({
-          total_bills:
-            report.total_bills !== null &&
-            report.total_bills !== undefined
-              ? String(report.total_bills)
+  async function loadSection() {
+    try {
+      // Reset cash immediately when switching reports.
+      // This prevents the previous date's values from carrying over.
+      setCash({
+        note_500: "",
+        note_200: "",
+        note_100: "",
+        note_50: "",
+        note_20: "",
+        note_10: "",
+        coin_5: "",
+        coin_2: "",
+        coin_1: "",
+      });
+
+      setMachineEntries([]);
+
+      const outstanding =
+        await udhaarService.getOutstanding(
+          report.id
+        );
+
+      if (cancelled) return;
+
+      setForm({
+        total_bills:
+          report.total_bills !== null &&
+          report.total_bills !== undefined
+            ? String(report.total_bills)
+            : "",
+
+        cash_sales:
+          report.cash_sales !== null &&
+          report.cash_sales !== undefined
+            ? String(report.cash_sales)
+            : "",
+
+        upi_sales:
+          report.upi_sales !== null &&
+          report.upi_sales !== undefined
+            ? String(report.upi_sales)
+            : "",
+
+        card_sales:
+          report.card_sales !== null &&
+          report.card_sales !== undefined
+            ? String(report.card_sales)
+            : "",
+
+        total_expenses:
+          report.total_expenses !== null &&
+          report.total_expenses !== undefined
+            ? String(report.total_expenses)
+            : "",
+
+        udhaar_sales:
+          outstanding?.outstanding !== null &&
+          outstanding?.outstanding !== undefined
+            ? String(outstanding.outstanding)
+            : "",
+
+        system_sales:
+          report.system_sales !== null &&
+          report.system_sales !== undefined
+            ? String(report.system_sales)
+            : "",
+      });
+
+      // -------------------------------
+      // CASH DENOMINATIONS
+      // -------------------------------
+
+      const savedCash =
+        await cashDenominationService.get(
+          report.id
+        );
+
+      if (cancelled) return;
+
+      if (savedCash) {
+        setCash({
+          note_500:
+            savedCash.note_500 !== null &&
+            savedCash.note_500 !== undefined
+              ? String(savedCash.note_500)
               : "",
 
-          cash_sales:
-            report.cash_sales !== null &&
-            report.cash_sales !== undefined
-              ? String(report.cash_sales)
+          note_200:
+            savedCash.note_200 !== null &&
+            savedCash.note_200 !== undefined
+              ? String(savedCash.note_200)
               : "",
 
-          upi_sales:
-            report.upi_sales !== null &&
-            report.upi_sales !== undefined
-              ? String(report.upi_sales)
+          note_100:
+            savedCash.note_100 !== null &&
+            savedCash.note_100 !== undefined
+              ? String(savedCash.note_100)
               : "",
 
-          card_sales:
-            report.card_sales !== null &&
-            report.card_sales !== undefined
-              ? String(report.card_sales)
+          note_50:
+            savedCash.note_50 !== null &&
+            savedCash.note_50 !== undefined
+              ? String(savedCash.note_50)
               : "",
 
-          total_expenses:
-            report.total_expenses !== null &&
-            report.total_expenses !== undefined
-              ? String(report.total_expenses)
+          note_20:
+            savedCash.note_20 !== null &&
+            savedCash.note_20 !== undefined
+              ? String(savedCash.note_20)
               : "",
 
-          udhaar_sales:
-            outstanding?.outstanding !== null &&
-            outstanding?.outstanding !== undefined
-              ? String(outstanding.outstanding)
+          note_10:
+            savedCash.note_10 !== null &&
+            savedCash.note_10 !== undefined
+              ? String(savedCash.note_10)
               : "",
 
-          system_sales:
-            report.system_sales !== null &&
-            report.system_sales !== undefined
-              ? String(report.system_sales)
+          coin_5:
+            savedCash.coin_5 !== null &&
+            savedCash.coin_5 !== undefined
+              ? String(savedCash.coin_5)
+              : "",
+
+          coin_2:
+            savedCash.coin_2 !== null &&
+            savedCash.coin_2 !== undefined
+              ? String(savedCash.coin_2)
+              : "",
+
+          coin_1:
+            savedCash.coin_1 !== null &&
+            savedCash.coin_1 !== undefined
+              ? String(savedCash.coin_1)
               : "",
         });
+      }
 
-        const savedCash =
-          await cashDenominationService.get(
-            report.id
-          );
+      // -------------------------------
+      // PAYMENT MACHINES
+      // -------------------------------
 
-        if (savedCash) {
-          setCash({
-            note_500:
-              savedCash.note_500 !== null &&
-              savedCash.note_500 !== undefined
-                ? String(savedCash.note_500)
-                : "",
-
-            note_200:
-              savedCash.note_200 !== null &&
-              savedCash.note_200 !== undefined
-                ? String(savedCash.note_200)
-                : "",
-
-            note_100:
-              savedCash.note_100 !== null &&
-              savedCash.note_100 !== undefined
-                ? String(savedCash.note_100)
-                : "",
-
-            note_50:
-              savedCash.note_50 !== null &&
-              savedCash.note_50 !== undefined
-                ? String(savedCash.note_50)
-                : "",
-
-            note_20:
-              savedCash.note_20 !== null &&
-              savedCash.note_20 !== undefined
-                ? String(savedCash.note_20)
-                : "",
-
-            note_10:
-              savedCash.note_10 !== null &&
-              savedCash.note_10 !== undefined
-                ? String(savedCash.note_10)
-                : "",
-
-            coin_5:
-              savedCash.coin_5 !== null &&
-              savedCash.coin_5 !== undefined
-                ? String(savedCash.coin_5)
-                : "",
-
-            coin_2:
-              savedCash.coin_2 !== null &&
-              savedCash.coin_2 !== undefined
-                ? String(savedCash.coin_2)
-                : "",
-
-            coin_1:
-              savedCash.coin_1 !== null &&
-              savedCash.coin_1 !== undefined
-                ? String(savedCash.coin_1)
-                : "",
-          });
-        }
-
-        const machineData =
-          await paymentMachineEntryService.get(
-            report.id
-          );
-
-        setMachineEntries(
-          machineData.map((machine) => ({
-            machine_id: machine.machine_id,
-            amount:
-              machine.amount !== null &&
-              machine.amount !== undefined
-                ? Number(machine.amount)
-                : 0,
-          }))
+      const machineData =
+        await paymentMachineEntryService.get(
+          report.id
         );
-      } catch (err) {
+
+      if (cancelled) return;
+
+      setMachineEntries(
+        machineData.map((machine) => ({
+          machine_id: machine.machine_id,
+          amount:
+            machine.amount !== null &&
+            machine.amount !== undefined
+              ? Number(machine.amount)
+              : 0,
+        }))
+      );
+
+    } catch (err) {
+      if (!cancelled) {
         console.error(
           "Failed to load sales section:",
           err
         );
       }
     }
+  }
 
-    loadSection();
-  }, [report?.id]);
+  loadSection();
+
+  return () => {
+    cancelled = true;
+  };
+}, [report]);
 
   const cashCounted = useMemo(() => {
     return (
@@ -220,13 +259,13 @@ export default function SalesSection({
     cashCounted - OPENING_CASH;
 
   useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      cash_sales: String(
-        calculatedCashSales
-      ),
-    }));
-  }, [calculatedCashSales]);
+  setForm((prev) => ({
+    ...prev,
+    cash_sales: String(
+      calculatedCashSales || 0
+    ),
+  }));
+}, [calculatedCashSales]);
 
   /*
    * IMPORTANT:
