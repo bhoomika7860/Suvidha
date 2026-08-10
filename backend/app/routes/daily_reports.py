@@ -522,15 +522,17 @@ def submit_report(
 
 
 
-
 @router.get("/{report_id}/purchases")
 def get_report_purchases(
     report_id: int,
+    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     report = (
         db.query(DailyReport)
-        .filter(DailyReport.id == report_id)
+        .filter(
+            DailyReport.id == report_id
+        )
         .first()
     )
 
@@ -540,11 +542,24 @@ def get_report_purchases(
             detail="Report not found",
         )
 
+    # --------------------------------------------------
+    # Store isolation
+    # --------------------------------------------------
+
+    if (
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
     purchases = (
         db.query(Purchase)
-    .filter(
-        Purchase.daily_report_id == report.id,
-    )
+        .filter(
+            Purchase.daily_report_id == report.id,
+        )
         .order_by(
             Purchase.purchase_date.desc(),
             Purchase.id.desc(),
@@ -553,13 +568,33 @@ def get_report_purchases(
     )
 
     return [
-    {
-        "id": purchase.id,
-        "product_name": purchase.product_name,
-        "supplier_name": purchase.supplier_name,
-        "quantity": purchase.quantity,
-        "purchase_amount": purchase.purchase_amount,
-    }
+        {
+            "id": purchase.id,
+
+            "product_name": purchase.product_name,
+
+            "supplier_name": purchase.supplier_name,
+
+            "quantity": purchase.quantity,
+
+            "purchase_amount": purchase.purchase_amount,
+
+            "bill_number": purchase.bill_number,
+
+            "received_by": purchase.received_by,
+
+            "checked_by": purchase.checked_by,
+
+            "entered_by": purchase.entered_by,
+
+            "status": purchase.status,
+
+            "purchase_date": purchase.purchase_date,
+
+            "received_date": purchase.received_date,
+
+            "bill_image": purchase.bill_image,
+        }
         for purchase in purchases
     ]
 
