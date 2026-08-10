@@ -10,7 +10,6 @@ import { Link } from "react-router-dom";
 import SectionCard from "./SectionCard";
 import AddExpenseModal from "../expenses/AddExpenseModal";
 
-import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
 export default function ExpenseSection({
@@ -23,20 +22,40 @@ export default function ExpenseSection({
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
+  // --------------------------------------------------
+  // Load expenses for this report
+  // --------------------------------------------------
+
   async function loadExpenses() {
     if (!report?.id) return;
 
     try {
       const data =
-        await dailyReportsService.getExpenses(
+        await expenseService.getExpenses(
           report.id
         );
+
+      console.log(
+        "EXPENSES FOR REPORT:",
+        report.id,
+        data
+      );
 
       setExpenses(data);
     } catch (err) {
       console.error(
         "Failed to load expenses:",
         err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
       );
     }
   }
@@ -45,11 +64,19 @@ export default function ExpenseSection({
     loadExpenses();
   }, [report?.id]);
 
+  // --------------------------------------------------
+  // Calculate total expenses
+  // --------------------------------------------------
+
   const total = expenses.reduce(
     (sum, item) =>
       sum + Number(item.amount || 0),
     0
   );
+
+  // --------------------------------------------------
+  // Delete expense
+  // --------------------------------------------------
 
   async function handleDelete(id) {
     if (
@@ -66,16 +93,44 @@ export default function ExpenseSection({
       await loadExpenses();
       await refreshReport();
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Failed to delete expense:",
+        err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
     }
   }
+
+  // --------------------------------------------------
+  // Edit expense
+  // --------------------------------------------------
 
   function handleEdit(expense) {
     setSelectedExpense(expense);
     setShowModal(true);
   }
 
+  // --------------------------------------------------
+  // Save edited expense
+  // --------------------------------------------------
+
   async function handleSave(data) {
+    if (!report?.id) {
+      console.error(
+        "Cannot save expense: report ID is missing."
+      );
+      return;
+    }
+
     try {
       if (data.id) {
         await expenseService.updateExpense(
@@ -94,9 +149,26 @@ export default function ExpenseSection({
       await refreshReport();
 
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Failed to save expense:",
+        err
+      );
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
     }
   }
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
 
   return (
     <SectionCard title="Expenses">
