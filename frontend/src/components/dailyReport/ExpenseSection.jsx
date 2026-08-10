@@ -18,44 +18,29 @@ export default function ExpenseSection({
 }) {
   const [expenses, setExpenses] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [selectedExpense, setSelectedExpense] =
+    useState(null);
 
-  async function loadExpenses() {
-    if (!report?.id) return;
-
-    try {
-      // Use the SAME endpoint used by the main Expenses page.
-      const data = await expenseService.getExpenses(
-        Number(report.id)
-      );
-
-      console.log(
-        "Daily Report Expense Load:",
-        {
-          reportId: report.id,
-          expenses: data,
-        }
-      );
-
-      setExpenses(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(
-        "Failed to load expenses for Daily Report:",
-        err
-      );
-
-      console.error(
-        "Backend response:",
-        err.response?.data
-      );
-
-      setExpenses([]);
-    }
-  }
+  // --------------------------------------------------
+  // Sync expenses directly from the Daily Report
+  // --------------------------------------------------
 
   useEffect(() => {
-    loadExpenses();
-  }, [report?.id]);
+    if (!report) {
+      setExpenses([]);
+      return;
+    }
+
+    setExpenses(
+      Array.isArray(report.expenses)
+        ? report.expenses
+        : []
+    );
+  }, [report]);
+
+  // --------------------------------------------------
+  // Total
+  // --------------------------------------------------
 
   const total = expenses.reduce(
     (sum, expense) =>
@@ -63,15 +48,21 @@ export default function ExpenseSection({
     0
   );
 
+  // --------------------------------------------------
+  // Delete
+  // --------------------------------------------------
+
   async function handleDelete(id) {
-    if (!window.confirm("Delete this expense?")) {
+    if (
+      !window.confirm(
+        "Delete this expense?"
+      )
+    ) {
       return;
     }
 
     try {
       await expenseService.deleteExpense(id);
-
-      await loadExpenses();
 
       if (refreshReport) {
         await refreshReport();
@@ -89,35 +80,43 @@ export default function ExpenseSection({
     }
   }
 
+  // --------------------------------------------------
+  // Edit
+  // --------------------------------------------------
+
   function handleEdit(expense) {
     setSelectedExpense(expense);
     setShowModal(true);
   }
 
+  // --------------------------------------------------
+  // Save edited expense
+  // --------------------------------------------------
+
   async function handleSave(data) {
     try {
-      if (data.id) {
-        await expenseService.updateExpense(
-          data.id,
-          {
-            expense_type: data.expense_type,
-            amount: Number(data.amount),
-            remarks: data.remarks || null,
-          }
-        );
+      if (!data.id) {
+        return;
       }
+
+      await expenseService.updateExpense(
+        data.id,
+        {
+          expense_type: data.expense_type,
+          amount: Number(data.amount),
+          remarks: data.remarks || null,
+        }
+      );
 
       setShowModal(false);
       setSelectedExpense(null);
-
-      await loadExpenses();
 
       if (refreshReport) {
         await refreshReport();
       }
     } catch (err) {
       console.error(
-        "Failed to save expense:",
+        "Failed to update expense:",
         err
       );
 
@@ -128,134 +127,181 @@ export default function ExpenseSection({
     }
   }
 
-  if (!report) return null;
+  if (!report) {
+    return null;
+  }
 
   return (
     <SectionCard title="Expenses">
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
-            <Wallet
-              size={18}
-              className="text-orange-600"
-            />
+      <div className="space-y-5">
+
+        {/* Header */}
+
+        <div className="flex items-center justify-between">
+
+          <div className="flex items-center gap-3">
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
+              <Wallet
+                size={18}
+                className="text-orange-600"
+              />
+            </div>
+
+            <div>
+              <h3 className="font-semibold">
+                Expenses
+              </h3>
+
+              <p className="text-sm text-gray-500">
+                Expenses for this report.
+              </p>
+            </div>
+
           </div>
 
-          <div>
-            <h3 className="font-semibold">
-              Expenses
-            </h3>
+          <Link
+            to={`/manager-expenses?report=${report.id}`}
+            className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
+          >
+            <Eye size={17} />
+            View Expenses
+          </Link>
 
-            <p className="text-sm text-gray-500">
-              Expenses for this report.
-            </p>
-          </div>
         </div>
 
-        <Link
-          to={`/manager-expenses?report=${report.id}`}
-          className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
-        >
-          <Eye size={17} />
-          View Expenses
-        </Link>
-      </div>
+        {/* Expense Table */}
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-5 py-3 text-left">
-                Expense
-              </th>
+        <div className="overflow-hidden rounded-xl border">
 
-              <th className="px-5 py-3 text-left">
-                Amount
-              </th>
+          <table className="w-full">
 
-              <th className="px-5 py-3 text-left">
-                Added By
-              </th>
+            <thead className="bg-gray-50">
 
-              <th className="px-5 py-3 text-center">
-                Actions
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {expenses.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-5 py-8 text-center text-gray-500"
-                >
-                  No expenses recorded for this report.
-                </td>
+
+                <th className="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                  Expense
+                </th>
+
+                <th className="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                  Amount
+                </th>
+
+                <th className="px-5 py-3 text-left text-sm font-medium text-gray-600">
+                  Added By
+                </th>
+
+                <th className="px-5 py-3 text-center text-sm font-medium text-gray-600">
+                  Actions
+                </th>
+
               </tr>
-            ) : (
-              expenses.map((expense) => (
-                <tr
-                  key={expense.id}
-                  className="border-t"
-                >
-                  <td className="px-5 py-3">
-                    {expense.expense_type || "-"}
+
+            </thead>
+
+            <tbody>
+
+              {expenses.length === 0 ? (
+
+                <tr>
+
+                  <td
+                    colSpan={4}
+                    className="px-5 py-8 text-center text-gray-500"
+                  >
+                    No expenses recorded for this report.
                   </td>
 
-                  <td className="px-5 py-3 font-medium">
-                    ₹
-                    {Number(
-                      expense.amount || 0
-                    ).toLocaleString("en-IN")}
-                  </td>
-
-                  <td className="px-5 py-3">
-                    {expense.created_by_name || "-"}
-                  </td>
-
-                  <td className="px-5 py-3">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleEdit(expense)
-                        }
-                        disabled={report.is_locked}
-                        className="rounded-lg bg-amber-500 p-2 text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Pencil size={16} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(expense.id)
-                        }
-                        disabled={report.is_locked}
-                        className="rounded-lg bg-red-600 p-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
 
-      <div className="mt-5 flex justify-end">
-        <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-3">
-          <p className="text-xs text-orange-700">
-            Total Expenses
-          </p>
+              ) : (
 
-          <h2 className="text-2xl font-bold text-orange-600">
-            ₹{total.toLocaleString("en-IN")}
-          </h2>
+                expenses.map((expense) => (
+
+                  <tr
+                    key={expense.id}
+                    className="border-t"
+                  >
+
+                    <td className="px-5 py-3">
+                      {expense.expense_type || "-"}
+                    </td>
+
+                    <td className="px-5 py-3 font-medium">
+                      ₹
+                      {Number(
+                        expense.amount || 0
+                      ).toLocaleString("en-IN")}
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {expense.created_by_name || "-"}
+                    </td>
+
+                    <td className="px-5 py-3">
+
+                      <div className="flex justify-center gap-2">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleEdit(expense)
+                          }
+                          disabled={report.is_locked}
+                          className="rounded-lg bg-amber-500 p-2 text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Pencil size={16} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              expense.id
+                            )
+                          }
+                          disabled={report.is_locked}
+                          className="rounded-lg bg-red-600 p-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              )}
+
+            </tbody>
+
+          </table>
+
         </div>
+
+        {/* Total */}
+
+        <div className="flex justify-end">
+
+          <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-3">
+
+            <p className="text-xs text-orange-700">
+              Total Expenses
+            </p>
+
+            <h2 className="text-2xl font-bold text-orange-600">
+              ₹
+              {total.toLocaleString("en-IN")}
+            </h2>
+
+          </div>
+
+        </div>
+
       </div>
 
       <AddExpenseModal
@@ -268,6 +314,7 @@ export default function ExpenseSection({
         expense={selectedExpense}
         dailyReportId={report.id}
       />
+
     </SectionCard>
   );
 }

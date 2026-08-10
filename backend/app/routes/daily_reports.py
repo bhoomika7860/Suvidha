@@ -259,6 +259,10 @@ def get_report_by_date(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # --------------------------------------------------
+    # Find report for this store + selected date
+    # --------------------------------------------------
+
     report = (
         db.query(DailyReport)
         .filter(
@@ -268,9 +272,9 @@ def get_report_by_date(
         .first()
     )
 
-    # ----------------------------------------
-    # Create report if it doesn't exist
-    # ----------------------------------------
+    # --------------------------------------------------
+    # Create report if it does not exist
+    # --------------------------------------------------
 
     if report is None:
         report = DailyReport(
@@ -283,46 +287,55 @@ def get_report_by_date(
         db.commit()
         db.refresh(report)
 
-    # ----------------------------------
-# Carry forward pending purchases
-# from previous reports into today
-# ----------------------------------
+    # --------------------------------------------------
+    # Carry forward pending purchases
+    # --------------------------------------------------
 
     pending_purchases = (
-    db.query(Purchase)
-    .filter(
-        Purchase.store_id == current_user["store_id"],
-        Purchase.status != "completed",
-        Purchase.daily_report_id != report.id,
+        db.query(Purchase)
+        .filter(
+            Purchase.store_id == current_user["store_id"],
+            Purchase.status != "completed",
+            Purchase.daily_report_id != report.id,
+        )
+        .all()
     )
-    .all()
-)
 
     for purchase in pending_purchases:
         purchase.daily_report_id = report.id
 
     db.commit()
 
-    # ----------------------------------------
-    # Expenses for THIS report only
-    # ----------------------------------------
+    # --------------------------------------------------
+    # Expenses for THIS report
+    # --------------------------------------------------
 
-    expenses_total = (
+    expenses = (
         db.query(
-            func.coalesce(
-                func.sum(Expense.amount),
-                0,
-            )
+            Expense,
+            User.full_name.label("created_by_name"),
+        )
+        .join(
+            User,
+            Expense.created_by == User.id,
         )
         .filter(
             Expense.daily_report_id == report.id,
         )
-        .scalar()
+        .order_by(
+            Expense.created_at.desc()
+        )
+        .all()
     )
 
-    # ----------------------------------------
-    # Udhaar for THIS report only
-    # ----------------------------------------
+    total_expenses = sum(
+        float(expense.amount or 0)
+        for expense, _ in expenses
+    )
+
+    # --------------------------------------------------
+    # Udhaar for THIS report
+    # --------------------------------------------------
 
     udhaar_total = (
         db.query(
@@ -342,9 +355,11 @@ def get_report_by_date(
         .scalar()
     )
 
-    # ----------------------------------------
-    # Purchases for THIS report only
-    # ----------------------------------------
+    udhaar_total = float(udhaar_total or 0)
+
+    # --------------------------------------------------
+    # Purchases for THIS report
+    # --------------------------------------------------
 
     purchase_total = (
         db.query(
@@ -361,6 +376,45 @@ def get_report_by_date(
         )
         .scalar()
     )
+
+    purchase_total = float(purchase_total or 0)
+
+    # --------------------------------------------------
+    # Total Sales
+    #
+    # Cash + UPI + Card + Udhaar + Expenses
+    # --------------------------------------------------
+
+    total_sales = (
+        float(report.cash_sales or 0)
+        + float(report.upi_sales or 0)
+        + float(report.card_sales or 0)
+        + udhaar_total
+        + total_expenses
+    )
+
+    # --------------------------------------------------
+    # Expense rows
+    # --------------------------------------------------
+
+    expense_items = [
+        {
+            "id": expense.id,
+            "store_id": expense.store_id,
+            "daily_report_id": expense.daily_report_id,
+            "expense_type": expense.expense_type,
+            "amount": expense.amount,
+            "remarks": expense.remarks,
+            "created_by": expense.created_by,
+            "created_by_name": created_by_name,
+            "created_at": expense.created_at,
+        }
+        for expense, created_by_name in expenses
+    ]
+
+    # --------------------------------------------------
+    # Response
+    # --------------------------------------------------
 
     return {
         "exists": True,
@@ -379,13 +433,17 @@ def get_report_by_date(
         "udhaar_sales": udhaar_total,
         "system_sales": report.system_sales,
 
-        "total_expenses": expenses_total,
+        "total_expenses": total_expenses,
         "total_purchases": purchase_total,
+
+        "total_sales": total_sales,
+
+        "expenses": expense_items,
 
         "notes": report.notes,
         "is_locked": report.is_locked,
+        "is_submitted": report.is_submitted,
     }
-
 @router.put("/{report_id}/sales")
 def update_sales(
     report_id: int,
@@ -1058,11 +1116,15 @@ def get_report(
 
         "summary": {
             "sales": (
-                report.cash_sales
-                + report.upi_sales
-                + report.card_sales
-                + udhaar_total
-            ),
+    float(report.cash_sales or 0)
+    + float(report.upi_sales or 0)
+    + float(report.card_sales or 0)
+    + float(udhaar_total or 0)
+    + sum(
+        float(expense.amount or 0)
+        for expense in expenses
+    )
+),
             "bills": report.total_bills,
             "deliveries": report.deliveries,
             "purchases": sum(
