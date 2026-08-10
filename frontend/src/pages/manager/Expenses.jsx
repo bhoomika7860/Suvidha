@@ -9,6 +9,9 @@ import AddExpenseModal from "../../components/expenses/AddExpenseModal";
 import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
+const SELECTED_DATE_KEY =
+  "pharmacore360_selected_report_date";
+
 export default function Expenses() {
   const [search, setSearch] = useState("");
 
@@ -39,16 +42,43 @@ export default function Expenses() {
     try {
       let id = searchParams.get("report");
 
-      // If no report was supplied in the URL,
-      // use today's report.
-      if (!id) {
-        const report =
-          await dailyReportsService.getTodayReport();
+      // --------------------------------------------------
+      // If opened from "View Expenses" inside a
+      // Daily Report, ALWAYS use that report.
+      // --------------------------------------------------
 
-        id = report.id;
+      if (id) {
+        id = Number(id);
       }
 
-      id = Number(id);
+      // --------------------------------------------------
+      // If opened directly from sidebar, use the
+      // currently selected Daily Report date.
+      // --------------------------------------------------
+
+      if (!id) {
+        const savedDate =
+          localStorage.getItem(
+            SELECTED_DATE_KEY
+          );
+
+        let reportDate = savedDate;
+
+        // Fallback only if no date has ever been selected.
+        if (!reportDate) {
+          reportDate =
+            new Date()
+              .toISOString()
+              .split("T")[0];
+        }
+
+        const report =
+          await dailyReportsService.getOrCreateReport(
+            reportDate
+          );
+
+        id = Number(report.id);
+      }
 
       setReportId(id);
 
@@ -60,12 +90,12 @@ export default function Expenses() {
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
+      console.error(
         "Backend response:",
         err.response?.data
       );
@@ -73,10 +103,10 @@ export default function Expenses() {
   }
 
   // --------------------------------------------------
-  // Load expenses for selected report
+  // Load expenses for report
   // --------------------------------------------------
 
-  async function loadExpenses(id = reportId) {
+  async function loadExpenses(id) {
     if (!id) return;
 
     try {
@@ -85,7 +115,19 @@ export default function Expenses() {
           Number(id)
         );
 
-      setExpenses(data);
+      console.log(
+        "EXPENSE PAGE LOAD",
+        {
+          reportId: id,
+          expenses: data,
+        }
+      );
+
+      setExpenses(
+        Array.isArray(data)
+          ? data
+          : []
+      );
 
     } catch (err) {
       console.error(
@@ -93,15 +135,17 @@ export default function Expenses() {
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
+      console.error(
         "Backend response:",
         err.response?.data
       );
+
+      setExpenses([]);
     }
   }
 
@@ -112,30 +156,42 @@ export default function Expenses() {
   async function handleSave(expense) {
     if (!reportId) {
       console.error(
-        "Cannot save expense: report ID is missing."
+        "Cannot save expense: report ID missing."
       );
       return;
     }
 
     try {
       if (expense.id) {
-        // Update existing expense.
-        // daily_report_id is included because
-        // the backend ExpenseCreate schema requires it.
+
         await expenseService.updateExpense(
           expense.id,
           {
-            ...expense,
-            daily_report_id: Number(reportId),
+            expense_type:
+              expense.expense_type,
+
+            amount:
+              Number(expense.amount),
+
+            remarks:
+              expense.remarks || null,
           }
         );
 
       } else {
-        // Create new expense for the
-        // currently selected report.
+
         await expenseService.createExpense({
-          ...expense,
-          daily_report_id: Number(reportId),
+          expense_type:
+            expense.expense_type,
+
+          amount:
+            Number(expense.amount),
+
+          remarks:
+            expense.remarks || null,
+
+          daily_report_id:
+            Number(reportId),
         });
       }
 
@@ -150,20 +206,25 @@ export default function Expenses() {
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
+      console.error(
         "Backend response:",
         err.response?.data
+      );
+
+      alert(
+        err.response?.data?.detail ||
+          "Failed to save expense."
       );
     }
   }
 
   // --------------------------------------------------
-  // Delete expense
+  // Delete
   // --------------------------------------------------
 
   async function handleDelete(id) {
@@ -186,20 +247,15 @@ export default function Expenses() {
         err
       );
 
-      console.log(
-        "Status:",
-        err.response?.status
-      );
-
-      console.log(
-        "Backend response:",
-        err.response?.data
+      alert(
+        err.response?.data?.detail ||
+          "Failed to delete expense."
       );
     }
   }
 
   // --------------------------------------------------
-  // Edit expense
+  // Edit
   // --------------------------------------------------
 
   function handleEdit(expense) {
@@ -220,18 +276,16 @@ export default function Expenses() {
       const createdBy =
         expense.created_by_name || "";
 
+      const searchValue =
+        search.toLowerCase();
+
       return (
         expenseType
           .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          ) ||
-
+          .includes(searchValue) ||
         createdBy
           .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
+          .includes(searchValue)
       );
     });
 
@@ -243,7 +297,6 @@ export default function Expenses() {
     <div className="space-y-6">
 
       <div>
-
         <h1 className="text-3xl font-bold">
           Expenses
         </h1>
@@ -251,7 +304,6 @@ export default function Expenses() {
         <p className="mt-1 text-gray-500">
           Manage daily store expenses.
         </p>
-
       </div>
 
       <ExpenseStats
@@ -275,16 +327,12 @@ export default function Expenses() {
 
       <AddExpenseModal
         isOpen={showModal}
-
         onClose={() => {
           setShowModal(false);
           setSelectedExpense(null);
         }}
-
         onSave={handleSave}
-
         expense={selectedExpense}
-
         dailyReportId={reportId}
       />
 
