@@ -1,53 +1,65 @@
 import api from "../api/api";
 
 const udhaarService = {
-  async getUdhaar(reportId = null) {
-  const res = await api.get("/udhaar/", {
-    params: reportId
-      ? {
-          report_id: reportId,
-        }
-      : {},
-  });
+  // Get Udhaar entries.
+  // If reportId is provided, only return entries
+  // belonging to that daily report.
+  getUdhaar: async (reportId = null) => {
+    const response = await api.get("/udhaar/", {
+      params: reportId
+        ? {
+            report_id: reportId,
+          }
+        : {},
+    });
 
-  return res.data;
-},
-
-  async getOutstanding() {
-    const res = await api.get("/udhaar/outstanding");
-    return res.data;
+    return response.data;
   },
 
-  async createUdhaar(dailyReportId, entries) {
-  const res = await api.post("/udhaar/", {
-    daily_report_id: dailyReportId,
-    entries,
-  });
+  // Get outstanding Udhaar.
+  // If reportId is provided, calculate outstanding
+  // only for that daily report.
+  getOutstanding: async (reportId = null) => {
+    const response = await api.get(
+      "/udhaar/outstanding",
+      {
+        params: reportId
+          ? {
+              report_id: reportId,
+            }
+          : {},
+      }
+    );
 
-  return res.data;
-},
+    return response.data;
+  },
 
-async getOutstanding(reportId = null) {
-  const res = await api.get("/udhaar/outstanding", {
-    params: reportId
-      ? {
-          report_id: reportId,
-        }
-      : {},
-  });
+  // Create Udhaar entries for a specific daily report.
+  createUdhaar: async (
+    dailyReportId,
+    entries
+  ) => {
+    const response = await api.post(
+      "/udhaar/",
+      {
+        daily_report_id: dailyReportId,
+        entries,
+      }
+    );
 
-  return res.data;
-},
+    return response.data;
+  },
 
-  async repayUdhaar(id, amount) {
-    const res = await api.post(
+  // Repay an Udhaar entry.
+  repayUdhaar: async (id, amount) => {
+    const response = await api.post(
       `/udhaar/${id}/repay/`,
       {
         amount,
       }
     );
 
-    return res.data;
+    return response.data;
   },
 };
 

@@ -74,12 +74,12 @@ export default function PurchaseSection({
         </div>
 
         <Link
-          to={`/manager-purchases?report=${report.id}`}
-          className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
-        >
-          <Eye size={17} />
-          View Purchases
-        </Link>
+  to={`/manager-purchases?report=${report.id}`}
+  className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
+>
+  <Eye size={17} />
+  View Purchases
+</Link>
 
       </div>
 

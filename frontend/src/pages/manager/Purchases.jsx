@@ -24,62 +24,106 @@ export default function Purchases() {
   const [report, setReport] =
     useState(null);
 
-  const [searchParams] =
-    useSearchParams();
-
-  const reportIdFromUrl =
-    searchParams.get("report");
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    loadData();
-  }, [reportIdFromUrl]);
+    initializePage();
+  }, []);
 
-  async function loadData() {
+  async function initializePage() {
     try {
-      let currentReport;
+      /*
+       * If we came from a specific Daily Report,
+       * use that report.
+       *
+       * Otherwise use today's report.
+       */
+      let reportId = searchParams.get("report");
 
-      if (reportIdFromUrl) {
-        currentReport =
+      if (reportId) {
+        const selectedReport =
           await dailyReportsService.getReport(
-            Number(reportIdFromUrl)
+            Number(reportId)
           );
-      } else {
-        currentReport =
-          await dailyReportsService.getTodayReport();
+
+        setReport(selectedReport);
+
+        await loadPurchases(Number(reportId));
+
+        return;
       }
 
-      setReport(currentReport);
+      /*
+       * Normal Purchases page:
+       * use today's report.
+       */
+      const todayReport =
+        await dailyReportsService.getTodayReport();
 
+      setReport(todayReport);
+
+      await loadPurchases(todayReport.id);
+
+    } catch (err) {
+      console.error(err);
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
+      );
+    }
+  }
+
+  async function loadPurchases(reportId) {
+    try {
       const purchaseData =
         await dailyReportsService.getPurchases(
-          currentReport.id
+          reportId
         );
 
       setPurchases(purchaseData);
 
     } catch (err) {
-      console.error(
-        "Failed to load purchases:",
-        err
+      console.error(err);
+
+      console.log(
+        "Status:",
+        err.response?.status
+      );
+
+      console.log(
+        "Backend response:",
+        err.response?.data
       );
     }
   }
 
   async function addPurchase(purchase) {
-    if (!report?.id) {
-      console.error(
-        "Cannot create purchase without report ID."
-      );
-      return;
-    }
-
     try {
+      if (!report) {
+        console.error(
+          "No daily report selected."
+        );
+        return;
+      }
+
       await purchaseService.createPurchase({
         ...purchase,
+
+        /*
+         * IMPORTANT:
+         * This is the selected report,
+         * not automatically today's report.
+         */
         daily_report_id: report.id,
       });
 
-      await loadData();
+      await loadPurchases(report.id);
 
       setShowReceiveModal(false);
 
@@ -100,7 +144,6 @@ export default function Purchases() {
 
   const filteredPurchases =
     purchases.filter((purchase) => {
-
       const matchesSearch =
         (purchase.supplier_name || "")
           .toLowerCase()
@@ -123,7 +166,6 @@ export default function Purchases() {
     <div>
 
       <div>
-
         <h1 className="text-3xl font-bold">
           Purchase Workflow
         </h1>
@@ -131,7 +173,6 @@ export default function Purchases() {
         <p className="mt-1 text-gray-500">
           Manage supplier purchase bills.
         </p>
-
       </div>
 
       <PurchaseStats
@@ -157,10 +198,13 @@ export default function Purchases() {
       {report && (
         <ReceiveBillModal
           isOpen={showReceiveModal}
+
           onClose={() =>
             setShowReceiveModal(false)
           }
+
           onSave={addPurchase}
+
           reportId={report.id}
         />
       )}

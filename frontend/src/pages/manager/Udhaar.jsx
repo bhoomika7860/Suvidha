@@ -98,53 +98,89 @@ export default function Udhaar() {
   // Load Udhaar for selected report
   // --------------------------------------------------
 
-  async function loadUdhaar(id = reportId) {
-    if (!id) return;
+  async function loadPage() {
+  try {
+    setLoading(true);
 
-    try {
-      const data =
-        await udhaarService.getUdhaar(
-          Number(id)
-        );
+    let selectedReportId = null;
 
-      console.log(
-        "UDHAAR DATA:",
-        data
-      );
+    /*
+     * Owners don't use the manager
+     * historical-report workflow.
+     */
+    if (!isOwner) {
+      let id = searchParams.get("report");
 
-      setEntries(data);
+      /*
+       * Previous report selected.
+       */
+      if (id) {
+        const report =
+          await dailyReportsService.getReport(
+            Number(id)
+          );
 
-    } catch (err) {
-      console.error(
-        "Failed to load Udhaar:",
-        err
-      );
+        selectedReportId = report.id;
+      } else {
+        /*
+         * Normal Udhaar page:
+         * use today's report.
+         */
+        const report =
+          await dailyReportsService.getTodayReport();
 
-      console.log(
-        "Status:",
-        err.response?.status
-      );
+        selectedReportId = report.id;
+      }
 
-      console.log(
-        "Headers:",
-        err.response?.headers
-      );
-
-      console.log(
-        "Backend Response:"
-      );
-
-      console.log(
-        JSON.stringify(
-          err.response?.data,
-          null,
-          2
-        )
-      );
-
-      setEntries([]);
+      setReportId(selectedReportId);
     }
+
+    /*
+     * IMPORTANT:
+     * Use the local selectedReportId here,
+     * not reportId state.
+     */
+    const data =
+      await udhaarService.getUdhaar(
+        isOwner ? null : selectedReportId
+      );
+
+    console.log(
+      "UDHAAR DATA:",
+      data
+    );
+
+    setEntries(data);
+
+  } catch (err) {
+    console.error(err);
+
+    console.log(
+      "Status:",
+      err.response?.status
+    );
+
+    console.log(
+      "Headers:",
+      err.response?.headers
+    );
+
+    console.log(
+      "Backend Response:"
+    );
+
+    console.log(
+      JSON.stringify(
+        err.response?.data,
+        null,
+        2
+      )
+    );
+
+  } finally {
+    setLoading(false);
   }
+}
 
   // --------------------------------------------------
   // Add Udhaar
