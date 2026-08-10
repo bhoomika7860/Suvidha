@@ -22,41 +22,65 @@ export default function ExpenseSection({
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
-  // --------------------------------------------------
-  // Load expenses for this report
-  // --------------------------------------------------
-
   async function loadExpenses() {
-    if (!report?.id) return;
+    if (!report?.id) {
+      console.log(
+        "EXPENSE SECTION: NO REPORT ID"
+      );
+      return;
+    }
+
+    console.log(
+      "================================"
+    );
+    console.log(
+      "EXPENSE SECTION REPORT ID:",
+      report.id
+    );
+    console.log(
+      "REPORT OBJECT:",
+      report
+    );
 
     try {
       const data =
         await expenseService.getExpenses(
-          report.id
+          Number(report.id)
         );
 
       console.log(
-        "EXPENSES FOR REPORT:",
-        report.id,
+        "EXPENSE API RESULT:",
         data
       );
 
-      setExpenses(data);
+      console.log(
+        "EXPENSE COUNT:",
+        data?.length
+      );
+
+      setExpenses(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
     } catch (err) {
       console.error(
-        "Failed to load expenses:",
+        "EXPENSE SECTION API ERROR:",
         err
       );
 
       console.log(
-        "Status:",
+        "STATUS:",
         err.response?.status
       );
 
       console.log(
-        "Backend response:",
+        "BACKEND RESPONSE:",
         err.response?.data
       );
+
+      setExpenses([]);
     }
   }
 
@@ -64,19 +88,11 @@ export default function ExpenseSection({
     loadExpenses();
   }, [report?.id]);
 
-  // --------------------------------------------------
-  // Calculate total expenses
-  // --------------------------------------------------
-
   const total = expenses.reduce(
     (sum, item) =>
       sum + Number(item.amount || 0),
     0
   );
-
-  // --------------------------------------------------
-  // Delete expense
-  // --------------------------------------------------
 
   async function handleDelete(id) {
     if (
@@ -92,41 +108,24 @@ export default function ExpenseSection({
 
       await loadExpenses();
       await refreshReport();
+
     } catch (err) {
       console.error(
         "Failed to delete expense:",
         err
       );
-
-      console.log(
-        "Status:",
-        err.response?.status
-      );
-
-      console.log(
-        "Backend response:",
-        err.response?.data
-      );
     }
   }
-
-  // --------------------------------------------------
-  // Edit expense
-  // --------------------------------------------------
 
   function handleEdit(expense) {
     setSelectedExpense(expense);
     setShowModal(true);
   }
 
-  // --------------------------------------------------
-  // Save edited expense
-  // --------------------------------------------------
-
   async function handleSave(data) {
     if (!report?.id) {
       console.error(
-        "Cannot save expense: report ID is missing."
+        "Cannot save expense: report ID missing."
       );
       return;
     }
@@ -137,7 +136,7 @@ export default function ExpenseSection({
           data.id,
           {
             ...data,
-            daily_report_id: report.id,
+            daily_report_id: Number(report.id),
           }
         );
       }
@@ -153,22 +152,8 @@ export default function ExpenseSection({
         "Failed to save expense:",
         err
       );
-
-      console.log(
-        "Status:",
-        err.response?.status
-      );
-
-      console.log(
-        "Backend response:",
-        err.response?.data
-      );
     }
   }
-
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
 
   return (
     <SectionCard title="Expenses">
@@ -185,7 +170,6 @@ export default function ExpenseSection({
           </div>
 
           <div>
-
             <h3 className="font-semibold">
               Expenses
             </h3>
@@ -193,7 +177,6 @@ export default function ExpenseSection({
             <p className="text-sm text-gray-500">
               Expenses for this report.
             </p>
-
           </div>
 
         </div>
@@ -213,7 +196,6 @@ export default function ExpenseSection({
         <table className="w-full">
 
           <thead className="bg-gray-50">
-
             <tr>
 
               <th className="px-5 py-3 text-left">
@@ -233,7 +215,6 @@ export default function ExpenseSection({
               </th>
 
             </tr>
-
           </thead>
 
           <tbody>
@@ -337,7 +318,7 @@ export default function ExpenseSection({
         }}
         onSave={handleSave}
         expense={selectedExpense}
-        dailyReportId={report.id}
+        dailyReportId={report?.id}
       />
 
     </SectionCard>
