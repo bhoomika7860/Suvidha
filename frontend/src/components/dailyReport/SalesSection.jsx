@@ -17,6 +17,18 @@ import udhaarService from "../../services/udhaarService";
 
 const OPENING_CASH = 20000;
 
+const EMPTY_CASH = {
+  note_500: "",
+  note_200: "",
+  note_100: "",
+  note_50: "",
+  note_20: "",
+  note_10: "",
+  coin_5: "",
+  coin_2: "",
+  coin_1: "",
+};
+
 export default function SalesSection({
   report,
   refreshReport,
@@ -34,17 +46,9 @@ export default function SalesSection({
   const [machineEntries, setMachineEntries] =
     useState([]);
 
-  const [cash, setCash] = useState({
-    note_500: "",
-    note_200: "",
-    note_100: "",
-    note_50: "",
-    note_20: "",
-    note_10: "",
-    coin_5: "",
-    coin_2: "",
-    coin_1: "",
-  });
+  const [cash, setCash] = useState(
+    EMPTY_CASH
+  );
 
   const denominationRefs = useRef([]);
 
@@ -60,186 +64,147 @@ export default function SalesSection({
   );
 
   useEffect(() => {
-  if (!report?.id) return;
+    if (!report?.id) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  async function loadSection() {
-    try {
-      // Reset cash immediately when switching reports.
-      // This prevents the previous date's values from carrying over.
-      setCash({
-        note_500: "",
-        note_200: "",
-        note_100: "",
-        note_50: "",
-        note_20: "",
-        note_10: "",
-        coin_5: "",
-        coin_2: "",
-        coin_1: "",
-      });
+    async function loadSection() {
+      try {
+        setCash(EMPTY_CASH);
+        setMachineEntries([]);
 
-      setMachineEntries([]);
+        const outstanding =
+          await udhaarService.getOutstanding(
+            report.id
+          );
 
-      const outstanding =
-        await udhaarService.getOutstanding(
-          report.id
-        );
+        if (cancelled) return;
 
-      if (cancelled) return;
-
-      setForm({
-        total_bills:
-          report.total_bills !== null &&
-          report.total_bills !== undefined
-            ? String(report.total_bills)
-            : "",
-
-        cash_sales:
-          report.cash_sales !== null &&
-          report.cash_sales !== undefined
-            ? String(report.cash_sales)
-            : "",
-
-        upi_sales:
-          report.upi_sales !== null &&
-          report.upi_sales !== undefined
-            ? String(report.upi_sales)
-            : "",
-
-        card_sales:
-          report.card_sales !== null &&
-          report.card_sales !== undefined
-            ? String(report.card_sales)
-            : "",
-
-        total_expenses:
-          report.total_expenses !== null &&
-          report.total_expenses !== undefined
-            ? String(report.total_expenses)
-            : "",
-
-        udhaar_sales:
-          outstanding?.outstanding !== null &&
-          outstanding?.outstanding !== undefined
-            ? String(outstanding.outstanding)
-            : "",
-
-        system_sales:
-          report.system_sales !== null &&
-          report.system_sales !== undefined
-            ? String(report.system_sales)
-            : "",
-      });
-
-      // -------------------------------
-      // CASH DENOMINATIONS
-      // -------------------------------
-
-      const savedCash =
-        await cashDenominationService.get(
-          report.id
-        );
-
-      if (cancelled) return;
-
-      if (savedCash) {
-        setCash({
-          note_500:
-            savedCash.note_500 !== null &&
-            savedCash.note_500 !== undefined
-              ? String(savedCash.note_500)
+        setForm({
+          total_bills:
+            report.total_bills != null
+              ? String(report.total_bills)
               : "",
 
-          note_200:
-            savedCash.note_200 !== null &&
-            savedCash.note_200 !== undefined
-              ? String(savedCash.note_200)
+          cash_sales:
+            report.cash_sales != null
+              ? String(report.cash_sales)
               : "",
 
-          note_100:
-            savedCash.note_100 !== null &&
-            savedCash.note_100 !== undefined
-              ? String(savedCash.note_100)
+          upi_sales:
+            report.upi_sales != null
+              ? String(report.upi_sales)
               : "",
 
-          note_50:
-            savedCash.note_50 !== null &&
-            savedCash.note_50 !== undefined
-              ? String(savedCash.note_50)
+          card_sales:
+            report.card_sales != null
+              ? String(report.card_sales)
               : "",
 
-          note_20:
-            savedCash.note_20 !== null &&
-            savedCash.note_20 !== undefined
-              ? String(savedCash.note_20)
+          total_expenses:
+            report.total_expenses != null
+              ? String(report.total_expenses)
               : "",
 
-          note_10:
-            savedCash.note_10 !== null &&
-            savedCash.note_10 !== undefined
-              ? String(savedCash.note_10)
+          udhaar_sales:
+            outstanding?.outstanding != null
+              ? String(outstanding.outstanding)
               : "",
 
-          coin_5:
-            savedCash.coin_5 !== null &&
-            savedCash.coin_5 !== undefined
-              ? String(savedCash.coin_5)
-              : "",
-
-          coin_2:
-            savedCash.coin_2 !== null &&
-            savedCash.coin_2 !== undefined
-              ? String(savedCash.coin_2)
-              : "",
-
-          coin_1:
-            savedCash.coin_1 !== null &&
-            savedCash.coin_1 !== undefined
-              ? String(savedCash.coin_1)
+          system_sales:
+            report.system_sales != null
+              ? String(report.system_sales)
               : "",
         });
-      }
 
-      // -------------------------------
-      // PAYMENT MACHINES
-      // -------------------------------
+        const savedCash =
+          await cashDenominationService.get(
+            report.id
+          );
 
-      const machineData =
-        await paymentMachineEntryService.get(
-          report.id
+        if (cancelled) return;
+
+        if (savedCash) {
+          setCash({
+            note_500:
+              savedCash.note_500 != null
+                ? String(savedCash.note_500)
+                : "",
+
+            note_200:
+              savedCash.note_200 != null
+                ? String(savedCash.note_200)
+                : "",
+
+            note_100:
+              savedCash.note_100 != null
+                ? String(savedCash.note_100)
+                : "",
+
+            note_50:
+              savedCash.note_50 != null
+                ? String(savedCash.note_50)
+                : "",
+
+            note_20:
+              savedCash.note_20 != null
+                ? String(savedCash.note_20)
+                : "",
+
+            note_10:
+              savedCash.note_10 != null
+                ? String(savedCash.note_10)
+                : "",
+
+            coin_5:
+              savedCash.coin_5 != null
+                ? String(savedCash.coin_5)
+                : "",
+
+            coin_2:
+              savedCash.coin_2 != null
+                ? String(savedCash.coin_2)
+                : "",
+
+            coin_1:
+              savedCash.coin_1 != null
+                ? String(savedCash.coin_1)
+                : "",
+          });
+        }
+
+        const machineData =
+          await paymentMachineEntryService.get(
+            report.id
+          );
+
+        if (cancelled) return;
+
+        setMachineEntries(
+          machineData.map((machine) => ({
+            machine_id: machine.machine_id,
+            amount:
+              machine.amount != null
+                ? Number(machine.amount)
+                : 0,
+          }))
         );
-
-      if (cancelled) return;
-
-      setMachineEntries(
-        machineData.map((machine) => ({
-          machine_id: machine.machine_id,
-          amount:
-            machine.amount !== null &&
-            machine.amount !== undefined
-              ? Number(machine.amount)
-              : 0,
-        }))
-      );
-
-    } catch (err) {
-      if (!cancelled) {
-        console.error(
-          "Failed to load sales section:",
-          err
-        );
+      } catch (err) {
+        if (!cancelled) {
+          console.error(
+            "Failed to load sales section:",
+            err
+          );
+        }
       }
     }
-  }
 
-  loadSection();
+    loadSection();
 
-  return () => {
-    cancelled = true;
-  };
-}, [report]);
+    return () => {
+      cancelled = true;
+    };
+  }, [report?.id]);
 
   const cashCounted = useMemo(() => {
     return (
@@ -259,19 +224,17 @@ export default function SalesSection({
     cashCounted - OPENING_CASH;
 
   useEffect(() => {
-  setForm((prev) => ({
-    ...prev,
-    cash_sales: String(
-      calculatedCashSales || 0
-    ),
-  }));
-}, [calculatedCashSales]);
+    setForm((prev) => ({
+      ...prev,
+      cash_sales: String(
+        calculatedCashSales || 0
+      ),
+    }));
+  }, [calculatedCashSales]);
 
   /*
-   * IMPORTANT:
-   * Total Sales intentionally includes Expenses.
+   * TOTAL SALES
    *
-   * PharmaCore360 calculation:
    * Cash + UPI/Card + Expenses + Udhaar
    */
   const totalSales = useMemo(() => {
@@ -300,10 +263,6 @@ export default function SalesSection({
     form.system_sales,
   ]);
 
-  /*
-   * Keep number inputs as strings while typing.
-   * This prevents values such as 01864.
-   */
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -313,20 +272,14 @@ export default function SalesSection({
     }));
   }
 
-  function handleCashChange(
-    name,
-    value
-  ) {
+  function handleCashChange(name, value) {
     setCash((prev) => ({
       ...prev,
       [name]: value,
     }));
   }
 
-  function handleCashKeyDown(
-    e,
-    index
-  ) {
+  function handleCashKeyDown(e, index) {
     if (e.key !== "Enter") return;
 
     e.preventDefault();
@@ -356,35 +309,27 @@ export default function SalesSection({
         note_500: Number(
           cash.note_500 || 0
         ),
-
         note_200: Number(
           cash.note_200 || 0
         ),
-
         note_100: Number(
           cash.note_100 || 0
         ),
-
         note_50: Number(
           cash.note_50 || 0
         ),
-
         note_20: Number(
           cash.note_20 || 0
         ),
-
         note_10: Number(
           cash.note_10 || 0
         ),
-
         coin_5: Number(
           cash.coin_5 || 0
         ),
-
         coin_2: Number(
           cash.coin_2 || 0
         ),
-
         coin_1: Number(
           cash.coin_1 || 0
         ),
@@ -393,15 +338,13 @@ export default function SalesSection({
       await dailyReportsService.updateSales(
         report.id,
         {
-          total_bills:
-            Number(
-              form.total_bills || 0
-            ),
+          total_bills: Number(
+            form.total_bills || 0
+          ),
 
-          cash_sales:
-            Number(
-              calculatedCashSales || 0
-            ),
+          cash_sales: Number(
+            calculatedCashSales || 0
+          ),
 
           upi_sales:
             machineEntries.reduce(
@@ -415,15 +358,13 @@ export default function SalesSection({
 
           card_sales: 0,
 
-          udhaar_sales:
-            Number(
-              form.udhaar_sales || 0
-            ),
+          udhaar_sales: Number(
+            form.udhaar_sales || 0
+          ),
 
-          system_sales:
-            Number(
-              form.system_sales || 0
-            ),
+          system_sales: Number(
+            form.system_sales || 0
+          ),
         }
       );
 
@@ -461,34 +402,143 @@ export default function SalesSection({
 
   return (
     <SectionCard title="Sales">
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="space-y-4">
 
-        <div className="mb-6 flex items-center gap-2">
-          <CreditCard
-            size={20}
-            className="text-blue-600"
-          />
+        {/* TOP SUMMARY */}
 
-          <h3 className="text-lg font-semibold text-gray-900">
-            Sales & Billing
-          </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+
+          <div className="rounded-xl border bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">
+              Cash
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ₹
+              {Number(
+                form.cash_sales || 0
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+
+          <div className="rounded-xl border bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">
+              UPI / Card
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ₹
+              {(
+                Number(
+                  form.upi_sales || 0
+                ) +
+                Number(
+                  form.card_sales || 0
+                )
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+
+          <div className="rounded-xl border bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">
+              Expenses
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ₹
+              {Number(
+                form.total_expenses || 0
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+
+          <div className="rounded-xl border bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">
+              Udhaar
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ₹
+              {Number(
+                form.udhaar_sales || 0
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+
         </div>
 
-        {/* Cash Denominations */}
+        {/* BILL COUNT + SYSTEM SALES */}
 
-        <div className="rounded-2xl border border-gray-200 p-5">
-          <h4 className="mb-5 text-lg font-semibold">
-            Cash Denominations
-          </h4>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-xl border p-3">
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Total Bills
+            </label>
+
+            <input
+              name="total_bills"
+              type="number"
+              min="0"
+              value={form.total_bills}
+              onChange={handleChange}
+              className="h-10 w-full rounded-lg border px-3"
+            />
+          </div>
+
+          <div className="rounded-xl border bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">
+              Outstanding Udhaar
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ₹
+              {Number(
+                form.udhaar_sales || 0
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+
+          <div className="rounded-xl border p-3">
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              System Sales
+            </label>
+
+            <input
+              name="system_sales"
+              type="number"
+              min="0"
+              value={form.system_sales}
+              onChange={handleChange}
+              className="h-10 w-full rounded-lg border px-3"
+            />
+          </div>
+
+        </div>
+
+        {/* CASH DENOMINATIONS */}
+
+        <div className="rounded-xl border p-4">
+
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="font-semibold">
+              Cash Denominations
+            </h4>
+
+            <span className="text-sm text-gray-500">
+              Count notes & coins
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+
             {denominations.map(
               ([key, label], index) => (
                 <div
                   key={key}
-                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                  className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
                 >
-                  <span className="font-semibold">
+                  <span className="text-sm font-medium">
                     {label}
                   </span>
 
@@ -513,66 +563,66 @@ export default function SalesSection({
                         index
                       )
                     }
-                    className="h-10 w-20 rounded-lg border text-center"
+                    className="h-8 w-16 rounded-md border bg-white text-center text-sm"
                   />
                 </div>
               )
             )}
+
           </div>
 
-          <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm">
 
-            <div className="flex justify-between">
-              <span>
-                Cash Counted
-              </span>
-
-              <span className="font-semibold">
+            <span>
+              Cash Counted:{" "}
+              <strong>
                 ₹
                 {cashCounted.toLocaleString(
                   "en-IN"
                 )}
-              </span>
-            </div>
+              </strong>
+            </span>
 
-            <div className="mt-2 flex justify-between">
-              <span>
-                Opening Cash
-              </span>
-
-              <span>
+            <span>
+              Opening:{" "}
+              <strong>
                 ₹
                 {OPENING_CASH.toLocaleString(
                   "en-IN"
                 )}
-              </span>
-            </div>
+              </strong>
+            </span>
 
-            <div className="mt-4 flex justify-between border-t border-blue-200 pt-4">
-              <span className="font-semibold">
-                Today's Cash Sales
-              </span>
-
-              <span
-                className={`text-2xl font-bold ${
-                  calculatedCashSales < 0
-                    ? "text-red-600"
-                    : "text-green-600"
-                }`}
-              >
-                ₹
-                {calculatedCashSales.toLocaleString(
-                  "en-IN"
-                )}
-              </span>
-            </div>
+            <span
+              className={
+                calculatedCashSales < 0
+                  ? "font-bold text-red-600"
+                  : "font-bold text-green-600"
+              }
+            >
+              Cash Sales: ₹
+              {calculatedCashSales.toLocaleString(
+                "en-IN"
+              )}
+            </span>
 
           </div>
         </div>
 
-        {/* Digital + Billing */}
+        {/* PAYMENT MACHINES */}
 
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border p-4">
+
+          <div className="mb-3 flex items-center gap-2">
+            <CreditCard
+              size={18}
+              className="text-blue-600"
+            />
+
+            <h4 className="font-semibold">
+              UPI / Card Payments
+            </h4>
+          </div>
 
           <PaymentMachines
             reportId={report.id}
@@ -584,133 +634,75 @@ export default function SalesSection({
             }
           />
 
-          <div className="rounded-2xl border border-gray-200 p-5">
-            <div className="space-y-5">
+        </div>
 
-              <div>
-                <label className="mb-2 block font-medium">
-                  Total Bills
-                </label>
+        {/* TOTAL */}
 
-                <input
-                  name="total_bills"
-                  type="number"
-                  min="0"
-                  value={form.total_bills}
-                  onChange={handleChange}
-                  className="h-12 w-full rounded-xl border px-4"
-                />
-              </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 
-              <div>
-                <label className="mb-2 block font-medium">
-                  Expenses
-                </label>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-xs text-blue-700">
+              Total Sales
+            </p>
 
-                <input
-                  readOnly
-                  value={form.total_expenses}
-                  className="h-12 w-full rounded-xl border bg-gray-100 px-4 font-semibold"
-                />
-              </div>
+            <p className="mt-1 text-2xl font-bold text-blue-600">
+              ₹
+              {totalSales.toLocaleString(
+                "en-IN"
+              )}
+            </p>
 
-              <div>
-                <label className="mb-2 block font-medium">
-                  Outstanding Udhaar
-                </label>
-
-                <input
-                  readOnly
-                  value={form.udhaar_sales}
-                  className="h-12 w-full rounded-xl border bg-gray-100 px-4 font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block font-medium">
-                  System Sales
-                </label>
-
-                <input
-                  name="system_sales"
-                  type="number"
-                  min="0"
-                  value={form.system_sales}
-                  onChange={handleChange}
-                  className="h-12 w-full rounded-xl border px-4"
-                />
-              </div>
-
-            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Cash + UPI/Card + Expenses + Udhaar
+            </p>
           </div>
+
+          <div className="rounded-xl border px-4 py-3">
+            <p className="text-xs text-gray-500">
+              Sales Difference
+            </p>
+
+            <p
+              className={`mt-1 text-2xl font-bold ${
+                balance === 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              ₹
+              {balance.toLocaleString(
+                "en-IN"
+              )}
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Actual Sales − System Sales
+            </p>
+          </div>
+
         </div>
 
-        {/* Total Sales */}
+        {/* SAVE */}
 
-        <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-6">
-          <p className="text-sm text-gray-500">
-            Total Sales Today
-          </p>
+        <div className="flex justify-end">
 
-          <h2 className="mt-2 text-4xl font-bold text-blue-600">
-            ₹
-            {totalSales.toLocaleString(
-              "en-IN"
-            )}
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Cash + UPI/Card + Expenses + Udhaar
-          </p>
-        </div>
-
-        {/* Sales Difference */}
-
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
-
-          <p className="text-sm text-gray-500">
-            Sales Difference
-          </p>
-
-          <h2
-            className={`mt-2 text-4xl font-bold ${
-              balance === 0
-                ? "text-green-600"
-                : "text-red-600"
+          <button
+            onClick={handleSave}
+            disabled={report.is_locked}
+            className={`h-10 rounded-lg px-6 text-sm font-medium text-white ${
+              report.is_locked
+                ? "cursor-not-allowed bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            ₹
-            {balance.toLocaleString(
-              "en-IN"
-            )}
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Actual Sales − System Sales
-          </p>
+            {report.is_locked
+              ? "Report Locked"
+              : "Save Sales"}
+          </button>
 
         </div>
 
       </div>
-
-      <div className="mt-6 flex justify-end">
-
-        <button
-          onClick={handleSave}
-          disabled={report.is_locked}
-          className={`h-11 rounded-xl px-8 font-medium text-white ${
-            report.is_locked
-              ? "cursor-not-allowed bg-gray-400"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {report.is_locked
-            ? "Report Locked"
-            : "Save Sales"}
-        </button>
-
-      </div>
-
     </SectionCard>
   );
 }
