@@ -17,66 +17,35 @@ export default function ExpenseSection({
   refreshReport,
 }) {
   const [expenses, setExpenses] = useState([]);
-
   const [showModal, setShowModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] =
-    useState(null);
+  const [selectedExpense, setSelectedExpense] = useState(null);
 
   async function loadExpenses() {
-    if (!report?.id) {
-      console.log(
-        "EXPENSE SECTION: NO REPORT ID"
-      );
-      return;
-    }
-
-    console.log(
-      "================================"
-    );
-    console.log(
-      "EXPENSE SECTION REPORT ID:",
-      report.id
-    );
-    console.log(
-      "REPORT OBJECT:",
-      report
-    );
+    if (!report?.id) return;
 
     try {
-      const data =
-        await expenseService.getExpenses(
-          Number(report.id)
-        );
-
-      console.log(
-        "EXPENSE API RESULT:",
-        data
+      // Use the SAME endpoint used by the main Expenses page.
+      const data = await expenseService.getExpenses(
+        Number(report.id)
       );
 
       console.log(
-        "EXPENSE COUNT:",
-        data?.length
+        "Daily Report Expense Load:",
+        {
+          reportId: report.id,
+          expenses: data,
+        }
       );
 
-      setExpenses(
-        Array.isArray(data)
-          ? data
-          : []
-      );
-
+      setExpenses(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(
-        "EXPENSE SECTION API ERROR:",
+        "Failed to load expenses for Daily Report:",
         err
       );
 
-      console.log(
-        "STATUS:",
-        err.response?.status
-      );
-
-      console.log(
-        "BACKEND RESPONSE:",
+      console.error(
+        "Backend response:",
         err.response?.data
       );
 
@@ -89,17 +58,13 @@ export default function ExpenseSection({
   }, [report?.id]);
 
   const total = expenses.reduce(
-    (sum, item) =>
-      sum + Number(item.amount || 0),
+    (sum, expense) =>
+      sum + Number(expense.amount || 0),
     0
   );
 
   async function handleDelete(id) {
-    if (
-      !window.confirm(
-        "Delete this expense?"
-      )
-    ) {
+    if (!window.confirm("Delete this expense?")) {
       return;
     }
 
@@ -107,12 +72,19 @@ export default function ExpenseSection({
       await expenseService.deleteExpense(id);
 
       await loadExpenses();
-      await refreshReport();
 
+      if (refreshReport) {
+        await refreshReport();
+      }
     } catch (err) {
       console.error(
         "Failed to delete expense:",
         err
+      );
+
+      alert(
+        err.response?.data?.detail ||
+          "Failed to delete expense."
       );
     }
   }
@@ -123,20 +95,14 @@ export default function ExpenseSection({
   }
 
   async function handleSave(data) {
-    if (!report?.id) {
-      console.error(
-        "Cannot save expense: report ID missing."
-      );
-      return;
-    }
-
     try {
       if (data.id) {
         await expenseService.updateExpense(
           data.id,
           {
-            ...data,
-            daily_report_id: Number(report.id),
+            expense_type: data.expense_type,
+            amount: Number(data.amount),
+            remarks: data.remarks || null,
           }
         );
       }
@@ -145,23 +111,29 @@ export default function ExpenseSection({
       setSelectedExpense(null);
 
       await loadExpenses();
-      await refreshReport();
 
+      if (refreshReport) {
+        await refreshReport();
+      }
     } catch (err) {
       console.error(
         "Failed to save expense:",
         err
       );
+
+      alert(
+        err.response?.data?.detail ||
+          "Failed to update expense."
+      );
     }
   }
 
+  if (!report) return null;
+
   return (
     <SectionCard title="Expenses">
-
       <div className="mb-5 flex items-center justify-between">
-
         <div className="flex items-center gap-3">
-
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
             <Wallet
               size={18}
@@ -178,7 +150,6 @@ export default function ExpenseSection({
               Expenses for this report.
             </p>
           </div>
-
         </div>
 
         <Link
@@ -188,16 +159,12 @@ export default function ExpenseSection({
           <Eye size={17} />
           View Expenses
         </Link>
-
       </div>
 
       <div className="overflow-hidden rounded-xl border">
-
         <table className="w-full">
-
           <thead className="bg-gray-50">
             <tr>
-
               <th className="px-5 py-3 text-left">
                 Expense
               </th>
@@ -213,14 +180,11 @@ export default function ExpenseSection({
               <th className="px-5 py-3 text-center">
                 Actions
               </th>
-
             </tr>
           </thead>
 
           <tbody>
-
             {expenses.length === 0 ? (
-
               <tr>
                 <td
                   colSpan={4}
@@ -229,18 +193,14 @@ export default function ExpenseSection({
                   No expenses recorded for this report.
                 </td>
               </tr>
-
             ) : (
-
               expenses.map((expense) => (
-
                 <tr
                   key={expense.id}
                   className="border-t"
                 >
-
                   <td className="px-5 py-3">
-                    {expense.expense_type}
+                    {expense.expense_type || "-"}
                   </td>
 
                   <td className="px-5 py-3 font-medium">
@@ -255,10 +215,9 @@ export default function ExpenseSection({
                   </td>
 
                   <td className="px-5 py-3">
-
                     <div className="flex justify-center gap-2">
-
                       <button
+                        type="button"
                         onClick={() =>
                           handleEdit(expense)
                         }
@@ -269,6 +228,7 @@ export default function ExpenseSection({
                       </button>
 
                       <button
+                        type="button"
                         onClick={() =>
                           handleDelete(expense.id)
                         }
@@ -277,27 +237,17 @@ export default function ExpenseSection({
                       >
                         <Trash2 size={16} />
                       </button>
-
                     </div>
-
                   </td>
-
                 </tr>
-
               ))
-
             )}
-
           </tbody>
-
         </table>
-
       </div>
 
       <div className="mt-5 flex justify-end">
-
         <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-3">
-
           <p className="text-xs text-orange-700">
             Total Expenses
           </p>
@@ -305,9 +255,7 @@ export default function ExpenseSection({
           <h2 className="text-2xl font-bold text-orange-600">
             ₹{total.toLocaleString("en-IN")}
           </h2>
-
         </div>
-
       </div>
 
       <AddExpenseModal
@@ -318,9 +266,8 @@ export default function ExpenseSection({
         }}
         onSave={handleSave}
         expense={selectedExpense}
-        dailyReportId={report?.id}
+        dailyReportId={report.id}
       />
-
     </SectionCard>
   );
 }

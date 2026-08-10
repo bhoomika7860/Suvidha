@@ -1,43 +1,61 @@
 import api from "../api/api";
 
 const formatReports = (reports) => {
-  return reports.map((r) => ({
-    id: r.id,
+  return reports.map((r) => {
+    const cashSales = Number(r.cash_sales || 0);
+    const upiSales = Number(r.upi_sales || 0);
+    const cardSales = Number(r.card_sales || 0);
+    const udhaarSales = Number(r.udhaar_sales || 0);
+    const expenses = Number(r.total_expenses || 0);
 
-    date: new Date(r.report_date).toLocaleDateString(
-      "en-GB",
-      {
+    return {
+      id: r.id,
+
+      date: new Date(
+        r.report_date
+      ).toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }
-    ),
+      }),
 
-    bills: r.total_bills ?? 0,
+      bills: r.total_bills ?? 0,
 
-    sales:
-      Number(r.cash_sales || 0) +
-      Number(r.upi_sales || 0) +
-      Number(r.card_sales || 0) +
-      Number(r.udhaar_sales || 0),
+      /*
+       * Total Sales
+       *
+       * Cash + UPI + Card + Udhaar + Expenses
+       */
+      sales:
+        cashSales +
+        upiSales +
+        cardSales +
+        udhaarSales +
+        expenses,
 
-    systemSales: Number(r.system_sales || 0),
+      systemSales:
+        Number(r.system_sales || 0),
 
-    expenses: Number(r.total_expenses || 0),
+      expenses,
 
-    purchases: Number(r.total_purchases || 0),
+      purchases:
+        Number(r.total_purchases || 0),
 
-    deliveries: r.deliveries ?? 0,
+      deliveries:
+        r.deliveries ?? 0,
 
-    status:
-      r.is_locked
-        ? "Locked"
-        : "Open",
+      status:
+        r.is_locked
+          ? "Locked"
+          : "Open",
 
-    store: r.store_name || "-",
+      store:
+        r.store_name || "-",
 
-    storeId: r.store_id,
-  }));
+      storeId:
+        r.store_id,
+    };
+  });
 };
 
 const dailyReportsService = {
@@ -54,7 +72,7 @@ const dailyReportsService = {
   },
 
   // --------------------------------------------------
-  // Existing methods
+  // Get All Reports
   // --------------------------------------------------
 
   getAllReports: async () => {
@@ -65,6 +83,10 @@ const dailyReportsService = {
     return response.data;
   },
 
+  // --------------------------------------------------
+  // Get Store Reports
+  // --------------------------------------------------
+
   getStoreReports: async (storeId) => {
     const response = await api.get(
       `/daily-reports/store/${storeId}`
@@ -72,6 +94,10 @@ const dailyReportsService = {
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Get Single Report
+  // --------------------------------------------------
 
   getReport: async (reportId) => {
     const response = await api.get(
@@ -81,6 +107,10 @@ const dailyReportsService = {
     return response.data;
   },
 
+  // --------------------------------------------------
+  // Lock Report
+  // --------------------------------------------------
+
   lockReport: async (reportId) => {
     const response = await api.put(
       `/daily-reports/${reportId}/lock`
@@ -88,6 +118,10 @@ const dailyReportsService = {
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Get Today's Report
+  // --------------------------------------------------
 
   getTodayReport: async () => {
     const response = await api.get(
@@ -97,7 +131,11 @@ const dailyReportsService = {
     return response.data;
   },
 
-  async getReportByDate(reportDate) {
+  // --------------------------------------------------
+  // Get Report By Date
+  // --------------------------------------------------
+
+  getReportByDate: async (reportDate) => {
     const response = await api.get(
       `/daily-reports/date/${reportDate}`
     );
@@ -105,7 +143,11 @@ const dailyReportsService = {
     return response.data;
   },
 
-  async getOrCreateReport(reportDate) {
+  // --------------------------------------------------
+  // Get Or Create Report
+  // --------------------------------------------------
+
+  getOrCreateReport: async (reportDate) => {
     const response = await api.get(
       `/daily-reports/date/${reportDate}`
     );
@@ -113,13 +155,24 @@ const dailyReportsService = {
     return response.data;
   },
 
-  async getCalendarStatus(year, month) {
+  // --------------------------------------------------
+  // Calendar Status
+  // --------------------------------------------------
+
+  getCalendarStatus: async (
+    year,
+    month
+  ) => {
     const response = await api.get(
       `/daily-reports/calendar/${year}/${month}`
     );
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Today's Reports
+  // --------------------------------------------------
 
   getTodayReports: async () => {
     const response = await api.get(
@@ -129,7 +182,14 @@ const dailyReportsService = {
     return response.data;
   },
 
-  updateSales: async (reportId, payload) => {
+  // --------------------------------------------------
+  // Update Sales
+  // --------------------------------------------------
+
+  updateSales: async (
+    reportId,
+    payload
+  ) => {
     const response = await api.put(
       `/daily-reports/${reportId}/sales`,
       payload
@@ -138,7 +198,14 @@ const dailyReportsService = {
     return response.data;
   },
 
-  updateNotes: async (reportId, notes) => {
+  // --------------------------------------------------
+  // Update Notes
+  // --------------------------------------------------
+
+  updateNotes: async (
+    reportId,
+    notes
+  ) => {
     const response = await api.put(
       `/daily-reports/${reportId}/notes`,
       {
@@ -149,6 +216,10 @@ const dailyReportsService = {
     return response.data;
   },
 
+  // --------------------------------------------------
+  // Submit Report
+  // --------------------------------------------------
+
   submitReport: async (reportId) => {
     const response = await api.post(
       `/daily-reports/${reportId}/submit`
@@ -157,13 +228,26 @@ const dailyReportsService = {
     return response.data;
   },
 
+  // --------------------------------------------------
+  // GET EXPENSES FOR DAILY REPORT
+  // --------------------------------------------------
+
   getExpenses: async (reportId) => {
     const response = await api.get(
-      `/daily-reports/${reportId}/expenses`
+      "/expenses/",
+      {
+        params: {
+          report_id: Number(reportId),
+        },
+      }
     );
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Get Purchases For Report
+  // --------------------------------------------------
 
   getPurchases: async (reportId) => {
     const response = await api.get(
@@ -172,6 +256,10 @@ const dailyReportsService = {
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Update Deliveries
+  // --------------------------------------------------
 
   updateDeliveries: async (
     reportId,
@@ -187,6 +275,10 @@ const dailyReportsService = {
     return response.data;
   },
 
+  // --------------------------------------------------
+  // Get Bounced Products
+  // --------------------------------------------------
+
   getBouncedProducts: async (reportId) => {
     const response = await api.get(
       `/daily-reports/${reportId}/bounced-products`
@@ -194,6 +286,10 @@ const dailyReportsService = {
 
     return response.data;
   },
+
+  // --------------------------------------------------
+  // Format Reports
+  // --------------------------------------------------
 
   formatReports,
 };
