@@ -172,7 +172,7 @@ export default function ReportProgress({
               {section.status ? (
                 <CheckCircle2 size={15} />
               ) : (
-                <Circle size={15} />
+                <span className="h-3.5 w-3.5 rounded-full border-2 border-current" />
               )}
 
               {section.title}
