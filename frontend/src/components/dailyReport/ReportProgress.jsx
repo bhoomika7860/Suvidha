@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   CheckCircle2,
-  Circle,
+ 
 } from "lucide-react";
 
 import dailyReportsService from "../../services/dailyReportsService";
