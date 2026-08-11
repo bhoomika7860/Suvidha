@@ -16,9 +16,11 @@ export default function Udhaar() {
 
   const isOwner = user?.role === "owner";
 
-  const [searchParams] = useSearchParams();
+  const [searchParams] =
+    useSearchParams();
 
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] =
+    useState([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -36,151 +38,102 @@ export default function Udhaar() {
     useState(null);
 
   // --------------------------------------------------
-  // Initialize page
+  // Load Udhaar
   // --------------------------------------------------
 
   useEffect(() => {
-  loadPage();
-}, [searchParams]);
+    loadPage();
+  }, [searchParams]);
 
-  async function initializePage() {
+  async function loadPage() {
     try {
       setLoading(true);
 
-      let id =
+      const reportParam =
         searchParams.get("report");
 
-      /*
-       * If the page was opened from a
-       * previous report, use that report.
-       *
-       * Example:
-       * /manager/udhaar?report=20
-       *
-       * Otherwise use today's report.
-       */
+      let selectedReportId = null;
 
-      if (!id) {
+      // --------------------------------------------------
+      // Historical Daily Report
+      // --------------------------------------------------
+
+      if (reportParam) {
+        const report =
+          await dailyReportsService.getReport(
+            Number(reportParam)
+          );
+
+        selectedReportId = report.id;
+      }
+
+      // --------------------------------------------------
+      // Normal manager Udhaar page
+      // --------------------------------------------------
+
+      else if (!isOwner) {
         const report =
           await dailyReportsService.getTodayReport();
 
-        id = report.id;
+        selectedReportId = report.id;
       }
 
-      id = Number(id);
+      setReportId(
+        selectedReportId
+          ? Number(selectedReportId)
+          : null
+      );
 
-      setReportId(id);
+      // --------------------------------------------------
+      // IMPORTANT
+      //
+      // If reportId exists:
+      // backend applies the selected-date logic.
+      //
+      // If reportId does not exist:
+      // backend returns current active Udhaar.
+      // --------------------------------------------------
 
-      await loadUdhaar(id);
+      const data =
+        await udhaarService.getUdhaar(
+          selectedReportId
+            ? Number(selectedReportId)
+            : null
+        );
+
+      console.log(
+        "UDHAAR DATA:",
+        data
+      );
+
+      setEntries(
+        Array.isArray(data)
+          ? data
+          : []
+      );
 
     } catch (err) {
       console.error(
-        "Failed to initialize Udhaar:",
+        "Failed to load Udhaar:",
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
-        "Backend Response:",
+      console.error(
+        "Backend response:",
         err.response?.data
       );
+
+      setEntries([]);
 
     } finally {
       setLoading(false);
     }
   }
-
-  // --------------------------------------------------
-  // Load Udhaar for selected report
-  // --------------------------------------------------
-
-  async function loadPage() {
-  try {
-    setLoading(true);
-
-    let selectedReportId = null;
-
-    /*
-     * Owners don't use the manager
-     * historical-report workflow.
-     */
-    if (!isOwner) {
-      let id = searchParams.get("report");
-
-      /*
-       * Previous report selected.
-       */
-      if (id) {
-        const report =
-          await dailyReportsService.getReport(
-            Number(id)
-          );
-
-        selectedReportId = report.id;
-      } else {
-        /*
-         * Normal Udhaar page:
-         * use today's report.
-         */
-        const report =
-          await dailyReportsService.getTodayReport();
-
-        selectedReportId = report.id;
-      }
-
-      setReportId(selectedReportId);
-    }
-
-    /*
-     * IMPORTANT:
-     * Use the local selectedReportId here,
-     * not reportId state.
-     */
-    const data =
-      await udhaarService.getUdhaar(
-        isOwner ? null : selectedReportId
-      );
-
-    console.log(
-      "UDHAAR DATA:",
-      data
-    );
-
-    setEntries(data);
-
-  } catch (err) {
-    console.error(err);
-
-    console.log(
-      "Status:",
-      err.response?.status
-    );
-
-    console.log(
-      "Headers:",
-      err.response?.headers
-    );
-
-    console.log(
-      "Backend Response:"
-    );
-
-    console.log(
-      JSON.stringify(
-        err.response?.data,
-        null,
-        2
-      )
-    );
-
-  } finally {
-    setLoading(false);
-  }
-}
 
   // --------------------------------------------------
   // Add Udhaar
@@ -210,26 +163,14 @@ export default function Udhaar() {
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
-        "Headers:",
-        err.response?.headers
-      );
-
-      console.log(
-        "Backend Response:"
-      );
-
-      console.log(
-        JSON.stringify(
-          err.response?.data,
-          null,
-          2
-        )
+      console.error(
+        "Backend response:",
+        err.response?.data
       );
     }
   }
@@ -248,6 +189,7 @@ export default function Udhaar() {
       setShowRepay(false);
       setSelected(null);
 
+      // Reload the same selected report.
       await loadPage();
 
     } catch (err) {
@@ -256,33 +198,17 @@ export default function Udhaar() {
         err
       );
 
-      console.log(
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
-        "Headers:",
-        err.response?.headers
-      );
-
-      console.log(
-        "Backend Response:"
-      );
-
-      console.log(
-        JSON.stringify(
-          err.response?.data,
-          null,
-          2
-        )
+      console.error(
+        "Backend response:",
+        err.response?.data
       );
     }
   }
-
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
 
   return (
     <div className="space-y-6">
@@ -292,7 +218,6 @@ export default function Udhaar() {
       <div className="flex items-center justify-between">
 
         <div>
-
           <h1 className="text-3xl font-bold">
             Udhaar
           </h1>
@@ -300,7 +225,6 @@ export default function Udhaar() {
           <p className="mt-1 text-slate-500">
             Manage customer credit.
           </p>
-
         </div>
 
         {!isOwner && (
@@ -348,7 +272,7 @@ export default function Udhaar() {
         />
       )}
 
-      {/* Add Udhaar */}
+      {/* Add */}
 
       {!isOwner && (
         <AddUdhaarModal

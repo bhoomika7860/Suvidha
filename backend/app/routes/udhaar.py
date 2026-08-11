@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.udhaar_entry import UdhaarEntry
 from app.dependencies.auth import get_current_user
 from app.models.daily_report import DailyReport
-from sqlalchemy import func
+from sqlalchemy import func, and_, or_
 from app.schemas.udhaar_entry import (
     BulkUdhaarCreate,
     UdhaarCreate,
@@ -172,9 +172,7 @@ def get_all_udhaar(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    query = db.query(UdhaarEntry).filter(
-        UdhaarEntry.status != "settled"
-    )
+    query = db.query(UdhaarEntry)
 
     # --------------------------------------------------
     # Store isolation
@@ -186,17 +184,69 @@ def get_all_udhaar(
         )
 
     # --------------------------------------------------
-    # Filter by daily report
+    # Report-specific Udhaar
     # --------------------------------------------------
 
     if report_id is not None:
-        query = query.filter(
-            UdhaarEntry.daily_report_id == report_id
+
+        report = (
+            db.query(DailyReport)
+            .filter(
+                DailyReport.id == report_id
+            )
+            .first()
         )
 
-    return query.order_by(
-        UdhaarEntry.id.desc()
-    ).all()
+        if not report:
+            raise HTTPException(
+                status_code=404,
+                detail="Daily report not found",
+            )
+
+        selected_date = report.report_date
+
+        query = query.filter(
+            and_(
+                # Never show future Udhaar
+                UdhaarEntry.date_given <= selected_date,
+
+                # Show:
+                # 1. Udhaar created on selected date
+                # OR
+                # 2. Older Udhaar that is still pending
+                or_(
+                    UdhaarEntry.date_given == selected_date,
+
+                    and_(
+                        UdhaarEntry.date_given < selected_date,
+                        UdhaarEntry.status != "settled",
+                    ),
+                ),
+            )
+        )
+
+    else:
+
+        # --------------------------------------------------
+        # Normal Udhaar page
+        # --------------------------------------------------
+        # Show currently active Udhaar only.
+        # This includes today's entries and
+        # pending entries from previous days.
+        # --------------------------------------------------
+
+        query = query.filter(
+            UdhaarEntry.status != "settled"
+        )
+
+    return (
+        query
+        .order_by(
+            UdhaarEntry.date_given.asc(),
+            UdhaarEntry.id.asc(),
+        )
+        .all()
+    )
 
 @router.get("/outstanding")
 def get_outstanding_udhaar(
