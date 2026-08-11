@@ -13,7 +13,7 @@ import PaymentMachines from "./PaymentMachines";
 import dailyReportsService from "../../services/dailyReportsService";
 import cashDenominationService from "../../services/cashDenominationService";
 import paymentMachineEntryService from "../../services/paymentMachineEntryService";
-import udhaarService from "../../services/udhaarService";
+
 
 const OPENING_CASH = 20000;
 
@@ -73,49 +73,47 @@ export default function SalesSection({
         setCash(EMPTY_CASH);
         setMachineEntries([]);
 
-        const outstanding =
-          await udhaarService.getOutstanding(
-            report.id
-          );
-
         if (cancelled) return;
 
-        setForm({
-          total_bills:
-            report.total_bills != null
-              ? String(report.total_bills)
-              : "",
+setForm({
+  total_bills:
+    report.total_bills != null
+      ? String(report.total_bills)
+      : "",
 
-          cash_sales:
-            report.cash_sales != null
-              ? String(report.cash_sales)
-              : "",
+  cash_sales:
+    report.cash_sales != null
+      ? String(report.cash_sales)
+      : "",
 
-          upi_sales:
-            report.upi_sales != null
-              ? String(report.upi_sales)
-              : "",
+  upi_sales:
+    report.upi_sales != null
+      ? String(report.upi_sales)
+      : "",
 
-          card_sales:
-            report.card_sales != null
-              ? String(report.card_sales)
-              : "",
+  card_sales:
+    report.card_sales != null
+      ? String(report.card_sales)
+      : "",
 
-          total_expenses:
-            report.total_expenses != null
-              ? String(report.total_expenses)
-              : "",
+  total_expenses:
+    report.total_expenses != null
+      ? String(report.total_expenses)
+      : "",
 
-          udhaar_sales:
-            outstanding?.outstanding != null
-              ? String(outstanding.outstanding)
-              : "",
+  // IMPORTANT:
+  // Use the Udhaar value calculated by
+  // the Daily Report backend.
+  udhaar_sales:
+    report.udhaar_sales != null
+      ? String(report.udhaar_sales)
+      : "0",
 
-          system_sales:
-            report.system_sales != null
-              ? String(report.system_sales)
-              : "",
-        });
+  system_sales:
+    report.system_sales != null
+      ? String(report.system_sales)
+      : "",
+});
 
         const savedCash =
           await cashDenominationService.get(
