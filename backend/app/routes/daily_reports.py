@@ -33,6 +33,43 @@ router = APIRouter(
 def ist_today():
     return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
+def get_udhaar_for_report_date(
+    db: Session,
+    store_id: int,
+    report_date: date,
+):
+    """
+    Returns Udhaar that should be visible for a selected report date.
+
+    Rules:
+
+    1. All Udhaar created on the selected date.
+    2. Only unsettled Udhaar from dates before the selected date.
+    3. Never include Udhaar from future dates.
+    """
+
+    return (
+        db.query(UdhaarEntry)
+        .join(
+            DailyReport,
+            UdhaarEntry.daily_report_id == DailyReport.id,
+        )
+        .filter(
+            UdhaarEntry.store_id == store_id,
+            DailyReport.report_date <= report_date,
+            (
+                (DailyReport.report_date == report_date)
+                |
+                (
+                    (DailyReport.report_date < report_date)
+                    &
+                    (UdhaarEntry.status != "settled")
+                )
+            ),
+        )
+        .all()
+    )
+
 # Create daily report
 @router.post("/")
 def create_daily_report(
@@ -198,22 +235,21 @@ def get_today_report(
         .scalar()
     )
 
-    udhaar_total = (
-        db.query(
-            func.coalesce(
-                func.sum(
-                    UdhaarEntry.amount
-                    - UdhaarEntry.paid_amount
-                ),
-                0,
-            )
-        )
-        .filter(
-            UdhaarEntry.daily_report_id == report.id,
-            UdhaarEntry.status != "settled",
-        )
-        .scalar()
-    )
+    # ----------------------------------
+# Udhaar visible for today's report
+# ----------------------------------
+
+    report_udhaar_entries = get_udhaar_for_report_date(
+    db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
+)
+
+    udhaar_total = sum(
+    float(entry.amount or 0) - float(entry.paid_amount or 0)
+    for entry in report_udhaar_entries
+    if entry.status != "settled"
+)
 
     purchase_total = (
         db.query(
@@ -334,26 +370,20 @@ def get_report_by_date(
     )
 
     # --------------------------------------------------
-    # Udhaar for THIS report
-    # --------------------------------------------------
+# Udhaar visible for THIS report date
+# --------------------------------------------------
 
-    udhaar_total = (
-        db.query(
-            func.coalesce(
-                func.sum(
-                    UdhaarEntry.amount
-                    - UdhaarEntry.paid_amount
-                ),
-                0,
-            )
-        )
-        .filter(
-            UdhaarEntry.store_id == report.store_id,
-            UdhaarEntry.daily_report_id == report.id,
-            UdhaarEntry.status != "settled",
-        )
-        .scalar()
-    )
+    report_udhaar_entries = get_udhaar_for_report_date(
+        db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
+)
+
+    udhaar_total = sum(
+    float(entry.amount or 0) - float(entry.paid_amount or 0)
+    for entry in report_udhaar_entries
+    if entry.status != "settled"
+)
 
     udhaar_total = float(udhaar_total or 0)
 
@@ -820,23 +850,18 @@ def get_today_reports(
             .scalar()
         )
 
-        udhaar_total = (
-    db.query(
-        func.coalesce(
-            func.sum(
-                UdhaarEntry.amount - UdhaarEntry.paid_amount
-            ),
-            0,
-        )
-    )
-    .filter(
-        UdhaarEntry.store_id == report.store_id,
-        UdhaarEntry.daily_report_id == report.id,
-        UdhaarEntry.status != "settled",
-    )
-    .scalar()
+        report_udhaar_entries = get_udhaar_for_report_date(
+    db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
 )
-        purchase_total = (
+
+    udhaar_total = sum(
+    float(entry.amount or 0) - float(entry.paid_amount or 0)
+    for entry in report_udhaar_entries
+    if entry.status != "settled"
+)
+    purchase_total = (
     db.query(
         func.coalesce(
             func.sum(Purchase.purchase_amount),
@@ -849,7 +874,7 @@ def get_today_reports(
     )
     .scalar()
 )
-        response.append(
+    response.append(
             {
                 "id": report.id,
                 "store_id": report.store_id,
@@ -1041,21 +1066,20 @@ def get_report(
     .all()
 )
 
-    udhaar_total = (
-    db.query(
-        func.coalesce(
-            func.sum(
-                UdhaarEntry.amount - UdhaarEntry.paid_amount
-            ),
-            0,
-        )
-    )
-    .filter(
-        UdhaarEntry.store_id == report.store_id,
-        UdhaarEntry.daily_report_id == report.id,
-        UdhaarEntry.status != "settled",
-    )
-    .scalar()
+    # --------------------------------------------------
+# Udhaar visible for THIS report date
+# --------------------------------------------------
+
+    report_udhaar_entries = get_udhaar_for_report_date(
+    db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
+)
+
+    udhaar_total = sum(
+    float(entry.amount or 0) - float(entry.paid_amount or 0)
+    for entry in report_udhaar_entries
+    if entry.status != "settled"
 )
     
     purchases = (
