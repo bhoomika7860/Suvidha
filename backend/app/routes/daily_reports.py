@@ -7,7 +7,8 @@ from app.schemas.daily_report import DailyReportCreate
 from app.dependencies.auth import get_current_user
 from app.utils.audit import create_audit_log
 from sqlalchemy.orm import joinedload
-
+from datetime import datetime, timedelta
+from sqlalchemy import or_, and_
 from app.models.expense import Expense
 from app.models.delivery_assignment import DeliveryAssignment
 from app.models.user import User
@@ -592,6 +593,30 @@ def get_report_purchases(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Return purchases visible for a specific business-date report.
+
+    Rules:
+
+    1. Purchases directly belonging to this report are ALWAYS visible.
+       The daily_report_id is the source of truth for these purchases.
+
+    2. Older purchases that are still pending are carried forward.
+
+    3. Future purchases are never carried forward.
+
+    4. Older completed purchases are not carried forward.
+
+    5. We NEVER modify daily_report_id while displaying carried-forward
+       purchases.
+
+    6. Store managers can only see purchases belonging to their own store.
+    """
+
+    # --------------------------------------------------
+    # Get selected report
+    # --------------------------------------------------
+
     report = (
         db.query(DailyReport)
         .filter(
@@ -621,16 +646,6 @@ def get_report_purchases(
 
     # --------------------------------------------------
     # Business-date boundaries
-    #
-    # Example:
-    # selected date = 2026-08-05
-    #
-    # Anything received:
-    # 2026-08-05 00:00
-    # through
-    # 2026-08-05 23:59:59
-    #
-    # belongs to 5th August.
     # --------------------------------------------------
 
     selected_date_start = datetime.combine(
@@ -640,34 +655,29 @@ def get_report_purchases(
         tzinfo=ZoneInfo("Asia/Kolkata")
     )
 
-    next_date_start = datetime.combine(
-        report.report_date,
-        datetime.min.time(),
-    ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
-    )
-
-    from datetime import timedelta
-
     next_date_start = (
-        next_date_start + timedelta(days=1)
+        selected_date_start + timedelta(days=1)
     )
 
     # --------------------------------------------------
-    # Purchase visibility rules
+    # Purchase visibility
     #
-    # 1. Purchases belonging to THIS report
-    #    are visible.
+    # A purchase is visible when:
     #
-    # 2. Older purchases that are still pending
-    #    are carried forward visually.
+    # A. It belongs directly to this report
     #
-    # 3. Future purchases are NEVER visible.
+    # OR
     #
-    # 4. Completed older purchases are NOT carried
-    #    forward.
+    # B. It was received before this business date
+    #    and is still pending.
     #
-    # 5. We NEVER modify daily_report_id here.
+    # IMPORTANT:
+    #
+    # Direct report purchases are NOT filtered by
+    # received_date.
+    #
+    # This protects historical purchases that were
+    # created before the business-date system was fixed.
     # --------------------------------------------------
 
     purchases = (
@@ -675,22 +685,20 @@ def get_report_purchases(
         .filter(
             Purchase.store_id == report.store_id,
 
-            (
-                # Purchases belonging to selected report
-                Purchase.daily_report_id == report.id
+            or_(
+                # --------------------------------------
+                # A. Purchase belongs directly to report
+                # --------------------------------------
+                Purchase.daily_report_id == report.id,
 
-                |
-
-                # Older pending purchases
-                (
-                    (Purchase.received_date < selected_date_start)
-                    &
-                    (Purchase.status != "completed")
-                )
+                # --------------------------------------
+                # B. Older pending purchase
+                # --------------------------------------
+                and_(
+                    Purchase.received_date < selected_date_start,
+                    Purchase.status != "completed",
+                ),
             ),
-
-            # NEVER allow future purchases
-            Purchase.received_date < next_date_start,
         )
         .order_by(
             Purchase.purchase_date.desc(),
@@ -698,6 +706,10 @@ def get_report_purchases(
         )
         .all()
     )
+
+    # --------------------------------------------------
+    # Return response
+    # --------------------------------------------------
 
     return [
         {
@@ -1117,56 +1129,53 @@ def get_report(
     if entry.status != "settled"
 )
     
-    selected_date_start = datetime.combine(
-    report.report_date,
-    datetime.min.time(),
-    ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
-)
+        # --------------------------------------------------
+    # Purchases visible for this business date
+    # --------------------------------------------------
 
-    from datetime import timedelta
-
-    next_date_start = (
-        selected_date_start + timedelta(days=1)
-)
+    selected_date = report.report_date
 
     purchases = (
         db.query(Purchase)
-    .filter(
-        Purchase.store_id == report.store_id,
+        .join(
+            DailyReport,
+            Purchase.daily_report_id
+            == DailyReport.id,
+        )
+        .filter(
+            Purchase.store_id
+            == report.store_id,
 
-        (
-            Purchase.daily_report_id == report.id
-
-            |
+            DailyReport.report_date
+            <= selected_date,
 
             (
-                (Purchase.received_date < selected_date_start)
-                &
-                (Purchase.status != "completed")
-            )
-        ),
-
-        Purchase.received_date < next_date_start,
+                (
+                    DailyReport.report_date
+                    == selected_date
+                )
+                |
+                (
+                    (
+                        DailyReport.report_date
+                        < selected_date
+                    )
+                    &
+                    (
+                        Purchase.status
+                        != "completed"
+                    )
+                )
+            ),
+        )
+        .order_by(
+            Purchase.purchase_date.desc(),
+            Purchase.id.desc(),
+        )
+        .all()
     )
-    .order_by(
-        Purchase.purchase_date.desc(),
-        Purchase.id.desc(),
-    )
-    .all()
-)
 
-    print("REPORT DATE:", report.report_date)
-
-    print("PURCHASES FOUND:", len(purchases))
-
-    for p in purchases:
-        print(
-        p.id,
-        p.purchase_date,
-        p.status,
-        p.supplier_name,
-    )
+    
 
     delivery_assignments = (
     db.query(

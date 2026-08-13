@@ -5,7 +5,6 @@ from fastapi import (
 )
 
 from sqlalchemy.orm import Session
-
 from sqlalchemy import func
 
 from app.database import get_db
@@ -28,6 +27,10 @@ router = APIRouter(
 )
 
 
+# ----------------------------------------------------
+# Recalculate Udhaar Sales
+# ----------------------------------------------------
+
 def recalculate_report_udhaar_sales(
     db: Session,
     report_id: int,
@@ -43,11 +46,11 @@ def recalculate_report_udhaar_sales(
             )
         )
         .filter(
-            UdhaarEntry.daily_report_id ==
-            report_id,
+            UdhaarEntry.daily_report_id
+            == report_id,
 
-            UdhaarEntry.status !=
-            "settled",
+            UdhaarEntry.status
+            != "settled",
         )
         .scalar()
     )
@@ -55,8 +58,7 @@ def recalculate_report_udhaar_sales(
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.id ==
-            report_id
+            DailyReport.id == report_id
         )
         .first()
     )
@@ -66,6 +68,10 @@ def recalculate_report_udhaar_sales(
             total or 0
         )
 
+
+# ----------------------------------------------------
+# Create Udhaar
+# ----------------------------------------------------
 
 @router.post("/")
 def create_udhaar(
@@ -78,8 +84,8 @@ def create_udhaar(
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.id ==
-            data.daily_report_id
+            DailyReport.id
+            == data.daily_report_id
         )
         .first()
     )
@@ -92,8 +98,8 @@ def create_udhaar(
 
     if (
         current_user["role"] != "owner"
-        and report.store_id !=
-        current_user["store_id"]
+        and report.store_id
+        != current_user["store_id"]
     ):
         raise HTTPException(
             status_code=403,
@@ -103,7 +109,10 @@ def create_udhaar(
     if report.is_locked:
         raise HTTPException(
             status_code=409,
-            detail="Cannot add udhaar to locked report",
+            detail=(
+                "Cannot add udhaar "
+                "to locked report"
+            ),
         )
 
     created_entries = []
@@ -113,7 +122,10 @@ def create_udhaar(
         if item.amount <= 0:
             raise HTTPException(
                 status_code=400,
-                detail="Udhaar amount must be greater than 0.",
+                detail=(
+                    "Udhaar amount must "
+                    "be greater than 0."
+                ),
             )
 
         udhaar = UdhaarEntry(
@@ -134,6 +146,9 @@ def create_udhaar(
             created_by=
                 current_user["user_id"],
 
+            # IMPORTANT:
+            # Use the report date,
+            # NOT date.today().
             date_given=
                 report.report_date,
 
@@ -149,6 +164,7 @@ def create_udhaar(
     db.commit()
 
     for udhaar in created_entries:
+
         db.refresh(udhaar)
 
         create_audit_log(
@@ -173,12 +189,17 @@ def create_udhaar(
 
     return {
         "message":
-            f"{len(created_entries)} entries created",
+            f"{len(created_entries)} "
+            "entries created",
 
         "report_udhaar_sales":
             report.udhaar_sales,
     }
 
+
+# ----------------------------------------------------
+# Repay Udhaar
+# ----------------------------------------------------
 
 @router.post("/{udhaar_id}/repay")
 def repay_udhaar(
@@ -192,8 +213,8 @@ def repay_udhaar(
     udhaar = (
         db.query(UdhaarEntry)
         .filter(
-            UdhaarEntry.id ==
-            udhaar_id
+            UdhaarEntry.id
+            == udhaar_id
         )
         .first()
     )
@@ -206,8 +227,8 @@ def repay_udhaar(
 
     if (
         current_user["role"] != "owner"
-        and udhaar.store_id !=
-        current_user["store_id"]
+        and udhaar.store_id
+        != current_user["store_id"]
     ):
         raise HTTPException(
             status_code=403,
@@ -217,40 +238,49 @@ def repay_udhaar(
     if data.amount <= 0:
         raise HTTPException(
             status_code=400,
-            detail="Repayment amount must be greater than 0.",
+            detail=(
+                "Repayment amount must "
+                "be greater than 0."
+            ),
         )
 
     remaining = (
-        udhaar.amount -
-        udhaar.paid_amount
+        udhaar.amount
+        - udhaar.paid_amount
     )
 
     if data.amount > remaining:
         raise HTTPException(
             status_code=400,
-            detail="Repayment exceeds remaining amount.",
+            detail=(
+                "Repayment exceeds "
+                "remaining amount."
+            ),
         )
 
-    udhaar.paid_amount += (
-        data.amount
-    )
+    udhaar.paid_amount += data.amount
 
     if udhaar.paid_amount <= 0:
+
         udhaar.status = "outstanding"
 
     elif (
-        udhaar.paid_amount <
-        udhaar.amount
+        udhaar.paid_amount
+        < udhaar.amount
     ):
+
         udhaar.status = "partial"
 
     else:
+
         udhaar.paid_amount = (
             udhaar.amount
         )
 
         udhaar.status = "settled"
 
+    # Keep the original report's
+    # Udhaar sales calculation intact.
     recalculate_report_udhaar_sales(
         db=db,
         report_id=
@@ -264,6 +294,10 @@ def repay_udhaar(
     return udhaar
 
 
+# ----------------------------------------------------
+# Get Udhaar
+# ----------------------------------------------------
+
 @router.get("/")
 def get_all_udhaar(
     report_id: int | None = None,
@@ -276,19 +310,27 @@ def get_all_udhaar(
         UdhaarEntry
     )
 
+    # ------------------------------------------------
+    # Store isolation
+    # ------------------------------------------------
+
     if current_user["role"] != "owner":
         query = query.filter(
-            UdhaarEntry.store_id ==
-            current_user["store_id"]
+            UdhaarEntry.store_id
+            == current_user["store_id"]
         )
+
+    # ------------------------------------------------
+    # Selected business date
+    # ------------------------------------------------
 
     if report_id is not None:
 
         selected_report = (
             db.query(DailyReport)
             .filter(
-                DailyReport.id ==
-                report_id
+                DailyReport.id
+                == report_id
             )
             .first()
         )
@@ -296,15 +338,17 @@ def get_all_udhaar(
         if not selected_report:
             raise HTTPException(
                 status_code=404,
-                detail="Daily report not found",
+                detail=(
+                    "Daily report "
+                    "not found"
+                ),
             )
 
         if (
-            current_user["role"] !=
-            "owner"
-            and
-            selected_report.store_id !=
-            current_user["store_id"]
+            current_user["role"]
+            != "owner"
+            and selected_report.store_id
+            != current_user["store_id"]
         ):
             raise HTTPException(
                 status_code=403,
@@ -315,41 +359,61 @@ def get_all_udhaar(
             selected_report.report_date
         )
 
+        # ------------------------------------------------
+        # IMPORTANT BUSINESS RULE
+        #
+        # Same date:
+        #     Show all entries created on that date.
+        #
+        # Older dates:
+        #     Show only unsettled entries.
+        #
+        # Future dates:
+        #     NEVER show.
+        # ------------------------------------------------
+
         query = (
             query
             .join(
                 DailyReport,
-                UdhaarEntry.daily_report_id ==
-                DailyReport.id,
+                UdhaarEntry.daily_report_id
+                == DailyReport.id,
             )
             .filter(
-                DailyReport.report_date <=
-                selected_date
-            )
-            .filter(
-                (
-                    DailyReport.report_date ==
-                    selected_date
-                )
-                |
+                DailyReport.store_id
+                == selected_report.store_id,
+
+                DailyReport.report_date
+                <= selected_date,
+
                 (
                     (
-                        DailyReport.report_date <
-                        selected_date
+                        DailyReport.report_date
+                        == selected_date
                     )
-                    &
+                    |
                     (
-                        UdhaarEntry.status !=
-                        "settled"
+                        (
+                            DailyReport.report_date
+                            < selected_date
+                        )
+                        &
+                        (
+                            UdhaarEntry.status
+                            != "settled"
+                        )
                     )
-                )
+                ),
             )
         )
 
     else:
+
+        # Normal Udhaar page:
+        # show current outstanding entries.
         query = query.filter(
-            UdhaarEntry.status !=
-            "settled"
+            UdhaarEntry.status
+            != "settled"
         )
 
     return (
@@ -360,6 +424,10 @@ def get_all_udhaar(
         .all()
     )
 
+
+# ----------------------------------------------------
+# Outstanding Udhaar
+# ----------------------------------------------------
 
 @router.get("/outstanding")
 def get_outstanding_udhaar(
@@ -372,20 +440,20 @@ def get_outstanding_udhaar(
     query = db.query(
         func.coalesce(
             func.sum(
-                UdhaarEntry.amount -
-                UdhaarEntry.paid_amount
+                UdhaarEntry.amount
+                - UdhaarEntry.paid_amount
             ),
             0,
         )
     ).filter(
-        UdhaarEntry.status !=
-        "settled"
+        UdhaarEntry.status
+        != "settled"
     )
 
     if current_user["role"] != "owner":
         query = query.filter(
-            UdhaarEntry.store_id ==
-            current_user["store_id"]
+            UdhaarEntry.store_id
+            == current_user["store_id"]
         )
 
     if report_id is not None:
@@ -393,8 +461,8 @@ def get_outstanding_udhaar(
         selected_report = (
             db.query(DailyReport)
             .filter(
-                DailyReport.id ==
-                report_id
+                DailyReport.id
+                == report_id
             )
             .first()
         )
@@ -402,15 +470,17 @@ def get_outstanding_udhaar(
         if not selected_report:
             raise HTTPException(
                 status_code=404,
-                detail="Daily report not found",
+                detail=(
+                    "Daily report "
+                    "not found"
+                ),
             )
 
         if (
-            current_user["role"] !=
-            "owner"
-            and
-            selected_report.store_id !=
-            current_user["store_id"]
+            current_user["role"]
+            != "owner"
+            and selected_report.store_id
+            != current_user["store_id"]
         ):
             raise HTTPException(
                 status_code=403,
@@ -425,12 +495,18 @@ def get_outstanding_udhaar(
             query
             .join(
                 DailyReport,
-                UdhaarEntry.daily_report_id ==
-                DailyReport.id,
+                UdhaarEntry.daily_report_id
+                == DailyReport.id,
             )
             .filter(
-                DailyReport.report_date <=
-                selected_date
+                DailyReport.store_id
+                == selected_report.store_id,
+
+                DailyReport.report_date
+                <= selected_date,
+
+                UdhaarEntry.status
+                != "settled",
             )
         )
 
@@ -441,6 +517,10 @@ def get_outstanding_udhaar(
             float(total or 0)
     }
 
+
+# ----------------------------------------------------
+# Get Single Udhaar
+# ----------------------------------------------------
 
 @router.get("/{udhaar_id}")
 def get_single_udhaar(
@@ -454,8 +534,8 @@ def get_single_udhaar(
     udhaar = (
         db.query(UdhaarEntry)
         .filter(
-            UdhaarEntry.id ==
-            udhaar_id
+            UdhaarEntry.id
+            == udhaar_id
         )
         .first()
     )
@@ -468,8 +548,8 @@ def get_single_udhaar(
 
     if (
         current_user["role"] != "owner"
-        and udhaar.store_id !=
-        current_user["store_id"]
+        and udhaar.store_id
+        != current_user["store_id"]
     ):
         raise HTTPException(
             status_code=403,
