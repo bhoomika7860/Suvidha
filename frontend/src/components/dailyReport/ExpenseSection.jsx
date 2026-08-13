@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
 import {
   Eye,
   Wallet,
   Pencil,
   Trash2,
 } from "lucide-react";
+
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import SectionCard from "./SectionCard";
 import AddExpenseModal from "../expenses/AddExpenseModal";
@@ -16,14 +17,14 @@ export default function ExpenseSection({
   report,
   refreshReport,
 }) {
-  const [expenses, setExpenses] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [expenses, setExpenses] =
+    useState([]);
+
+  const [showModal, setShowModal] =
+    useState(false);
+
   const [selectedExpense, setSelectedExpense] =
     useState(null);
-
-  // --------------------------------------------------
-  // Sync expenses directly from the Daily Report
-  // --------------------------------------------------
 
   useEffect(() => {
     if (!report) {
@@ -38,21 +39,21 @@ export default function ExpenseSection({
     );
   }, [report]);
 
-  // --------------------------------------------------
-  // Total
-  // --------------------------------------------------
-
-  const total = expenses.reduce(
-    (sum, expense) =>
-      sum + Number(expense.amount || 0),
-    0
-  );
-
-  // --------------------------------------------------
-  // Delete
-  // --------------------------------------------------
+  const total =
+    expenses.reduce(
+      (sum, expense) =>
+        sum +
+        Number(
+          expense.amount || 0
+        ),
+      0
+    );
 
   async function handleDelete(id) {
+    if (report.is_locked) {
+      return;
+    }
+
     if (
       !window.confirm(
         "Delete this expense?"
@@ -62,11 +63,12 @@ export default function ExpenseSection({
     }
 
     try {
-      await expenseService.deleteExpense(id);
+      await expenseService.deleteExpense(
+        id
+      );
 
-      if (refreshReport) {
-        await refreshReport();
-      }
+      await refreshReport();
+
     } catch (err) {
       console.error(
         "Failed to delete expense:",
@@ -80,18 +82,14 @@ export default function ExpenseSection({
     }
   }
 
-  // --------------------------------------------------
-  // Edit
-  // --------------------------------------------------
-
   function handleEdit(expense) {
+    if (report.is_locked) {
+      return;
+    }
+
     setSelectedExpense(expense);
     setShowModal(true);
   }
-
-  // --------------------------------------------------
-  // Save edited expense
-  // --------------------------------------------------
 
   async function handleSave(data) {
     try {
@@ -102,18 +100,22 @@ export default function ExpenseSection({
       await expenseService.updateExpense(
         data.id,
         {
-          expense_type: data.expense_type,
-          amount: Number(data.amount),
-          remarks: data.remarks || null,
+          expense_type:
+            data.expense_type,
+
+          amount:
+            Number(data.amount),
+
+          remarks:
+            data.remarks || null,
         }
       );
 
       setShowModal(false);
       setSelectedExpense(null);
 
-      if (refreshReport) {
-        await refreshReport();
-      }
+      await refreshReport();
+
     } catch (err) {
       console.error(
         "Failed to update expense:",
@@ -124,6 +126,8 @@ export default function ExpenseSection({
         err.response?.data?.detail ||
           "Failed to update expense."
       );
+
+      throw err;
     }
   }
 
@@ -133,6 +137,7 @@ export default function ExpenseSection({
 
   return (
     <SectionCard title="Expenses">
+
       <div className="space-y-5">
 
         {/* Header */}
@@ -154,7 +159,7 @@ export default function ExpenseSection({
               </h3>
 
               <p className="text-sm text-gray-500">
-                Expenses for this report.
+                Expenses for this business date.
               </p>
             </div>
 
@@ -170,7 +175,7 @@ export default function ExpenseSection({
 
         </div>
 
-        {/* Expense Table */}
+        {/* Table */}
 
         <div className="overflow-hidden rounded-xl border">
 
@@ -217,63 +222,73 @@ export default function ExpenseSection({
 
               ) : (
 
-                expenses.map((expense) => (
+                expenses.map(
+                  (expense) => (
 
-                  <tr
-                    key={expense.id}
-                    className="border-t"
-                  >
+                    <tr
+                      key={expense.id}
+                      className="border-t"
+                    >
 
-                    <td className="px-5 py-3">
-                      {expense.expense_type || "-"}
-                    </td>
+                      <td className="px-5 py-3">
+                        {expense.expense_type || "-"}
+                      </td>
 
-                    <td className="px-5 py-3 font-medium">
-                      ₹
-                      {Number(
-                        expense.amount || 0
-                      ).toLocaleString("en-IN")}
-                    </td>
+                      <td className="px-5 py-3 font-medium">
+                        ₹
+                        {Number(
+                          expense.amount || 0
+                        ).toLocaleString(
+                          "en-IN"
+                        )}
+                      </td>
 
-                    <td className="px-5 py-3">
-                      {expense.created_by_name || "-"}
-                    </td>
+                      <td className="px-5 py-3">
+                        {expense.created_by_name || "-"}
+                      </td>
 
-                    <td className="px-5 py-3">
+                      <td className="px-5 py-3">
 
-                      <div className="flex justify-center gap-2">
+                        <div className="flex justify-center gap-2">
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleEdit(expense)
-                          }
-                          disabled={report.is_locked}
-                          className="rounded-lg bg-amber-500 p-2 text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <Pencil size={16} />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEdit(
+                                expense
+                              )
+                            }
+                            disabled={
+                              report.is_locked
+                            }
+                            className="rounded-lg bg-amber-500 p-2 text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Pencil size={16} />
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDelete(
-                              expense.id
-                            )
-                          }
-                          disabled={report.is_locked}
-                          className="rounded-lg bg-red-600 p-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(
+                                expense.id
+                              )
+                            }
+                            disabled={
+                              report.is_locked
+                            }
+                            className="rounded-lg bg-red-600 p-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Trash2 size={16} />
+                          </button>
 
-                      </div>
+                        </div>
 
-                    </td>
+                      </td>
 
-                  </tr>
+                    </tr>
 
-                ))
+                  )
+                )
 
               )}
 
@@ -295,7 +310,9 @@ export default function ExpenseSection({
 
             <h2 className="text-2xl font-bold text-orange-600">
               ₹
-              {total.toLocaleString("en-IN")}
+              {total.toLocaleString(
+                "en-IN"
+              )}
             </h2>
 
           </div>
@@ -312,7 +329,7 @@ export default function ExpenseSection({
         }}
         onSave={handleSave}
         expense={selectedExpense}
-        dailyReportId={report.id}
+        reportId={report.id}
       />
 
     </SectionCard>

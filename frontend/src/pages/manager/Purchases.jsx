@@ -4,131 +4,144 @@ import { useSearchParams } from "react-router-dom";
 import purchaseService from "../../services/purchaseService";
 import dailyReportsService from "../../services/dailyReportsService";
 
+import { useBusinessDate } from "../../contexts/BusinessDateContext";
+
 import PurchaseStats from "../../components/purchases/PurchaseStats";
 import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
 import PurchaseTable from "../../components/purchases/PurchaseTable";
 import ReceiveBillModal from "../../components/purchases/ReceiveBillModal";
 
 export default function Purchases() {
-  const [search, setSearch] = useState("");
+  const { selectedDate } = useBusinessDate();
 
+  const [searchParams] = useSearchParams();
+
+  const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] =
     useState("received");
 
   const [showReceiveModal, setShowReceiveModal] =
     useState(false);
 
-  const [purchases, setPurchases] =
-    useState([]);
-
-  const [report, setReport] =
-    useState(null);
-
-  const [searchParams] = useSearchParams();
+  const [purchases, setPurchases] = useState([]);
+  const [report, setReport] = useState(null);
 
   useEffect(() => {
     initializePage();
-  }, []);
+  }, [selectedDate, searchParams]);
 
   async function initializePage() {
     try {
+      setReport(null);
+      setPurchases([]);
+
+      const reportParam =
+        searchParams.get("report");
+
+      let selectedReport;
+
       /*
-       * If we came from a specific Daily Report,
-       * use that report.
-       *
-       * Otherwise use today's report.
+       * If opened from a historical Daily Report,
+       * explicitly use that report.
        */
-      let reportId = searchParams.get("report");
 
-      if (reportId) {
-        const selectedReport =
+      if (reportParam) {
+        selectedReport =
           await dailyReportsService.getReport(
-            Number(reportId)
+            Number(reportParam)
           );
-
-        setReport(selectedReport);
-
-        await loadPurchases(Number(reportId));
-
-        return;
       }
 
       /*
-       * Normal Purchases page:
-       * use today's report.
+       * Otherwise use the global Business Date.
        */
-      const todayReport =
-        await dailyReportsService.getTodayReport();
 
-      setReport(todayReport);
-
-      await loadPurchases(todayReport.id);
-
-    } catch (err) {
-      console.error(err);
+      else {
+        selectedReport =
+          await dailyReportsService.getOrCreateReport(
+            selectedDate
+          );
+      }
 
       console.log(
+        "PURCHASE PAGE BUSINESS DATE:",
+        selectedDate
+      );
+
+      console.log(
+        "PURCHASE PAGE REPORT:",
+        selectedReport
+      );
+
+      setReport(selectedReport);
+
+      await loadPurchases(
+        selectedReport.id
+      );
+
+    } catch (err) {
+      console.error(
+        "Failed to initialize purchases:",
+        err
+      );
+
+      console.error(
         "Status:",
         err.response?.status
       );
 
-      console.log(
+      console.error(
         "Backend response:",
         err.response?.data
       );
+
+      setReport(null);
+      setPurchases([]);
     }
   }
 
   async function loadPurchases(reportId) {
-  try {
-    const purchaseData =
-      await dailyReportsService.getPurchases(
-        Number(reportId)
+    if (!reportId) return;
+
+    try {
+      const purchaseData =
+        await dailyReportsService.getPurchases(
+          Number(reportId)
+        );
+
+      console.log(
+        "PURCHASES FOR REPORT:",
+        reportId,
+        purchaseData
       );
 
-    console.log(
-      "PURCHASES FOR REPORT:",
-      reportId,
-      purchaseData
-    );
+      setPurchases(
+        Array.isArray(purchaseData)
+          ? purchaseData
+          : []
+      );
 
-    setPurchases(purchaseData);
+    } catch (err) {
+      console.error(
+        "Failed to load purchases:",
+        err
+      );
 
-  } catch (err) {
-    console.error(
-      "Failed to load purchases:",
-      err
-    );
-
-    console.log(
-      "Status:",
-      err.response?.status
-    );
-
-    console.log(
-      "Backend response:",
-      err.response?.data
-    );
+      setPurchases([]);
+    }
   }
-}
 
   async function addPurchase(purchase) {
-    try {
-      if (!report) {
-        console.error(
-          "No daily report selected."
-        );
-        return;
-      }
+    if (!report) {
+      console.error(
+        "No daily report selected."
+      );
+      return;
+    }
 
+    try {
       await purchaseService.createPurchase({
         ...purchase,
-
-        /*
-         * IMPORTANT:
-         * This is the selected report,
-         * not automatically today's report.
-         */
         daily_report_id: report.id,
       });
 
@@ -137,30 +150,33 @@ export default function Purchases() {
       setShowReceiveModal(false);
 
     } catch (err) {
-      console.error(err);
-
-      console.log(
-        "Status:",
-        err.response?.status
+      console.error(
+        "Failed to add purchase:",
+        err
       );
 
-      console.log(
-        "Backend response:",
-        err.response?.data
+      alert(
+        err.response?.data?.detail ||
+          "Failed to add purchase."
       );
     }
   }
 
   const filteredPurchases =
     purchases.filter((purchase) => {
+      const searchValue =
+        search.toLowerCase();
+
       const matchesSearch =
         (purchase.supplier_name || "")
           .toLowerCase()
-          .includes(search.toLowerCase()) ||
-
+          .includes(searchValue) ||
         (purchase.bill_number || "")
           .toLowerCase()
-          .includes(search.toLowerCase());
+          .includes(searchValue) ||
+        (purchase.product_name || "")
+          .toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
         purchase.status === activeFilter;
@@ -172,7 +188,9 @@ export default function Purchases() {
     });
 
   return (
-    <div>
+    <div className="space-y-6">
+
+      {/* Header */}
 
       <div>
         <h1 className="text-3xl font-bold">
@@ -182,13 +200,21 @@ export default function Purchases() {
         <p className="mt-1 text-gray-500">
           Manage supplier purchase bills.
         </p>
+
+        <p className="mt-2 text-sm font-medium text-blue-600">
+          Business Date: {selectedDate}
+        </p>
       </div>
+
+      {/* Stats */}
 
       <PurchaseStats
         purchases={purchases}
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
       />
+
+      {/* Toolbar */}
 
       <PurchaseToolbar
         search={search}
@@ -198,22 +224,23 @@ export default function Purchases() {
         }
       />
 
+      {/* Table */}
+
       <PurchaseTable
         purchases={filteredPurchases}
         allPurchases={purchases}
         setPurchases={setPurchases}
       />
 
+      {/* Receive Bill */}
+
       {report && (
         <ReceiveBillModal
           isOpen={showReceiveModal}
-
           onClose={() =>
             setShowReceiveModal(false)
           }
-
           onSave={addPurchase}
-
           reportId={report.id}
         />
       )}

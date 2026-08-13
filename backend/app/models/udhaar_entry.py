@@ -1,27 +1,79 @@
-from sqlalchemy import Column, Integer, Float, String, Date, ForeignKey
-from app.database import Base
 from datetime import date
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    Float,
+    String,
+    Date,
+    ForeignKey,
+)
+
+from app.database import Base
 
 
 class UdhaarEntry(Base):
     __tablename__ = "udhaar_entries"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
     bill_number = Column(
-    String,
-    nullable=False,
-)
-    store_id = Column(Integer, ForeignKey("stores.id"))
-    daily_report_id = Column(Integer, ForeignKey("daily_reports.id"))
-    created_by = Column(Integer, ForeignKey("users.id"))
+        String,
+        nullable=False,
+    )
 
-    customer_name = Column(String, nullable=False)
-    customer_phone = Column(String, nullable=True)
+    store_id = Column(
+        Integer,
+        ForeignKey("stores.id"),
+        nullable=False,
+    )
 
-    amount = Column(Float, nullable=False)
-    paid_amount = Column(Float, default=0)
+    daily_report_id = Column(
+        Integer,
+        ForeignKey("daily_reports.id"),
+        nullable=False,
+        index=True,
+    )
 
-    date_given = Column(Date, default=date.today)
+    created_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
-    status = Column(String, default="outstanding")
+    customer_name = Column(
+        String,
+        nullable=False,
+    )
+
+    customer_phone = Column(
+        String,
+        nullable=True,
+    )
+
+    amount = Column(
+        Float,
+        nullable=False,
+    )
+
+    paid_amount = Column(
+        Float,
+        default=0,
+        nullable=False,
+    )
+
+    date_given = Column(
+        Date,
+        default=date.today,
+        nullable=False,
+    )
+
+    status = Column(
+        String,
+        default="outstanding",
+        nullable=False,
+    )

@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { Truck } from "lucide-react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Truck,
+} from "lucide-react";
 
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
@@ -8,38 +14,70 @@ export default function DeliverySection({
   report,
   refreshReport,
 }) {
-  const [deliveries, setDeliveries] = useState("");
+  const [deliveries, setDeliveries] =
+    useState("");
 
   useEffect(() => {
-  if (!report) return;
+    if (!report) {
+      setDeliveries("");
+      return;
+    }
 
-  setDeliveries(
-    report.deliveries !== null &&
-      report.deliveries !== undefined
-      ? String(report.deliveries)
-      : ""
-  );
-}, [report]);
+    setDeliveries(
+      report.deliveries !== null &&
+        report.deliveries !== undefined
+        ? String(report.deliveries)
+        : ""
+    );
+  }, [report]);
 
   async function handleSave() {
-  try {
-    await dailyReportsService.updateDeliveries(
-      report.id,
-      Number(deliveries || 0)
-    );
+    if (!report || report.is_locked) {
+      return;
+    }
 
-    await refreshReport();
+    const value =
+      Number(deliveries || 0);
 
-    alert("Deliveries saved.");
-  } catch (err) {
-    console.error(err);
+    if (value < 0) {
+      alert(
+        "Deliveries cannot be negative."
+      );
+      return;
+    }
+
+    try {
+      await dailyReportsService.updateDeliveries(
+        report.id,
+        value
+      );
+
+      await refreshReport();
+
+      alert(
+        "Deliveries saved."
+      );
+
+    } catch (err) {
+      console.error(
+        "Failed to save deliveries:",
+        err
+      );
+
+      alert(
+        err.response?.data?.detail ||
+          "Failed to save deliveries."
+      );
+    }
   }
-}
 
-  if (!report) return null;
+  if (!report) {
+    return null;
+  }
 
   return (
     <SectionCard title="Deliveries">
+
       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
 
         <div className="mb-5 flex items-center gap-2">
@@ -65,10 +103,13 @@ export default function DeliverySection({
             type="number"
             min="0"
             value={deliveries}
+            disabled={report.is_locked}
             onChange={(e) =>
-              setDeliveries(e.target.value)
+              setDeliveries(
+                e.target.value
+              )
             }
-            className="h-11 w-full rounded-xl border px-4"
+            className="h-11 w-full rounded-xl border px-4 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
 
         </div>
@@ -80,7 +121,9 @@ export default function DeliverySection({
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-violet-600">
-            {Number(deliveries)}
+            {Number(
+              deliveries || 0
+            )}
           </h2>
 
         </div>
@@ -90,10 +133,14 @@ export default function DeliverySection({
       <div className="mt-6 flex justify-end">
 
         <button
+          type="button"
           onClick={handleSave}
-          className="h-11 rounded-xl bg-blue-600 px-8 font-medium text-white hover:bg-blue-700"
+          disabled={report.is_locked}
+          className="h-11 rounded-xl bg-blue-600 px-8 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
-          Save Deliveries
+          {report.is_locked
+            ? "Report Locked"
+            : "Save Deliveries"}
         </button>
 
       </div>

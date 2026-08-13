@@ -9,11 +9,16 @@ import AddExpenseModal from "../../components/expenses/AddExpenseModal";
 import dailyReportsService from "../../services/dailyReportsService";
 import expenseService from "../../services/expenseService";
 
-const SELECTED_DATE_KEY =
-  "pharmacore360_selected_report_date";
+import { useBusinessDate } from "../../contexts/BusinessDateContext";
 
 export default function Expenses() {
-  const [search, setSearch] = useState("");
+  const { selectedDate } = useBusinessDate();
+
+  const [searchParams] =
+    useSearchParams();
+
+  const [search, setSearch] =
+    useState("");
 
   const [showModal, setShowModal] =
     useState(false);
@@ -21,68 +26,58 @@ export default function Expenses() {
   const [expenses, setExpenses] =
     useState([]);
 
-  const [searchParams] =
-    useSearchParams();
-
-  const [reportId, setReportId] =
+  const [report, setReport] =
     useState(null);
 
   const [selectedExpense, setSelectedExpense] =
     useState(null);
 
-  // --------------------------------------------------
-  // Initialize page
-  // --------------------------------------------------
-
   useEffect(() => {
     initializePage();
-  }, [searchParams]);
+  }, [selectedDate, searchParams]);
 
   async function initializePage() {
     try {
-      let id = searchParams.get("report");
+      setReport(null);
+      setExpenses([]);
 
-      // --------------------------------------------------
-      // If opened from "View Expenses" inside a
-      // Daily Report, ALWAYS use that report.
-      // --------------------------------------------------
+      const reportParam =
+        searchParams.get("report");
 
-      if (id) {
-        id = Number(id);
+      let selectedReport;
+
+      /*
+       * Historical report opened explicitly.
+       *
+       * Example:
+       * /manager-expenses?report=17
+       */
+
+      if (reportParam) {
+        selectedReport =
+          await dailyReportsService.getReport(
+            Number(reportParam)
+          );
       }
 
-      // --------------------------------------------------
-      // If opened directly from sidebar, use the
-      // currently selected Daily Report date.
-      // --------------------------------------------------
+      /*
+       * Normal Expenses page.
+       *
+       * Uses the GLOBAL BUSINESS DATE.
+       */
 
-      if (!id) {
-        const savedDate =
-          localStorage.getItem(
-            SELECTED_DATE_KEY
-          );
-
-        let reportDate = savedDate;
-
-        // Fallback only if no date has ever been selected.
-        if (!reportDate) {
-          reportDate =
-            new Date()
-              .toISOString()
-              .split("T")[0];
-        }
-
-        const report =
+      else {
+        selectedReport =
           await dailyReportsService.getOrCreateReport(
-            reportDate
+            selectedDate
           );
-
-        id = Number(report.id);
       }
 
-      setReportId(id);
+      setReport(selectedReport);
 
-      await loadExpenses(id);
+      await loadExpenses(
+        selectedReport.id
+      );
 
     } catch (err) {
       console.error(
@@ -99,26 +94,25 @@ export default function Expenses() {
         "Backend response:",
         err.response?.data
       );
+
+      setReport(null);
+      setExpenses([]);
     }
   }
 
-  // --------------------------------------------------
-  // Load expenses for report
-  // --------------------------------------------------
-
-  async function loadExpenses(id) {
-    if (!id) return;
+  async function loadExpenses(reportId) {
+    if (!reportId) return;
 
     try {
       const data =
         await expenseService.getExpenses(
-          Number(id)
+          Number(reportId)
         );
 
       console.log(
-        "EXPENSE PAGE LOAD",
+        "EXPENSE PAGE LOAD:",
         {
-          reportId: id,
+          reportId,
           expenses: data,
         }
       );
@@ -149,21 +143,16 @@ export default function Expenses() {
     }
   }
 
-  // --------------------------------------------------
-  // Save expense
-  // --------------------------------------------------
-
   async function handleSave(expense) {
-    if (!reportId) {
+    if (!report?.id) {
       console.error(
-        "Cannot save expense: report ID missing."
+        "Cannot save expense: report missing."
       );
       return;
     }
 
     try {
       if (expense.id) {
-
         await expenseService.updateExpense(
           expense.id,
           {
@@ -177,10 +166,11 @@ export default function Expenses() {
               expense.remarks || null,
           }
         );
-
       } else {
-
         await expenseService.createExpense({
+          daily_report_id:
+            Number(report.id),
+
           expense_type:
             expense.expense_type,
 
@@ -189,13 +179,10 @@ export default function Expenses() {
 
           remarks:
             expense.remarks || null,
-
-          daily_report_id:
-            Number(reportId),
         });
       }
 
-      await loadExpenses(reportId);
+      await loadExpenses(report.id);
 
       setShowModal(false);
       setSelectedExpense(null);
@@ -220,12 +207,10 @@ export default function Expenses() {
         err.response?.data?.detail ||
           "Failed to save expense."
       );
+
+      throw err;
     }
   }
-
-  // --------------------------------------------------
-  // Delete
-  // --------------------------------------------------
 
   async function handleDelete(id) {
     if (
@@ -239,7 +224,9 @@ export default function Expenses() {
     try {
       await expenseService.deleteExpense(id);
 
-      await loadExpenses(reportId);
+      await loadExpenses(
+        report.id
+      );
 
     } catch (err) {
       console.error(
@@ -254,22 +241,17 @@ export default function Expenses() {
     }
   }
 
-  // --------------------------------------------------
-  // Edit
-  // --------------------------------------------------
-
   function handleEdit(expense) {
+    if (report?.is_locked) {
+      return;
+    }
+
     setSelectedExpense(expense);
     setShowModal(true);
   }
 
-  // --------------------------------------------------
-  // Search
-  // --------------------------------------------------
-
   const filteredExpenses =
     expenses.filter((expense) => {
-
       const expenseType =
         expense.expense_type || "";
 
@@ -289,20 +271,32 @@ export default function Expenses() {
       );
     });
 
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
-
   return (
     <div className="space-y-6">
 
+      {/* Header */}
+
       <div>
-        <h1 className="text-3xl font-bold">
-          Expenses
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+
+          <h1 className="text-3xl font-bold">
+            Expenses
+          </h1>
+
+          {report?.is_locked && (
+            <span className="rounded-full border border-green-200 bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+              Report Locked
+            </span>
+          )}
+
+        </div>
 
         <p className="mt-1 text-gray-500">
-          Manage daily store expenses.
+          Manage expenses for the selected business day.
+        </p>
+
+        <p className="mt-2 text-sm font-medium text-blue-600">
+          Business Date: {report?.report_date || selectedDate}
         </p>
       </div>
 
@@ -314,6 +308,10 @@ export default function Expenses() {
         search={search}
         setSearch={setSearch}
         onAddExpense={() => {
+          if (report?.is_locked) {
+            return;
+          }
+
           setSelectedExpense(null);
           setShowModal(true);
         }}
@@ -322,7 +320,11 @@ export default function Expenses() {
       <ExpenseTable
         expenses={filteredExpenses}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={
+          report?.is_locked
+            ? undefined
+            : handleDelete
+        }
       />
 
       <AddExpenseModal
@@ -333,7 +335,7 @@ export default function Expenses() {
         }}
         onSave={handleSave}
         expense={selectedExpense}
-        dailyReportId={reportId}
+        reportId={report?.id}
       />
 
     </div>

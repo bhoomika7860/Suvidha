@@ -1,6 +1,16 @@
-import { Eye, Package } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {
+  Eye,
+  Package,
+} from "lucide-react";
+
+import {
+  Link,
+} from "react-router-dom";
+
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import SectionCard from "./SectionCard";
 import dailyReportsService from "../../services/dailyReportsService";
@@ -9,10 +19,14 @@ export default function PurchaseSection({
   report,
   refreshReport,
 }) {
-  const [purchases, setPurchases] = useState([]);
+  const [purchases, setPurchases] =
+    useState([]);
 
   useEffect(() => {
-    if (!report?.id) return;
+    if (!report?.id) {
+      setPurchases([]);
+      return;
+    }
 
     async function loadPurchases() {
       try {
@@ -21,36 +35,47 @@ export default function PurchaseSection({
             report.id
           );
 
-        setPurchases(data);
+        setPurchases(
+          Array.isArray(data)
+            ? data
+            : []
+        );
 
       } catch (err) {
         console.error(
           "Failed to load purchases:",
           err
         );
+
+        setPurchases([]);
       }
     }
 
     loadPurchases();
   }, [report?.id]);
 
-  const total = purchases.reduce(
-    (sum, purchase) =>
-      sum +
-      Number(
-        purchase.purchase_amount || 0
-      ),
-    0
-  );
+  const total =
+    purchases.reduce(
+      (sum, purchase) =>
+        sum +
+        Number(
+          purchase.purchase_amount || 0
+        ),
+      0
+    );
+
+  if (!report) {
+    return null;
+  }
 
   return (
     <SectionCard title="Purchases">
 
-      <div className="flex items-center justify-between mb-5">
+      <div className="mb-5 flex items-center justify-between">
 
         <div className="flex items-center gap-3">
 
-          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
 
             <Package
               size={18}
@@ -74,12 +99,12 @@ export default function PurchaseSection({
         </div>
 
         <Link
-  to={`/manager-purchases?report=${report.id}`}
-  className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
->
-  <Eye size={17} />
-  View Purchases
-</Link>
+          to={`/manager-purchases?report=${report.id}`}
+          className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
+        >
+          <Eye size={17} />
+          View Purchases
+        </Link>
 
       </div>
 
@@ -112,41 +137,47 @@ export default function PurchaseSection({
             {purchases.length === 0 ? (
 
               <tr>
+
                 <td
                   colSpan={3}
                   className="px-5 py-8 text-center text-gray-500"
                 >
                   No purchases recorded for this report.
                 </td>
+
               </tr>
 
             ) : (
 
-              purchases.map((purchase) => (
+              purchases.map(
+                (purchase) => (
 
-                <tr
-                  key={purchase.id}
-                  className="border-t"
-                >
+                  <tr
+                    key={purchase.id}
+                    className="border-t"
+                  >
 
-                  <td className="px-5 py-3">
-                    {purchase.product_name}
-                  </td>
+                    <td className="px-5 py-3">
+                      {purchase.product_name}
+                    </td>
 
-                  <td className="px-5 py-3">
-                    {purchase.supplier_name || "-"}
-                  </td>
+                    <td className="px-5 py-3">
+                      {purchase.supplier_name || "-"}
+                    </td>
 
-                  <td className="px-5 py-3 font-medium">
-                    ₹
-                    {Number(
-                      purchase.purchase_amount || 0
-                    ).toLocaleString("en-IN")}
-                  </td>
+                    <td className="px-5 py-3 font-medium">
+                      ₹
+                      {Number(
+                        purchase.purchase_amount || 0
+                      ).toLocaleString(
+                        "en-IN"
+                      )}
+                    </td>
 
-                </tr>
+                  </tr>
 
-              ))
+                )
+              )
 
             )}
 
@@ -158,14 +189,17 @@ export default function PurchaseSection({
 
       <div className="mt-5 flex justify-end">
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-6 py-3">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-6 py-3">
 
           <p className="text-xs text-blue-700">
             Total Purchases
           </p>
 
           <h2 className="text-2xl font-bold text-blue-600">
-            ₹{total.toLocaleString("en-IN")}
+            ₹
+            {total.toLocaleString(
+              "en-IN"
+            )}
           </h2>
 
         </div>

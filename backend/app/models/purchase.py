@@ -6,6 +6,7 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
 )
+
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -14,7 +15,11 @@ from app.database import Base
 class Purchase(Base):
     __tablename__ = "purchases"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
     store_id = Column(
         Integer,
@@ -23,10 +28,11 @@ class Purchase(Base):
     )
 
     daily_report_id = Column(
-    Integer,
-    ForeignKey("daily_reports.id"),
-    nullable=False,
-)
+        Integer,
+        ForeignKey("daily_reports.id"),
+        nullable=False,
+        index=True,
+    )
 
     product_name = Column(
         String,
@@ -60,10 +66,10 @@ class Purchase(Base):
     )
 
     received_date = Column(
-    DateTime(timezone=True),
-    server_default=func.now(),
-    nullable=False,
-)
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
 
     purchase_order_id = Column(
         Integer,
@@ -82,10 +88,25 @@ class Purchase(Base):
         nullable=False,
     )
 
-    received_by = Column(String, nullable=True)
-    checked_by = Column(String, nullable=True)
-    entered_by = Column(String, nullable=True)
-    grn_number = Column(String,nullable=True,)
+    received_by = Column(
+        String,
+        nullable=True,
+    )
+
+    checked_by = Column(
+        String,
+        nullable=True,
+    )
+
+    entered_by = Column(
+        String,
+        nullable=True,
+    )
+
+    grn_number = Column(
+        String,
+        nullable=True,
+    )
 
     bill_image = Column(
         String,

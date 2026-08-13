@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   CheckCircle2,
- 
 } from "lucide-react";
 
 import dailyReportsService from "../../services/dailyReportsService";
@@ -9,34 +12,48 @@ import dailyReportsService from "../../services/dailyReportsService";
 export default function ReportProgress({
   report,
 }) {
-  const [expensesCompleted, setExpensesCompleted] =
-    useState(false);
+  const [
+    expensesCompleted,
+    setExpensesCompleted,
+  ] = useState(false);
 
-  const [purchasesCompleted, setPurchasesCompleted] =
-    useState(false);
+  const [
+    purchasesCompleted,
+    setPurchasesCompleted,
+  ] = useState(false);
 
   useEffect(() => {
-    if (!report?.id) return;
+    if (!report?.id) {
+      setExpensesCompleted(false);
+      setPurchasesCompleted(false);
+      return;
+    }
 
     async function loadProgress() {
       try {
-        const expenses =
-          await dailyReportsService.getExpenses(
+        const [
+          expenses,
+          purchases,
+        ] = await Promise.all([
+          dailyReportsService.getExpenses(
             report.id
-          );
+          ),
 
-        const purchases =
-          await dailyReportsService.getPurchases(
+          dailyReportsService.getPurchases(
             report.id
-          );
+          ),
+        ]);
 
         setExpensesCompleted(
-          expenses.length > 0
+          Array.isArray(expenses) &&
+            expenses.length > 0
         );
 
         setPurchasesCompleted(
-          purchases.length > 0
+          Array.isArray(purchases) &&
+            purchases.length > 0
         );
+
       } catch (err) {
         console.error(
           "Failed to load report progress:",
@@ -48,23 +65,20 @@ export default function ReportProgress({
     loadProgress();
   }, [report?.id]);
 
-  if (!report) return null;
+  if (!report) {
+    return null;
+  }
 
   const salesCompleted =
     Number(report.total_bills || 0) > 0 ||
     Number(report.cash_sales || 0) > 0 ||
     Number(report.upi_sales || 0) > 0 ||
-    Number(report.card_sales || 0) > 0;
+    Number(report.card_sales || 0) > 0 ||
+    Number(report.udhaar_sales || 0) > 0;
 
   const deliveriesCompleted =
     Number(report.deliveries || 0) > 0;
 
-  /*
-   * Expenses and Purchases are OPTIONAL.
-   *
-   * They are deliberately not included in the
-   * required completion percentage.
-   */
   const requiredSections = [
     {
       title: "Sales",
@@ -89,7 +103,8 @@ export default function ReportProgress({
 
   const completedRequired =
     requiredSections.filter(
-      (section) => section.status
+      (section) =>
+        section.status
     ).length;
 
   const percentage =
@@ -99,16 +114,21 @@ export default function ReportProgress({
 
   return (
     <div className="mb-4">
+
       <div className="flex items-center justify-between">
+
         <div>
+
           <h2 className="text-lg font-semibold">
             Report Progress
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
             {completedRequired} of{" "}
-            {requiredSections.length} required sections completed
+            {requiredSections.length}{" "}
+            required sections completed
           </p>
+
         </div>
 
         <span
@@ -122,20 +142,22 @@ export default function ReportProgress({
             ? "Locked"
             : "Draft"}
         </span>
+
       </div>
 
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-200">
+
         <div
           className="h-full rounded-full bg-blue-600 transition-all"
           style={{
             width: `${percentage}%`,
           }}
         />
+
       </div>
 
-      {/* Required sections */}
-
       <div className="mt-5 flex flex-wrap gap-3">
+
         {requiredSections.map(
           (section) => (
             <div
@@ -146,6 +168,7 @@ export default function ReportProgress({
                   : "border-gray-200 bg-gray-50 text-gray-500"
               }`}
             >
+
               {section.status ? (
                 <CheckCircle2 size={15} />
               ) : (
@@ -153,11 +176,10 @@ export default function ReportProgress({
               )}
 
               {section.title}
+
             </div>
           )
         )}
-
-        {/* Optional sections */}
 
         {optionalSections.map(
           (section) => (
@@ -169,6 +191,7 @@ export default function ReportProgress({
                   : "border-gray-200 bg-gray-50 text-gray-500"
               }`}
             >
+
               {section.status ? (
                 <CheckCircle2 size={15} />
               ) : (
@@ -180,10 +203,13 @@ export default function ReportProgress({
               <span className="text-xs font-normal opacity-70">
                 Optional
               </span>
+
             </div>
           )
         )}
+
       </div>
+
     </div>
   );
 }

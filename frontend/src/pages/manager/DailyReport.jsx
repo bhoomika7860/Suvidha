@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+
 import dailyReportsService from "../../services/dailyReportsService";
-import { CalendarDays } from "lucide-react";
+
+import { useBusinessDate } from "../../contexts/BusinessDateContext";
 
 import ReportProgress from "../../components/dailyReport/ReportProgress";
 import SalesSection from "../../components/dailyReport/SalesSection";
@@ -9,23 +11,11 @@ import PurchaseSection from "../../components/dailyReport/PurchaseSection";
 import DeliverySection from "../../components/dailyReport/DeliverySection";
 import ReviewSection from "../../components/dailyReport/ReviewSection";
 
-function getInitialDate() {
-  const savedDate =
-    localStorage.getItem("pharmacore360_selected_report_date");
-
-  if (savedDate) {
-    return savedDate;
-  }
-
-  return new Date().toISOString().split("T")[0];
-}
-
 export default function DailyReport() {
-  const [selectedDate, setSelectedDate] =
-    useState(getInitialDate);
+  const { selectedDate } = useBusinessDate();
 
-  const [report, setReport] =
-    useState(null);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadReport();
@@ -33,36 +23,49 @@ export default function DailyReport() {
 
   async function loadReport() {
     try {
+      setLoading(true);
+      setReport(null);
+
       const data =
         await dailyReportsService.getOrCreateReport(
           selectedDate
         );
 
       setReport(data);
-
     } catch (err) {
       console.error(
         "Failed to load daily report:",
         err
       );
+
+      console.error(
+        "Status:",
+        err.response?.status
+      );
+
+      console.error(
+        "Backend response:",
+        err.response?.data
+      );
+
+      setReport(null);
+    } finally {
+      setLoading(false);
     }
   }
 
-  function handleDateChange(e) {
-    const date = e.target.value;
-
-    setSelectedDate(date);
-
-    localStorage.setItem(
-      "pharmacore360_selected_report_date",
-      date
+  if (loading) {
+    return (
+      <div className="p-10 text-gray-500">
+        Loading daily report...
+      </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="p-10">
-        Loading...
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
+        Failed to load the daily report.
       </div>
     );
   }
@@ -72,56 +75,41 @@ export default function DailyReport() {
 
       {/* Header */}
 
-      <div className="flex items-start justify-between">
+      <div>
+        <div className="flex flex-wrap items-center gap-3">
 
-        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Daily Report
+          </h1>
 
-          <div className="flex items-center gap-3">
-
-            <h1 className="text-3xl font-bold text-gray-900">
-              Daily Report
-            </h1>
-
-            <span className="rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
-              {report.is_locked
-                ? "Locked"
-                : "Draft"}
-            </span>
-
-          </div>
-
-          <p className="mt-1 text-gray-500">
-            Complete all sections before submitting
-            the report.
-          </p>
+          <span
+            className={`rounded-full border px-3 py-1 text-sm font-medium ${
+              report.is_locked
+                ? "border-green-200 bg-green-100 text-green-700"
+                : "border-amber-200 bg-amber-100 text-amber-700"
+            }`}
+          >
+            {report.is_locked
+              ? "Locked"
+              : "Draft"}
+          </span>
 
         </div>
 
-        {/* Date */}
+        <p className="mt-1 text-gray-500">
+          Complete all sections before submitting
+          the report.
+        </p>
 
-        <div className="flex items-center gap-2">
-
-          <CalendarDays
-            size={20}
-            className="text-gray-500"
-          />
-
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={handleDateChange}
-            className="rounded-xl border border-gray-300 px-4 py-2"
-          />
-
-        </div>
-
+        <p className="mt-2 text-sm font-medium text-blue-600">
+          Business Date: {selectedDate}
+        </p>
       </div>
 
-      {/* Report Progress */}
+      {/* Progress */}
 
       <ReportProgress
         report={report}
-        refreshReport={loadReport}
       />
 
       {/* Sales */}
