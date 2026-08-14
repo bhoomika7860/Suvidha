@@ -16,3 +16,35 @@ body,
     transform: translate(-50%, 0%);
   }
 }
+
+/* Legacy browser color fallbacks */
+:root {
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+
+  --color-yellow-500: #eab308;
+  --color-yellow-600: #ca8a04;
+
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7e22ce;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+}
