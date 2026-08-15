@@ -352,14 +352,14 @@ def dashboard_summary(
         "outstanding_udhaar": round(total_udhaar, 2),
         "recovered_udhaar": round(recovered_udhaar, 2),
         "growth_rate": 0,
-        "submitted_reports": len(reports),
-        "sales_difference": (
-    report.cash_sales
-    + report.upi_sales
-    + report.card_sales
-    + report.total_expenses
-    + report.udhaar_sales
-    - report.system_sales
+"submitted_reports": len(reports),
+"sales_difference": round(
+    total_sales
+    - sum(
+        _safe_number(report.system_sales)
+        for report in reports
+    ),
+    2,
 ),
     }
 
