@@ -17,14 +17,18 @@ export default function Purchases() {
   const [searchParams] = useSearchParams();
 
   const [search, setSearch] = useState("");
+
   const [activeFilter, setActiveFilter] =
     useState("received");
 
   const [showReceiveModal, setShowReceiveModal] =
     useState(false);
 
-  const [purchases, setPurchases] = useState([]);
-  const [report, setReport] = useState(null);
+  const [purchases, setPurchases] =
+    useState([]);
+
+  const [report, setReport] =
+    useState(null);
 
   useEffect(() => {
     initializePage();
@@ -44,7 +48,6 @@ export default function Purchases() {
        * If opened from a historical Daily Report,
        * explicitly use that report.
        */
-
       if (reportParam) {
         selectedReport =
           await dailyReportsService.getReport(
@@ -55,7 +58,6 @@ export default function Purchases() {
       /*
        * Otherwise use the global Business Date.
        */
-
       else {
         selectedReport =
           await dailyReportsService.getOrCreateReport(
@@ -100,8 +102,12 @@ export default function Purchases() {
     }
   }
 
-  async function loadPurchases(reportId) {
-    if (!reportId) return;
+  async function loadPurchases(
+    reportId
+  ) {
+    if (!reportId) {
+      return;
+    }
 
     try {
       const purchaseData =
@@ -116,7 +122,9 @@ export default function Purchases() {
       );
 
       setPurchases(
-        Array.isArray(purchaseData)
+        Array.isArray(
+          purchaseData
+        )
           ? purchaseData
           : []
       );
@@ -131,21 +139,29 @@ export default function Purchases() {
     }
   }
 
-  async function addPurchase(purchase) {
+  async function addPurchase(
+    purchase
+  ) {
     if (!report) {
       console.error(
         "No daily report selected."
       );
+
       return;
     }
 
     try {
-      await purchaseService.createPurchase({
-        ...purchase,
-        daily_report_id: report.id,
-      });
+      await purchaseService.createPurchase(
+        {
+          ...purchase,
+          daily_report_id:
+            report.id,
+        }
+      );
 
-      await loadPurchases(report.id);
+      await loadPurchases(
+        report.id
+      );
 
       setShowReceiveModal(false);
 
@@ -163,29 +179,57 @@ export default function Purchases() {
   }
 
   const filteredPurchases =
-    purchases.filter((purchase) => {
-      const searchValue =
-        search.toLowerCase();
+    purchases.filter(
+      (purchase) => {
+        const searchValue =
+          search.toLowerCase();
 
-      const matchesSearch =
-        (purchase.supplier_name || "")
-          .toLowerCase()
-          .includes(searchValue) ||
-        (purchase.bill_number || "")
-          .toLowerCase()
-          .includes(searchValue) ||
-        (purchase.product_name || "")
-          .toLowerCase()
-          .includes(searchValue);
+        const matchesSearch =
+          (
+            purchase.supplier_name ||
+            ""
+          )
+            .toLowerCase()
+            .includes(searchValue) ||
 
-      const matchesStatus =
-        purchase.status === activeFilter;
+          (
+            purchase.bill_number ||
+            ""
+          )
+            .toLowerCase()
+            .includes(searchValue) ||
 
-      return (
-        matchesSearch &&
-        matchesStatus
-      );
-    });
+          (
+            purchase.product_name ||
+            ""
+          )
+            .toLowerCase()
+            .includes(searchValue);
+
+
+        /*
+         * IMPORTANT:
+         *
+         * "all" means do not apply
+         * any status filter.
+         *
+         * For every other tab,
+         * only show purchases whose
+         * status matches that tab.
+         */
+        const matchesStatus =
+          activeFilter === "all"
+            ? true
+            : purchase.status ===
+              activeFilter;
+
+
+        return (
+          matchesSearch &&
+          matchesStatus
+        );
+      }
+    );
 
   return (
     <div className="space-y-6">
@@ -193,6 +237,7 @@ export default function Purchases() {
       {/* Header */}
 
       <div>
+
         <h1 className="text-3xl font-bold">
           Purchase Workflow
         </h1>
@@ -204,15 +249,22 @@ export default function Purchases() {
         <p className="mt-2 text-sm font-medium text-blue-600">
           Business Date: {selectedDate}
         </p>
+
       </div>
+
 
       {/* Stats */}
 
       <PurchaseStats
         purchases={purchases}
-        activeFilter={activeFilter}
-        setActiveFilter={setActiveFilter}
+        activeFilter={
+          activeFilter
+        }
+        setActiveFilter={
+          setActiveFilter
+        }
       />
+
 
       {/* Toolbar */}
 
@@ -220,25 +272,39 @@ export default function Purchases() {
         search={search}
         setSearch={setSearch}
         onReceiveBill={() =>
-          setShowReceiveModal(true)
+          setShowReceiveModal(
+            true
+          )
         }
       />
+
 
       {/* Table */}
 
       <PurchaseTable
-        purchases={filteredPurchases}
-        allPurchases={purchases}
-        setPurchases={setPurchases}
+        purchases={
+          filteredPurchases
+        }
+        allPurchases={
+          purchases
+        }
+        setPurchases={
+          setPurchases
+        }
       />
+
 
       {/* Receive Bill */}
 
       {report && (
         <ReceiveBillModal
-          isOpen={showReceiveModal}
+          isOpen={
+            showReceiveModal
+          }
           onClose={() =>
-            setShowReceiveModal(false)
+            setShowReceiveModal(
+              false
+            )
           }
           onSave={addPurchase}
           reportId={report.id}

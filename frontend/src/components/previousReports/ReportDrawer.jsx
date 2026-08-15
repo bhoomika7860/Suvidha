@@ -8,46 +8,124 @@ import {
   X,
 } from "lucide-react";
 
+/*
+ * Convert a purchase timestamp into the
+ * Indian business date.
+ *
+ * Backend timestamps are handled using
+ * Asia/Kolkata so the purchase is counted
+ * against the correct pharmacy business date.
+ */
+function getIndiaBusinessDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }
+    ).format(new Date(value));
+  } catch (err) {
+    console.error(
+      "Failed to convert purchase date:",
+      err
+    );
+
+    return null;
+  }
+}
+
 export default function ReportDrawer({
   report,
   isOpen,
   onClose,
 }) {
-  if (!isOpen || !report) return null;
+  if (
+    !isOpen ||
+    !report
+  ) {
+    return null;
+  }
 
   const rawExpenses =
-    report.expenses || [];
+    Array.isArray(
+      report.expenses
+    )
+      ? report.expenses
+      : [];
 
   const purchases =
-    report.purchases ||
-    report.completed_purchases ||
-    [];
+    Array.isArray(
+      report.purchases
+    )
+      ? report.purchases
+      : Array.isArray(
+          report.completed_purchases
+        )
+      ? report.completed_purchases
+      : [];
 
-  // ----------------------------------------
-  // Group expenses
-  // ----------------------------------------
+
+  /*
+   * ----------------------------------------
+   * REPORT BUSINESS DATE
+   * ----------------------------------------
+   */
+
+  const reportBusinessDate =
+    report.report_date
+      ? getIndiaBusinessDate(
+          report.report_date
+        )
+      : null;
+
+
+  /*
+   * ----------------------------------------
+   * EXPENSES
+   * ----------------------------------------
+   */
 
   const groupedExpenses = {};
 
-  rawExpenses.forEach((expense) => {
-    const key =
-      expense.expense_type ||
-      expense.title ||
-      expense.category ||
-      "Other";
+  rawExpenses.forEach(
+    (expense) => {
+      const key =
+        expense.expense_type ||
+        expense.title ||
+        expense.category ||
+        "Other";
 
-    if (!groupedExpenses[key]) {
-      groupedExpenses[key] = 0;
+      if (
+        !groupedExpenses[key]
+      ) {
+        groupedExpenses[key] = 0;
+      }
+
+      groupedExpenses[key] +=
+        Number(
+          expense.amount || 0
+        );
     }
-
-    groupedExpenses[key] += Number(
-      expense.amount || 0
-    );
-  });
+  );
 
   const expenses =
-    Object.entries(groupedExpenses).map(
-      ([expense_type, amount], index) => ({
+    Object.entries(
+      groupedExpenses
+    ).map(
+      (
+        [
+          expense_type,
+          amount,
+        ],
+        index
+      ) => ({
         id: index,
         expense_type,
         amount,
@@ -56,43 +134,191 @@ export default function ReportDrawer({
 
   const totalExpenses =
     expenses.reduce(
-      (sum, item) =>
-        sum + Number(item.amount || 0),
+      (
+        sum,
+        item
+      ) =>
+        sum +
+        Number(
+          item.amount || 0
+        ),
       0
     );
 
-  // ----------------------------------------
-  // Sales difference
-  // ----------------------------------------
+
+  /*
+   * ----------------------------------------
+   * TODAY'S RECEIVED PURCHASES
+   * ----------------------------------------
+   *
+   * ONLY:
+   *
+   * 1. status = received
+   * 2. received_date = report business date
+   *
+   * Nothing else is included.
+   */
+
+  const receivedTodayPurchases =
+    purchases.filter(
+      (purchase) => {
+        const status =
+          String(
+            purchase.status || ""
+          ).toLowerCase();
+
+        if (
+          status !== "received"
+        ) {
+          return false;
+        }
+
+        const receivedDate =
+          getIndiaBusinessDate(
+            purchase.received_date
+          );
+
+        return (
+          receivedDate ===
+          reportBusinessDate
+        );
+      }
+    );
+
+
+  /*
+   * Total amount of ONLY the bills
+   * received on this report's date.
+   */
+
+  const totalPurchasesReceivedToday =
+    receivedTodayPurchases.reduce(
+      (
+        sum,
+        purchase
+      ) =>
+        sum +
+        Number(
+          purchase.purchase_amount ??
+            purchase.amount ??
+            0
+        ),
+      0
+    );
+
+
+  /*
+   * ----------------------------------------
+   * SALES
+   * ----------------------------------------
+   */
 
   const actualSales =
-    Number(report.summary?.sales || 0);
+    report.summary?.sales !==
+      undefined &&
+    report.summary?.sales !==
+      null
+      ? Number(
+          report.summary.sales ||
+            0
+        )
+      : (
+          Number(
+            report.cash_sales || 0
+          ) +
+          Number(
+            report.upi_sales || 0
+          ) +
+          Number(
+            report.card_sales || 0
+          ) +
+          Number(
+            report.udhaar_sales || 0
+          )
+        );
+
 
   const systemSales =
     Number(
-      report.payments?.system_sales ||
-      0
+      report.payments
+        ?.system_sales ??
+        report.system_sales ??
+        0
     );
 
+
   const salesDifference =
-    actualSales - systemSales;
+    actualSales -
+    systemSales;
+
+
+  const bills =
+    Number(
+      report.summary?.bills ??
+        report.total_bills ??
+        0
+    );
+
+
+  const deliveries =
+    Number(
+      report.summary
+        ?.deliveries ??
+        report.deliveries ??
+        0
+    );
+
+
+  const cash =
+    Number(
+      report.payments?.cash ??
+        report.cash_sales ??
+        0
+    );
+
+
+  const upi =
+    Number(
+      report.payments?.upi ??
+        report.upi_sales ??
+        0
+    );
+
+
+  const card =
+    Number(
+      report.payments?.card ??
+        report.card_sales ??
+        0
+    );
+
+
+  const udhaar =
+    Number(
+      report.payments?.udhaar ??
+        report.udhaar_sales ??
+        0
+    );
+
 
   return (
     <>
+
       {/* Overlay */}
 
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/30 z-40"
+        className="fixed inset-0 z-40 bg-black/30"
       />
+
 
       {/* Drawer */}
 
-      <div className="fixed right-0 top-0 h-screen w-full sm:w-[620px] bg-white shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 z-50 h-screen w-full overflow-y-auto bg-white shadow-2xl sm:w-[620px]">
 
         {/* Header */}
 
-        <div className="flex justify-between items-center border-b px-6 py-5">
+        <div className="flex items-center justify-between border-b px-6 py-5">
 
           <div>
 
@@ -100,9 +326,11 @@ export default function ReportDrawer({
               Daily Report
             </h2>
 
-            <p className="text-gray-500 mt-1 flex items-center gap-2">
+            <p className="mt-1 flex items-center gap-2 text-gray-500">
 
-              <CalendarDays size={16} />
+              <CalendarDays
+                size={16}
+              />
 
               {new Date(
                 report.report_date
@@ -119,16 +347,19 @@ export default function ReportDrawer({
 
           </div>
 
+
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="rounded-lg p-2 hover:bg-gray-100"
           >
             <X size={22} />
           </button>
 
         </div>
 
-        <div className="p-6 space-y-6">
+
+        <div className="space-y-6 p-6">
 
           {/* Summary */}
 
@@ -139,50 +370,48 @@ export default function ReportDrawer({
                 <Receipt size={18} />
               }
               title="Bills"
-              value={
-                report.summary?.bills ?? 0
-              }
+              value={bills}
             />
+
 
             <SummaryCard
               icon={
                 <Wallet size={18} />
               }
               title="Sales"
-              value={`₹${Number(
-                report.summary?.sales || 0
-              ).toLocaleString("en-IN")}`}
+              value={`₹${actualSales.toLocaleString(
+                "en-IN"
+              )}`}
             />
+
 
             <SummaryCard
               icon={
                 <Package size={18} />
               }
               title="Purchases"
-              value={`₹${Number(
-                report.summary?.purchases ||
-                  0
-              ).toLocaleString("en-IN")}`}
+              value={`₹${totalPurchasesReceivedToday.toLocaleString(
+                "en-IN"
+              )}`}
             />
+
 
             <SummaryCard
               icon={
                 <Truck size={18} />
               }
               title="Deliveries"
-              value={
-                report.summary?.deliveries ??
-                0
-              }
+              value={deliveries}
             />
 
           </div>
 
+
           {/* Payment Breakdown */}
 
-          <div className="border rounded-2xl p-5">
+          <div className="rounded-2xl border p-5">
 
-            <h3 className="font-semibold mb-4">
+            <h3 className="mb-4 font-semibold">
               Payment Breakdown
             </h3>
 
@@ -190,34 +419,30 @@ export default function ReportDrawer({
 
               <Row
                 title="Cash"
-                value={`₹${Number(
-                  report.payments?.cash ||
-                    0
-                ).toLocaleString("en-IN")}`}
+                value={`₹${cash.toLocaleString(
+                  "en-IN"
+                )}`}
               />
 
               <Row
                 title="UPI"
-                value={`₹${Number(
-                  report.payments?.upi ||
-                    0
-                ).toLocaleString("en-IN")}`}
+                value={`₹${upi.toLocaleString(
+                  "en-IN"
+                )}`}
               />
 
               <Row
                 title="Card"
-                value={`₹${Number(
-                  report.payments?.card ||
-                    0
-                ).toLocaleString("en-IN")}`}
+                value={`₹${card.toLocaleString(
+                  "en-IN"
+                )}`}
               />
 
               <Row
                 title="Udhaar"
-                value={`₹${Number(
-                  report.payments?.udhaar ||
-                    0
-                ).toLocaleString("en-IN")}`}
+                value={`₹${udhaar.toLocaleString(
+                  "en-IN"
+                )}`}
               />
 
               <div className="border-t pt-4">
@@ -236,9 +461,9 @@ export default function ReportDrawer({
                   )}`}
                 />
 
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-4 border-t pt-4">
 
-                  <div className="flex justify-between">
+                  <div className="flex items-center justify-between">
 
                     <span className="font-semibold">
                       Sales Difference
@@ -246,7 +471,8 @@ export default function ReportDrawer({
 
                     <span
                       className={`font-bold ${
-                        salesDifference === 0
+                        salesDifference ===
+                        0
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
@@ -269,15 +495,17 @@ export default function ReportDrawer({
 
           </div>
 
+
           {/* Expenses */}
 
-          <div className="border rounded-2xl p-5">
+          <div className="rounded-2xl border p-5">
 
-            <h3 className="font-semibold mb-4">
+            <h3 className="mb-4 font-semibold">
               Expenses
             </h3>
 
-            {expenses.length === 0 ? (
+            {expenses.length ===
+            0 ? (
 
               <p className="text-gray-500">
                 No expenses recorded.
@@ -286,10 +514,14 @@ export default function ReportDrawer({
             ) : (
 
               <>
+
                 <div className="space-y-4">
 
                   {expenses.map(
-                    (expense) => (
+                    (
+                      expense
+                    ) => (
+
                       <Row
                         key={
                           expense.id
@@ -304,12 +536,13 @@ export default function ReportDrawer({
                           "en-IN"
                         )}`}
                       />
+
                     )
                   )}
 
                 </div>
 
-                <div className="border-t mt-4 pt-4">
+                <div className="mt-4 border-t pt-4">
 
                   <Row
                     title="Total"
@@ -326,64 +559,64 @@ export default function ReportDrawer({
 
           </div>
 
+
           {/* Purchases */}
 
-          <div className="border rounded-2xl p-5">
+          <div className="rounded-2xl border p-5">
 
-            <h3 className="font-semibold mb-4">
-              Purchases
-            </h3>
+            <div className="flex items-center justify-between">
 
-            {purchases.length === 0 ? (
+              <div>
 
-              <p className="text-gray-500">
-                No purchases recorded.
-              </p>
+                <h3 className="font-semibold">
+                  Purchases
+                </h3>
 
-            ) : (
-
-              <div className="space-y-4">
-
-                {purchases.map(
-                  (purchase) => (
-
-                    <Row
-                      key={purchase.id}
-                      title={
-                        purchase.product_name ||
-                        purchase.supplier_name ||
-                        "Purchase"
-                      }
-                      value={`₹${Number(
-                        purchase.purchase_amount ??
-                          purchase.amount ??
-                          0
-                      ).toLocaleString(
-                        "en-IN"
-                      )}`}
-                    />
-
-                  )
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Purchase bills received on this business date.
+                </p>
 
               </div>
 
-            )}
+              <Package
+                size={20}
+                className="text-blue-600"
+              />
+
+            </div>
+
+
+            <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-5">
+
+              <p className="text-sm font-medium text-blue-700">
+                Purchases Received Today
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-blue-600">
+                ₹
+                {totalPurchasesReceivedToday.toLocaleString(
+                  "en-IN"
+                )}
+              </p>
+
+            </div>
 
           </div>
 
+
           {/* Deliveries */}
 
-          <div className="border rounded-2xl p-5">
+          <div className="rounded-2xl border p-5">
 
-            <h3 className="font-semibold mb-4">
+            <h3 className="mb-4 font-semibold">
               Deliveries
             </h3>
 
             {(
               report.delivery_assignments ||
               []
-            ).length === 0 ? (
+            ).length ===
+            0 ? (
 
               <p className="text-gray-500">
                 No delivery assignments recorded.
@@ -394,10 +627,14 @@ export default function ReportDrawer({
               <div className="space-y-4">
 
                 {report.delivery_assignments.map(
-                  (delivery) => (
+                  (
+                    delivery
+                  ) => (
 
                     <Row
-                      key={delivery.id}
+                      key={
+                        delivery.id
+                      }
                       title={
                         delivery.delivery_boy_name
                       }
@@ -415,26 +652,26 @@ export default function ReportDrawer({
 
           </div>
 
+
           {/* Notes */}
 
-          <div className="border rounded-2xl p-5">
+          <div className="rounded-2xl border p-5">
 
-            <h3 className="font-semibold mb-3">
+            <h3 className="mb-3 font-semibold">
               Manager Notes
             </h3>
 
-            <p className="text-gray-600 leading-7">
-
+            <p className="leading-7 text-gray-600">
               {report.notes ||
                 "No notes added."}
-
             </p>
 
           </div>
 
+
           {/* Status */}
 
-          <div className="rounded-2xl bg-green-50 border border-green-200 p-5 flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-5">
 
             <CheckCircle2 className="text-green-600" />
 
@@ -445,8 +682,7 @@ export default function ReportDrawer({
               </p>
 
               <p className="text-sm text-gray-600">
-                This report is locked and
-                cannot be edited.
+                This report is locked and cannot be edited.
               </p>
 
             </div>
@@ -456,9 +692,11 @@ export default function ReportDrawer({
         </div>
 
       </div>
+
     </>
   );
 }
+
 
 function SummaryCard({
   icon,
@@ -466,9 +704,9 @@ function SummaryCard({
   value,
 }) {
   return (
-    <div className="border rounded-2xl p-5">
+    <div className="rounded-2xl border p-5">
 
-      <div className="flex items-center gap-2 text-gray-500 mb-3">
+      <div className="mb-3 flex items-center gap-2 text-gray-500">
 
         {icon}
 
@@ -486,18 +724,19 @@ function SummaryCard({
   );
 }
 
+
 function Row({
   title,
   value,
 }) {
   return (
-    <div className="flex justify-between items-center gap-4">
+    <div className="flex items-center justify-between gap-4">
 
       <span className="text-gray-600">
         {title}
       </span>
 
-      <span className="font-medium text-right">
+      <span className="text-right font-medium">
         {value}
       </span>
 
