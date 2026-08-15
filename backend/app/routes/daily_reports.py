@@ -861,6 +861,7 @@ def get_today_reports(
     db: Session = Depends(get_db),
 ):
     print(">>> GET TODAY REPORT CALLED <<<")
+
     if current_user["role"] != "owner":
         raise HTTPException(
             status_code=403,
@@ -872,7 +873,7 @@ def get_today_reports(
         .options(joinedload(DailyReport.store))
         .filter(
             DailyReport.is_submitted == True,
-            func.date(DailyReport.report_date) == ist_today(),
+            DailyReport.report_date == ist_today(),
         )
         .order_by(DailyReport.store_id)
         .all()
@@ -882,65 +883,109 @@ def get_today_reports(
 
     for report in reports:
 
+        # --------------------------------------------------
+        # Expenses for this report
+        # --------------------------------------------------
+
         expenses_total = (
-            db.query(func.coalesce(func.sum(Expense.amount), 0))
-            .filter(
-                Expense.store_id == report.store_id,
-                func.date(
-                    func.timezone(
-                        "Asia/Kolkata",
-                        Expense.created_at,
-                    )
+            db.query(
+                func.coalesce(
+                    func.sum(Expense.amount),
+                    0,
                 )
-                == report.report_date,
+            )
+            .filter(
+                Expense.daily_report_id == report.id,
             )
             .scalar()
         )
 
-        report_udhaar_entries = get_udhaar_for_report_date(
-    db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
-
-    udhaar_total = sum(
-    float(entry.amount or 0) - float(entry.paid_amount or 0)
-    for entry in report_udhaar_entries
-    if entry.status != "settled"
-)
-    purchase_total = (
-    db.query(
-        func.coalesce(
-            func.sum(Purchase.purchase_amount),
-            0,
+        expenses_total = float(
+            expenses_total or 0
         )
-    )
-    .filter(
-        Purchase.daily_report_id == report.id,
-        Purchase.status == "completed",
-    )
-    .scalar()
-)
-    response.append(
+
+        # --------------------------------------------------
+        # Udhaar for this report
+        # --------------------------------------------------
+
+        report_udhaar_entries = (
+            get_udhaar_for_report_date(
+                db=db,
+                store_id=report.store_id,
+                report_date=report.report_date,
+            )
+        )
+
+        udhaar_total = sum(
+            float(entry.amount or 0)
+            - float(entry.paid_amount or 0)
+            for entry in report_udhaar_entries
+            if entry.status != "settled"
+        )
+
+        udhaar_total = float(
+            udhaar_total or 0
+        )
+
+        # --------------------------------------------------
+        # Today's received/completed purchases
+        # --------------------------------------------------
+
+        purchase_total = (
+            db.query(
+                func.coalesce(
+                    func.sum(
+                        Purchase.purchase_amount
+                    ),
+                    0,
+                )
+            )
+            .filter(
+                Purchase.daily_report_id == report.id,
+                Purchase.status == "completed",
+            )
+            .scalar()
+        )
+
+        purchase_total = float(
+            purchase_total or 0
+        )
+
+        # --------------------------------------------------
+        # Response
+        # --------------------------------------------------
+
+        response.append(
             {
                 "id": report.id,
+
                 "store_id": report.store_id,
+
                 "store_name": report.store.name,
+
                 "report_date": report.report_date,
 
                 "total_bills": report.total_bills,
+
                 "deliveries": report.deliveries,
 
                 "cash_sales": report.cash_sales,
+
                 "upi_sales": report.upi_sales,
+
                 "card_sales": report.card_sales,
 
                 "udhaar_sales": udhaar_total,
+
                 "system_sales": report.system_sales,
+
                 "total_expenses": expenses_total,
+
                 "total_purchases": purchase_total,
 
                 "is_locked": report.is_locked,
+
+                "is_submitted": report.is_submitted,
             }
         )
 
