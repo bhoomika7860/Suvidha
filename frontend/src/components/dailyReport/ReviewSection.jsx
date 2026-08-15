@@ -4,7 +4,6 @@ import {
 } from "react";
 
 import {
-  AlertCircle,
   CheckCircle2,
   Circle,
   Lock,
@@ -14,7 +13,6 @@ import dailyReportsService from "../../services/dailyReportsService";
 
 export default function ReviewSection({
   report,
-  refreshReport,
 }) {
   const [
     expensesCompleted,
@@ -88,84 +86,68 @@ export default function ReviewSection({
 
   addRequiredSection(
     "Sales",
-    Number(report.total_bills || 0) > 0 ||
-      Number(report.cash_sales || 0) > 0 ||
-      Number(report.upi_sales || 0) > 0 ||
-      Number(report.card_sales || 0) > 0 ||
-      Number(report.udhaar_sales || 0) > 0
+    Number(
+      report.total_bills || 0
+    ) > 0 ||
+      Number(
+        report.cash_sales || 0
+      ) > 0 ||
+      Number(
+        report.upi_sales || 0
+      ) > 0 ||
+      Number(
+        report.card_sales || 0
+      ) > 0 ||
+      Number(
+        report.udhaar_sales || 0
+      ) > 0
   );
 
   addRequiredSection(
     "Deliveries",
-    Number(report.deliveries || 0) > 0
+    Number(
+      report.deliveries || 0
+    ) > 0
   );
 
   if (expensesCompleted) {
-    completed.push("Expenses");
+    completed.push(
+      "Expenses"
+    );
   } else {
-    optional.push("Expenses");
+    optional.push(
+      "Expenses"
+    );
   }
 
   if (purchasesCompleted) {
-    completed.push("Purchases");
+    completed.push(
+      "Purchases"
+    );
   } else {
-    optional.push("Purchases");
-  }
-
-  async function submitReport() {
-    if (report.is_locked) {
-      return;
-    }
-
-    if (remaining.length > 0) {
-      alert(
-        "Complete all required sections before submitting."
-      );
-      return;
-    }
-
-    try {
-      await dailyReportsService.submitReport(
-        report.id
-      );
-
-      alert(
-        "Daily report submitted successfully."
-      );
-
-      await refreshReport();
-
-    } catch (err) {
-      console.error(
-        "Failed to submit report:",
-        err
-      );
-
-      alert(
-        err.response?.data?.detail ||
-          "Failed to submit daily report."
-      );
-    }
+    optional.push(
+      "Purchases"
+    );
   }
 
   return (
     <div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
 
-          <h2 className="text-xl font-semibold">
-            Review & Submit
+          <h2 className="text-2xl font-bold text-gray-900">
+            Review
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            Verify this report before submission.
+            Review the report before the final submission.
           </p>
 
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+        <div className="flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
 
           <Lock size={15} />
 
@@ -175,7 +157,10 @@ export default function ReviewSection({
 
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
+
+      <div className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-3">
+
+        {/* COMPLETED */}
 
         <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
 
@@ -186,7 +171,7 @@ export default function ReviewSection({
               className="text-green-600"
             />
 
-            <h3 className="font-semibold text-green-700">
+            <h3 className="text-base font-semibold text-green-700">
               Completed ({completed.length})
             </h3>
 
@@ -204,7 +189,10 @@ export default function ReviewSection({
 
               completed.map(
                 (item) => (
-                  <li key={item}>
+                  <li
+                    key={item}
+                    className="text-green-700"
+                  >
                     ✓ {item}
                   </li>
                 )
@@ -216,16 +204,19 @@ export default function ReviewSection({
 
         </div>
 
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5">
+
+        {/* REQUIRED */}
+
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
 
           <div className="mb-4 flex items-center gap-2">
 
-            <AlertCircle
+            <Circle
               size={20}
-              className="text-orange-600"
+              className="text-gray-500"
             />
 
-            <h3 className="font-semibold text-orange-700">
+            <h3 className="text-base font-semibold text-gray-700">
               Required ({remaining.length})
             </h3>
 
@@ -235,7 +226,7 @@ export default function ReviewSection({
 
             {remaining.length === 0 ? (
 
-              <li className="text-orange-700/70">
+              <li className="text-gray-600">
                 All required sections completed.
               </li>
 
@@ -243,7 +234,10 @@ export default function ReviewSection({
 
               remaining.map(
                 (item) => (
-                  <li key={item}>
+                  <li
+                    key={item}
+                    className="text-gray-600"
+                  >
                     • {item}
                   </li>
                 )
@@ -255,22 +249,25 @@ export default function ReviewSection({
 
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+
+        {/* OPTIONAL */}
+
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
 
           <div className="mb-4 flex items-center gap-2">
 
             <Circle
               size={20}
-              className="text-gray-500"
+              className="text-blue-500"
             />
 
-            <h3 className="font-semibold text-gray-700">
+            <h3 className="text-base font-semibold text-blue-700">
               Optional ({optional.length})
             </h3>
 
           </div>
 
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="space-y-2 text-sm text-blue-700">
 
             {optional.length === 0 ? (
 
@@ -296,46 +293,16 @@ export default function ReviewSection({
 
       </div>
 
-      <div className="mt-8 flex items-center justify-between border-t pt-5">
+
+      <div className="mt-7 rounded-2xl border border-gray-200 bg-white p-5">
 
         <p className="text-sm text-gray-500">
 
           {remaining.length === 0
-            ? "Report is ready for submission."
-            : "Complete all required sections before submitting."}
+            ? "All required sections are ready. Use the single Save & Submit Report button below to submit the complete report."
+            : "Complete all required sections before submitting the report."}
 
         </p>
-
-        <div className="flex gap-3">
-
-          <button
-            type="button"
-            disabled
-            className="h-11 cursor-not-allowed rounded-xl border border-gray-200 px-6 text-gray-400"
-          >
-            Save Draft
-          </button>
-
-          <button
-            type="button"
-            disabled={
-              remaining.length > 0 ||
-              report.is_locked
-            }
-            onClick={submitReport}
-            className={`h-11 w-60 rounded-xl font-semibold text-white ${
-              remaining.length > 0 ||
-              report.is_locked
-                ? "cursor-not-allowed bg-gray-400"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {report.is_locked
-              ? "Report Submitted"
-              : "Submit Daily Report"}
-          </button>
-
-        </div>
 
       </div>
 

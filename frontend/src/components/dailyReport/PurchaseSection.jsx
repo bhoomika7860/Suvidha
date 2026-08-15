@@ -1,5 +1,4 @@
-import { Eye, Package } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Package } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import SectionCard from "./SectionCard";
@@ -7,9 +6,9 @@ import dailyReportsService from "../../services/dailyReportsService";
 
 export default function PurchaseSection({
   report,
-  refreshReport,
 }) {
-  const [purchases, setPurchases] = useState([]);
+  const [purchases, setPurchases] =
+    useState([]);
 
   useEffect(() => {
     if (!report?.id) {
@@ -43,15 +42,15 @@ export default function PurchaseSection({
   }, [report?.id]);
 
   /*
-   * IMPORTANT:
+   * Only RECEIVED purchases belonging to
+   * this report are included.
    *
-   * The Daily Report should only show the
-   * monetary value of purchases that are
-   * currently in RECEIVED status.
-   *
-   * Completed purchases are deliberately
-   * excluded from this amount.
+   * No purchase history is displayed.
+   * No supplier information is displayed.
+   * No bill information is displayed.
+   * No purchase table is displayed.
    */
+
   const receivedPurchases =
     purchases.filter(
       (purchase) =>
@@ -79,51 +78,36 @@ export default function PurchaseSection({
 
       <div className="space-y-5">
 
-        {/* Header */}
+        <div className="flex items-center gap-3">
 
-        <div className="flex items-center justify-between">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100">
 
-          <div className="flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
-
-              <Package
-                size={18}
-                className="text-blue-600"
-              />
-
-            </div>
-
-            <div>
-
-              <h3 className="font-semibold">
-                Purchases
-              </h3>
-
-              <p className="text-sm text-gray-500">
-                Total value of purchases received for this report.
-              </p>
-
-            </div>
+            <Package
+              size={19}
+              className="text-blue-600"
+            />
 
           </div>
 
-          <Link
-            to={`/manager-purchases?report=${report.id}`}
-            className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
-          >
-            <Eye size={17} />
-            View Purchases
-          </Link>
+          <div>
+
+            <h3 className="text-base font-semibold text-gray-900">
+              Purchases Received Today
+            </h3>
+
+            <p className="text-sm text-gray-500">
+              Only purchases received for this business date are included.
+            </p>
+
+          </div>
 
         </div>
 
-        {/* Received Purchase Amount */}
 
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+        <div className="max-w-[560px] rounded-2xl border border-blue-200 bg-blue-50 p-6">
 
           <p className="text-sm font-medium text-blue-700">
-            Purchases Received
+            Purchase Received Today
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-blue-600">
@@ -132,10 +116,6 @@ export default function PurchaseSection({
               "en-IN"
             )}
           </h2>
-
-          <p className="mt-2 text-sm text-blue-700/70">
-            Only purchases with status "Received" are included.
-          </p>
 
         </div>
 

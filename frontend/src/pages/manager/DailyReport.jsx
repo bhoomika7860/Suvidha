@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import dailyReportsService from "../../services/dailyReportsService";
 
@@ -15,6 +19,10 @@ export default function DailyReport() {
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const salesRef = useRef(null);
+  const deliveryRef = useRef(null);
 
   useEffect(() => {
     loadReport();
@@ -50,6 +58,86 @@ export default function DailyReport() {
       setReport(null);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleFinalSubmit() {
+    if (!report || report.is_locked || submitting) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      /*
+       * Save Sales
+       *
+       * The SalesSection still uses the exact
+       * existing backend/service logic.
+       *
+       * It no longer has its own Save button.
+       */
+
+      if (salesRef.current?.save) {
+        await salesRef.current.save();
+      }
+
+      /*
+       * Save Deliveries
+       *
+       * The DeliverySection still uses the
+       * existing updateDeliveries API.
+       *
+       * It no longer has its own Save button.
+       */
+
+      if (deliveryRef.current?.save) {
+        await deliveryRef.current.save();
+      }
+
+      /*
+       * Refresh once before final submission so
+       * the latest Sales and Delivery values are
+       * reflected in the report.
+       */
+
+      const latestReport =
+        await dailyReportsService.getOrCreateReport(
+          selectedDate
+        );
+
+      setReport(latestReport);
+
+      /*
+       * Final report submission.
+       *
+       * This is the ONLY Daily Report submission
+       * action on the page.
+       */
+
+      await dailyReportsService.submitReport(
+        latestReport.id
+      );
+
+      alert(
+        "Daily report submitted successfully."
+      );
+
+      await loadReport();
+
+    } catch (err) {
+      console.error(
+        "Failed to submit daily report:",
+        err
+      );
+
+      alert(
+        err.response?.data?.detail ||
+          err.message ||
+          "Failed to submit daily report."
+      );
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -99,7 +187,9 @@ export default function DailyReport() {
                     : "border-amber-200 bg-amber-50 text-amber-700"
                 }`}
               >
-                {isLocked ? "Locked" : "Draft"}
+                {isLocked
+                  ? "Locked"
+                  : "Draft"}
               </span>
 
             </div>
@@ -121,61 +211,6 @@ export default function DailyReport() {
 
 
       {/* =====================================================
-          REPORT SUMMARY
-      ====================================================== */}
-
-      <div className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-
-        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
-          <p className="text-sm text-gray-500">
-            Sales
-          </p>
-
-          <p className="mt-1 text-xl font-semibold text-gray-900">
-            ₹{Number(report.cash_sales || 0).toLocaleString("en-IN")}
-          </p>
-        </div>
-
-
-        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
-          <p className="text-sm text-gray-500">
-            Deliveries
-          </p>
-
-          <p className="mt-1 text-xl font-semibold text-gray-900">
-            {Number(report.deliveries || 0)}
-          </p>
-        </div>
-
-
-        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
-          <p className="text-sm text-gray-500">
-            Expenses
-          </p>
-
-          <p className="mt-1 text-xl font-semibold text-gray-900">
-            ₹{Number(report.total_expenses || 0).toLocaleString("en-IN")}
-          </p>
-        </div>
-
-
-        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
-          <p className="text-sm text-gray-500">
-            Purchases Received
-          </p>
-
-          <p className="mt-1 text-xl font-semibold text-gray-900">
-            ₹
-            {Number(
-              report.total_purchases || 0
-            ).toLocaleString("en-IN")}
-          </p>
-        </div>
-
-      </div>
-
-
-      {/* =====================================================
           CONTINUOUS REPORT
       ====================================================== */}
 
@@ -185,7 +220,7 @@ export default function DailyReport() {
             SALES
         ==================================================== */}
 
-        <section className="border-b border-gray-200 px-5 py-8 sm:px-8 lg:px-10">
+        <section className="border-b border-gray-200 px-5 py-10 sm:px-8 lg:px-10">
 
           <div className="mb-7">
 
@@ -208,10 +243,9 @@ export default function DailyReport() {
           </div>
 
           <SalesSection
+            ref={salesRef}
             report={report}
             refreshReport={loadReport}
-            embedded
-            disabled={isLocked}
           />
 
         </section>
@@ -221,7 +255,7 @@ export default function DailyReport() {
             DELIVERIES
         ==================================================== */}
 
-        <section className="border-b border-gray-200 px-5 py-8 sm:px-8 lg:px-10">
+        <section className="border-b border-gray-200 px-5 py-10 sm:px-8 lg:px-10">
 
           <div className="mb-7">
 
@@ -245,10 +279,9 @@ export default function DailyReport() {
           </div>
 
           <DeliverySection
+            ref={deliveryRef}
             report={report}
             refreshReport={loadReport}
-            embedded
-            disabled={isLocked}
           />
 
         </section>
@@ -258,19 +291,27 @@ export default function DailyReport() {
             EXPENSES
         ==================================================== */}
 
-        <section className="border-b border-gray-200 px-5 py-8 sm:px-8 lg:px-10">
+        <section className="border-b border-gray-200 px-5 py-10 sm:px-8 lg:px-10">
 
           <div className="mb-7">
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
 
-              <span className="text-sm font-semibold tracking-wider text-orange-600">
-                03
+              <div className="flex items-center gap-3">
+
+                <span className="text-sm font-semibold tracking-wider text-orange-600">
+                  03
+                </span>
+
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Expenses
+                </h2>
+
+              </div>
+
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                Optional
               </span>
-
-              <h2 className="text-2xl font-bold text-gray-900">
-                Expenses
-              </h2>
 
             </div>
 
@@ -284,8 +325,6 @@ export default function DailyReport() {
           <ExpenseSection
             report={report}
             refreshReport={loadReport}
-            embedded
-            disabled={isLocked}
           />
 
         </section>
@@ -295,24 +334,33 @@ export default function DailyReport() {
             PURCHASES
         ==================================================== */}
 
-        <section className="px-5 py-8 sm:px-8 lg:px-10">
+        <section className="border-b border-gray-200 px-5 py-10 sm:px-8 lg:px-10">
 
           <div className="mb-7">
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
 
-              <span className="text-sm font-semibold tracking-wider text-blue-600">
-                04
+              <div className="flex items-center gap-3">
+
+                <span className="text-sm font-semibold tracking-wider text-blue-600">
+                  04
+                </span>
+
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Purchases
+                </h2>
+
+              </div>
+
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                Optional
               </span>
-
-              <h2 className="text-2xl font-bold text-gray-900">
-                Purchases
-              </h2>
 
             </div>
 
             <p className="mt-1 text-sm text-gray-500">
-              Purchases received for this business date.
+              Only the purchase value received on this business
+              date is shown here.
             </p>
 
           </div>
@@ -320,8 +368,20 @@ export default function DailyReport() {
           <PurchaseSection
             report={report}
             refreshReport={loadReport}
-            embedded
-            disabled={isLocked}
+          />
+
+        </section>
+
+
+        {/* ===================================================
+            REVIEW
+        ==================================================== */}
+
+        <section className="px-5 py-10 sm:px-8 lg:px-10">
+
+          <ReviewSection
+            report={report}
+            refreshReport={loadReport}
           />
 
         </section>
@@ -330,17 +390,48 @@ export default function DailyReport() {
 
 
       {/* =====================================================
-          REVIEW & SUBMIT
+          ONE FINAL SAVE / SUBMIT BUTTON
       ====================================================== */}
 
       <section className="mt-8">
 
-        <ReviewSection
-          report={report}
-          refreshReport={loadReport}
-          embedded
-          disabled={isLocked}
-        />
+        <div className="flex flex-col gap-5 rounded-3xl border border-gray-200 bg-white px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
+
+          <div>
+
+            <h2 className="text-xl font-semibold text-gray-900">
+              Ready to submit?
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Review the report above. Once submitted, the
+              daily report will be locked.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={handleFinalSubmit}
+            disabled={
+              isLocked ||
+              submitting
+            }
+            className={`h-12 min-w-[220px] rounded-xl px-8 text-sm font-semibold text-white transition-colors ${
+              isLocked ||
+              submitting
+                ? "cursor-not-allowed bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {isLocked
+              ? "Report Submitted"
+              : submitting
+                ? "Saving & Submitting..."
+                : "Save & Submit Report"}
+          </button>
+
+        </div>
 
       </section>
 

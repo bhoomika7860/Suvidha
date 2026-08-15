@@ -1,44 +1,101 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import paymentMachineService from "../../services/paymentMachineService";
 import paymentMachineEntryService from "../../services/paymentMachineEntryService";
+
+const NUMBER_INPUT_CLASS =
+  "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
+function handleNumberWheel(e) {
+  e.currentTarget.blur();
+}
 
 export default function PaymentMachines({
   reportId,
   onTotalChange,
   onMachinesChange,
 }) {
-  const [machines, setMachines] = useState([]);
-  const [newMachine, setNewMachine] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [machines, setMachines] =
+    useState([]);
+
+  const [newMachine, setNewMachine] =
+    useState("");
+
+  const [showAdd, setShowAdd] =
+    useState(false);
 
   async function loadMachines() {
-    if (!reportId) return;
+    if (!reportId) {
+      return;
+    }
 
     try {
+      /*
+       * Load the permanent machine list.
+       */
       const machineList =
         await paymentMachineService.getMachines();
 
+      /*
+       * Load the saved amounts for THIS
+       * daily report.
+       *
+       * Therefore refreshing the browser
+       * loads the saved amounts again.
+       */
       const entries =
-        await paymentMachineEntryService.get(reportId);
-
-      const merged = machineList.map((machine) => {
-        const existing = entries.find(
-          (entry) => entry.machine_id === machine.id
+        await paymentMachineEntryService.get(
+          reportId
         );
 
-        return {
-          ...machine,
-          amount:
-  existing?.amount !== undefined &&
-  existing?.amount !== null
-    ? String(existing.amount)
-    : "",
-        };
-      });
+      const merged =
+        machineList.map(
+          (machine) => {
+            const existing =
+              entries.find(
+                (entry) =>
+                  entry.machine_id ===
+                  machine.id
+              );
+
+            const savedAmount =
+              existing?.amount !==
+                undefined &&
+              existing?.amount !==
+                null
+                ? Number(
+                    existing.amount
+                  )
+                : 0;
+
+            return {
+              ...machine,
+
+              /*
+               * Keep zero amounts visually
+               * empty instead of displaying 0.
+               */
+              amount:
+                savedAmount > 0
+                  ? String(
+                      savedAmount
+                    )
+                  : "",
+            };
+          }
+        );
 
       setMachines(merged);
+
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Failed to load payment machines:",
+        err
+      );
     }
   }
 
@@ -46,67 +103,123 @@ export default function PaymentMachines({
     loadMachines();
   }, [reportId]);
 
-  const total = useMemo(() => {
-  return machines.reduce(
-    (sum, machine) =>
-      sum + Number(machine.amount || 0),
-    0
-  );
-}, [machines]);
+  const total =
+    useMemo(() => {
+      return machines.reduce(
+        (sum, machine) =>
+          sum +
+          Number(
+            machine.amount || 0
+          ),
+        0
+      );
+    }, [machines]);
 
   useEffect(() => {
-    onTotalChange?.(total);
-  }, [total, onTotalChange]);
+    onTotalChange?.(
+      total
+    );
+  }, [
+    total,
+    onTotalChange,
+  ]);
 
   useEffect(() => {
-  onMachinesChange?.(
-    machines.map((machine) => ({
-      machine_id: machine.id,
-      amount: Number(machine.amount || 0),
-    }))
-  );
-}, [machines, onMachinesChange]);
+    onMachinesChange?.(
+      machines.map(
+        (machine) => ({
+          machine_id:
+            machine.id,
 
-  function changeAmount(id, value) {
-  setMachines((prev) =>
-    prev.map((machine) =>
-      machine.id === id
-        ? {
-            ...machine,
-            amount: value,
-          }
-        : machine
-    )
-  );
-}
+          amount:
+            Number(
+              machine.amount || 0
+            ),
+        })
+      )
+    );
+  }, [
+    machines,
+    onMachinesChange,
+  ]);
+
+  function changeAmount(
+    id,
+    value
+  ) {
+    setMachines(
+      (prev) =>
+        prev.map(
+          (machine) =>
+            machine.id === id
+              ? {
+                  ...machine,
+                  amount: value,
+                }
+              : machine
+        )
+    );
+  }
 
   async function addMachine() {
-    if (!newMachine.trim()) return;
+    if (
+      !newMachine.trim()
+    ) {
+      return;
+    }
 
     try {
-      await paymentMachineService.addMachine({
-        machine_name: newMachine,
-      });
+      await paymentMachineService.addMachine(
+        {
+          machine_name:
+            newMachine,
+        }
+      );
 
       setNewMachine("");
       setShowAdd(false);
 
+      /*
+       * Reload the permanent machine list
+       * after adding a machine.
+       */
       await loadMachines();
+
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Failed to add payment machine:",
+        err
+      );
     }
   }
 
-  async function deleteMachine(id) {
-    if (!window.confirm("Delete this machine?"))
+  async function deleteMachine(
+    id
+  ) {
+    if (
+      !window.confirm(
+        "Delete this machine?"
+      )
+    ) {
       return;
+    }
 
     try {
-      await paymentMachineService.deleteMachine(id);
+      await paymentMachineService.deleteMachine(
+        id
+      );
 
+      /*
+       * Reload the machine list after
+       * deleting a machine.
+       */
       await loadMachines();
+
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Failed to delete payment machine:",
+        err
+      );
     }
   }
 
@@ -120,7 +233,10 @@ export default function PaymentMachines({
         </h4>
 
         <button
-          onClick={() => setShowAdd(true)}
+          type="button"
+          onClick={() =>
+            setShowAdd(true)
+          }
           className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
         >
           + Machine
@@ -128,61 +244,86 @@ export default function PaymentMachines({
 
       </div>
 
-      {machines.map((machine) => (
-        <div
-          key={machine.id}
-          className="mb-3 flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-        >
 
-          <div className="flex-1 font-medium">
-            {machine.machine_name}
+      {machines.map(
+        (machine) => (
+
+          <div
+            key={machine.id}
+            className="mb-3 flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+          >
+
+            <div className="min-w-0 flex-1 font-medium text-gray-900">
+              {machine.machine_name}
+            </div>
+
+
+            <input
+              type="number"
+              min="0"
+              value={
+                machine.amount
+              }
+              onChange={(e) =>
+                changeAmount(
+                  machine.id,
+                  e.target.value
+                )
+              }
+              onWheel={
+                handleNumberWheel
+              }
+              className={`${NUMBER_INPUT_CLASS} h-9 w-28 rounded-lg border border-gray-200 bg-white px-2 text-right text-base font-medium outline-none focus:border-blue-500`}
+            />
+
+
+            <button
+              type="button"
+              onClick={() =>
+                deleteMachine(
+                  machine.id
+                )
+              }
+              className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+            >
+              🗑
+            </button>
+
           </div>
 
-          <input
-            type="number"
-            min="0"
-            value={machine.amount}
-            onChange={(e) =>
-              changeAmount(
-                machine.id,
-                e.target.value
-              )
-            }
-            className="h-10 w-36 rounded-lg border px-3 text-right"
-          />
+        )
+      )}
 
-          <button
-            onClick={() =>
-              deleteMachine(machine.id)
-            }
-            className="rounded-lg p-2 text-red-500 hover:bg-red-50"
-          >
-            🗑
-          </button>
-
-        </div>
-      ))}
 
       {showAdd && (
+
         <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3">
 
           <input
-            value={newMachine}
+            value={
+              newMachine
+            }
             onChange={(e) =>
-              setNewMachine(e.target.value)
+              setNewMachine(
+                e.target.value
+              )
             }
             placeholder="Machine Name"
-            className="h-10 flex-1 rounded-lg border px-3"
+            className="h-10 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
           />
 
           <button
-            onClick={addMachine}
+            type="button"
+            onClick={
+              addMachine
+            }
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Add
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setShowAdd(false);
               setNewMachine("");
@@ -193,7 +334,9 @@ export default function PaymentMachines({
           </button>
 
         </div>
+
       )}
+
 
       <div className="mt-6 border-t pt-5">
 
@@ -204,7 +347,10 @@ export default function PaymentMachines({
           </span>
 
           <span className="text-3xl font-bold text-blue-600">
-            ₹{total.toLocaleString("en-IN")}
+            ₹
+            {total.toLocaleString(
+              "en-IN"
+            )}
           </span>
 
         </div>

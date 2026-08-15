@@ -6,7 +6,10 @@ import {
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import SectionCard from "./SectionCard";
 import AddExpenseModal from "../expenses/AddExpenseModal";
@@ -104,7 +107,9 @@ export default function ExpenseSection({
             data.expense_type,
 
           amount:
-            Number(data.amount),
+            Number(
+              data.amount
+            ),
 
           remarks:
             data.remarks || null,
@@ -138,36 +143,38 @@ export default function ExpenseSection({
   return (
     <SectionCard title="Expenses">
 
-      <div className="space-y-5">
+      <div className="space-y-6">
 
-        {/* Header */}
-
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
 
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100">
+
               <Wallet
-                size={18}
+                size={19}
                 className="text-orange-600"
               />
+
             </div>
 
             <div>
-              <h3 className="font-semibold">
+
+              <h3 className="text-base font-semibold text-gray-900">
                 Expenses
               </h3>
 
               <p className="text-sm text-gray-500">
                 Expenses for this business date.
               </p>
+
             </div>
 
           </div>
 
           <Link
             to={`/manager-expenses?report=${report.id}`}
-            className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 hover:bg-gray-50"
+            className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 text-sm hover:bg-gray-50"
           >
             <Eye size={17} />
             View Expenses
@@ -175,9 +182,8 @@ export default function ExpenseSection({
 
         </div>
 
-        {/* Table */}
 
-        <div className="overflow-hidden rounded-xl border">
+        <div className="overflow-hidden rounded-xl border border-gray-200">
 
           <table className="w-full">
 
@@ -213,7 +219,7 @@ export default function ExpenseSection({
 
                   <td
                     colSpan={4}
-                    className="px-5 py-8 text-center text-gray-500"
+                    className="px-5 py-9 text-center text-sm text-gray-500"
                   >
                     No expenses recorded for this report.
                   </td>
@@ -227,14 +233,14 @@ export default function ExpenseSection({
 
                     <tr
                       key={expense.id}
-                      className="border-t"
+                      className="border-t border-gray-100"
                     >
 
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-4">
                         {expense.expense_type || "-"}
                       </td>
 
-                      <td className="px-5 py-3 font-medium">
+                      <td className="px-5 py-4 font-medium">
                         ₹
                         {Number(
                           expense.amount || 0
@@ -243,11 +249,11 @@ export default function ExpenseSection({
                         )}
                       </td>
 
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-4">
                         {expense.created_by_name || "-"}
                       </td>
 
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-4">
 
                         <div className="flex justify-center gap-2">
 
@@ -298,17 +304,16 @@ export default function ExpenseSection({
 
         </div>
 
-        {/* Total */}
 
         <div className="flex justify-end">
 
-          <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-3">
+          <div className="rounded-xl border border-orange-200 bg-orange-50 px-6 py-4">
 
-            <p className="text-xs text-orange-700">
+            <p className="text-sm text-orange-700">
               Total Expenses
             </p>
 
-            <h2 className="text-2xl font-bold text-orange-600">
+            <h2 className="mt-1 text-2xl font-bold text-orange-600">
               ₹
               {total.toLocaleString(
                 "en-IN"
@@ -320,6 +325,7 @@ export default function ExpenseSection({
         </div>
 
       </div>
+
 
       <AddExpenseModal
         isOpen={showModal}
