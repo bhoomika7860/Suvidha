@@ -11,6 +11,8 @@ import PurchaseToolbar from "../../components/purchases/PurchaseToolbar";
 import PurchaseTable from "../../components/purchases/PurchaseTable";
 import ReceiveBillModal from "../../components/purchases/ReceiveBillModal";
 
+import ReceiveBillSheet from "../../components/staff/purchases/ReceiveBillSheet";
+
 export default function Purchases() {
   const { selectedDate } = useBusinessDate();
 
@@ -44,36 +46,17 @@ export default function Purchases() {
 
       let selectedReport;
 
-      /*
-       * If opened from a historical Daily Report,
-       * explicitly use that report.
-       */
       if (reportParam) {
         selectedReport =
           await dailyReportsService.getReport(
             Number(reportParam)
           );
-      }
-
-      /*
-       * Otherwise use the global Business Date.
-       */
-      else {
+      } else {
         selectedReport =
           await dailyReportsService.getOrCreateReport(
             selectedDate
           );
       }
-
-      console.log(
-        "PURCHASE PAGE BUSINESS DATE:",
-        selectedDate
-      );
-
-      console.log(
-        "PURCHASE PAGE REPORT:",
-        selectedReport
-      );
 
       setReport(selectedReport);
 
@@ -102,9 +85,7 @@ export default function Purchases() {
     }
   }
 
-  async function loadPurchases(
-    reportId
-  ) {
+  async function loadPurchases(reportId) {
     if (!reportId) {
       return;
     }
@@ -115,16 +96,8 @@ export default function Purchases() {
           Number(reportId)
         );
 
-      console.log(
-        "PURCHASES FOR REPORT:",
-        reportId,
-        purchaseData
-      );
-
       setPurchases(
-        Array.isArray(
-          purchaseData
-        )
+        Array.isArray(purchaseData)
           ? purchaseData
           : []
       );
@@ -139,9 +112,7 @@ export default function Purchases() {
     }
   }
 
-  async function addPurchase(
-    purchase
-  ) {
+  async function addPurchase(purchase) {
     if (!report) {
       console.error(
         "No daily report selected."
@@ -151,13 +122,10 @@ export default function Purchases() {
     }
 
     try {
-      await purchaseService.createPurchase(
-        {
-          ...purchase,
-          daily_report_id:
-            report.id,
-        }
-      );
+      await purchaseService.createPurchase({
+        ...purchase,
+        daily_report_id: report.id,
+      });
 
       await loadPurchases(
         report.id
@@ -181,6 +149,7 @@ export default function Purchases() {
   const filteredPurchases =
     purchases.filter(
       (purchase) => {
+
         const searchValue =
           search.toLowerCase();
 
@@ -206,23 +175,11 @@ export default function Purchases() {
             .toLowerCase()
             .includes(searchValue);
 
-
-        /*
-         * IMPORTANT:
-         *
-         * "all" means do not apply
-         * any status filter.
-         *
-         * For every other tab,
-         * only show purchases whose
-         * status matches that tab.
-         */
         const matchesStatus =
           activeFilter === "all"
             ? true
             : purchase.status ===
               activeFilter;
-
 
         return (
           matchesSearch &&
@@ -232,85 +189,136 @@ export default function Purchases() {
     );
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* ========================================================= */}
+      {/* DESKTOP */}
+      {/* ========================================================= */}
 
-      {/* Header */}
+      <div className="hidden lg:block space-y-6">
 
-      <div>
+        <div>
 
-        <h1 className="text-3xl font-bold">
-          Purchase Workflow
-        </h1>
+          <h1 className="text-3xl font-bold">
+            Purchase Workflow
+          </h1>
 
-        <p className="mt-1 text-gray-500">
-          Manage supplier purchase bills.
-        </p>
+          <p className="mt-1 text-gray-500">
+            Manage supplier purchase bills.
+          </p>
 
-        <p className="mt-2 text-sm font-medium text-blue-600">
-          Business Date: {selectedDate}
-        </p>
+          <p className="mt-2 text-sm font-medium text-blue-600">
+            Business Date: {selectedDate}
+          </p>
+
+        </div>
+
+
+        <PurchaseStats
+          purchases={purchases}
+          activeFilter={activeFilter}
+          setActiveFilter={setActiveFilter}
+        />
+
+
+        <PurchaseToolbar
+          search={search}
+          setSearch={setSearch}
+          onReceiveBill={() =>
+            setShowReceiveModal(true)
+          }
+        />
+
+
+        <PurchaseTable
+          purchases={filteredPurchases}
+          allPurchases={purchases}
+          setPurchases={setPurchases}
+        />
+
+
+        {report && (
+          <ReceiveBillModal
+            isOpen={showReceiveModal}
+            onClose={() =>
+              setShowReceiveModal(false)
+            }
+            onSave={addPurchase}
+            reportId={report.id}
+          />
+        )}
 
       </div>
 
 
-      {/* Stats */}
+      {/* ========================================================= */}
+      {/* MOBILE */}
+      {/* ========================================================= */}
 
-      <PurchaseStats
-        purchases={purchases}
-        activeFilter={
-          activeFilter
-        }
-        setActiveFilter={
-          setActiveFilter
-        }
-      />
+      <div className="lg:hidden min-h-screen bg-gray-50 pb-24">
 
+        <div className="bg-white px-4 pt-5 pb-5 border-b">
 
-      {/* Toolbar */}
+          <h1 className="text-2xl font-bold text-gray-900">
+            Purchases
+          </h1>
 
-      <PurchaseToolbar
-        search={search}
-        setSearch={setSearch}
-        onReceiveBill={() =>
-          setShowReceiveModal(
-            true
-          )
-        }
-      />
+          <p className="mt-1 text-sm text-gray-500">
+            Manage supplier purchase bills.
+          </p>
+
+          <p className="mt-2 text-xs font-medium text-blue-600">
+            Business Date: {selectedDate}
+          </p>
+
+        </div>
 
 
-      {/* Table */}
+        <div className="px-4 pt-4">
 
-      <PurchaseTable
-        purchases={
-          filteredPurchases
-        }
-        allPurchases={
-          purchases
-        }
-        setPurchases={
-          setPurchases
-        }
-      />
+          <PurchaseStats
+            purchases={purchases}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+          />
+
+        </div>
 
 
-      {/* Receive Bill */}
+        <div className="px-4 pt-4">
 
-      {report && (
-        <ReceiveBillModal
-          isOpen={
-            showReceiveModal
-          }
-          onClose={() =>
-            setShowReceiveModal(
-              false
-            )
-          }
-          onSave={addPurchase}
-          reportId={report.id}
-        />
-      )}
+          <PurchaseToolbar
+            search={search}
+            setSearch={setSearch}
+            onReceiveBill={() =>
+              setShowReceiveModal(true)
+            }
+          />
 
-    </div>
+        </div>
+
+
+        <div className="px-4 pt-5">
+
+          <PurchaseTable
+            purchases={filteredPurchases}
+            allPurchases={purchases}
+            setPurchases={setPurchases}
+          />
+
+        </div>
+
+
+        {report && (
+          <ReceiveBillSheet
+            isOpen={showReceiveModal}
+            onClose={() =>
+              setShowReceiveModal(false)
+            }
+            onSave={addPurchase}
+          />
+        )}
+
+      </div>
+    </>
   );
 }

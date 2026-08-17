@@ -12,20 +12,22 @@ export default function PurchaseBillCard({
   function getStatusColor(status) {
     switch (status) {
       case "received":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-50 text-blue-600";
 
       case "waiting-entry":
-        return "bg-violet-100 text-violet-700";
+        return "bg-violet-50 text-violet-600";
 
       case "completed":
-        return "bg-green-100 text-green-700";
+        return "bg-green-50 text-green-600";
 
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-50 text-gray-600";
     }
   }
 
   function getStatusText(status) {
+    if (!status) return "-";
+
     return status
       .replace("-", " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -34,65 +36,85 @@ export default function PurchaseBillCard({
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm p-4 active:scale-[0.99] transition"
+      className="
+        w-full
+        bg-white
+        border border-gray-200
+        rounded-xl
+        px-3
+        py-3
+        text-left
+        active:bg-gray-50
+        transition
+      "
     >
-      <div className="flex justify-between items-start">
+      <div className="flex items-center gap-3">
 
-        {/* Left */}
+        {/* Icon */}
+        <div className="w-10 h-10 shrink-0 rounded-lg bg-blue-50 flex items-center justify-center">
+          <Building2
+            size={18}
+            className="text-blue-600"
+          />
+        </div>
 
-        <div className="flex gap-4 flex-1">
+        {/* Main Information */}
+        <div className="flex-1 min-w-0">
 
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-            <Building2
-              size={22}
-              className="text-blue-600"
-            />
-          </div>
+          {/* Supplier + Bill */}
+          <div className="flex items-start justify-between gap-2">
 
-          <div className="text-left flex-1 min-w-0">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 truncate">
+                {purchase.supplier_name || "-"}
+              </h3>
 
-            {/* Supplier */}
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                <Receipt size={12} />
 
-            <h3 className="font-semibold break-words">
-              {purchase.supplier_name}
-            </h3>
-
-            {/* Bill */}
-
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-
-              <Receipt size={15} />
-
-              <span>
-                {purchase.bill_number}
-              </span>
-
+                <span>
+                  {purchase.bill_number || "-"}
+                </span>
+              </div>
             </div>
 
-            {/* Amount */}
+            <ChevronRight
+              size={17}
+              className="text-gray-400 shrink-0 mt-1"
+            />
 
-            <div className="flex items-center gap-2 mt-2">
+          </div>
+
+          {/* Bottom Row */}
+          <div className="flex items-center justify-between gap-2 mt-2">
+
+            <div className="flex items-center gap-1">
 
               <IndianRupee
-                size={15}
+                size={13}
                 className="text-green-600"
               />
 
-              <span className="font-semibold">
-                ₹
+              <span className="text-sm font-semibold text-gray-900">
                 {Number(
-                  purchase.purchase_amount
+                  purchase.purchase_amount || 0
                 ).toLocaleString("en-IN")}
               </span>
 
             </div>
 
-            {/* Status */}
-
             <span
-              className={`inline-flex mt-3 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                purchase.status
-              )}`}
+              className={`
+                inline-flex
+                px-2.5
+                py-1
+                rounded-full
+                text-[11px]
+                font-medium
+                ${getStatusColor(
+                  purchase.status
+                )}
+              `}
             >
               {getStatusText(
                 purchase.status
@@ -102,13 +124,6 @@ export default function PurchaseBillCard({
           </div>
 
         </div>
-
-        {/* Arrow */}
-
-        <ChevronRight
-          size={20}
-          className="text-gray-400 shrink-0 ml-3"
-        />
 
       </div>
     </button>

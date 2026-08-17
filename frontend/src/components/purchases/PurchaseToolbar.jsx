@@ -6,52 +6,63 @@ export default function PurchaseToolbar({
   onReceiveBill,
 }) {
   return (
-    <div className="flex flex-row items-center justify-between gap-4">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
 
-      <div className="relative">
+      <div className="relative w-full lg:w-80">
 
         <Search
           size={18}
-          className="absolute left-3 top-3 text-gray-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
 
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
           placeholder="Search Bills..."
           className="
-  w-80
-  h-11
-  pl-10
-  pr-4
-  rounded-xl
-  border
-  border-gray-200
-  outline-none
-  focus:border-blue-500
-"
+            w-full
+            h-11
+            pl-10
+            pr-4
+            rounded-xl
+            border
+            border-gray-200
+            bg-white
+            outline-none
+            focus:border-blue-500
+          "
         />
 
       </div>
 
+
       <button
         onClick={onReceiveBill}
         className="
-  h-11
-  shrink-0
-  px-5
-  rounded-xl
-  bg-blue-600
-  hover:bg-blue-700
-  text-white
-  flex
-  items-center
-  justify-center
-  gap-2
-"
+          w-full
+          lg:w-auto
+          h-11
+          shrink-0
+          px-5
+          rounded-xl
+          bg-blue-600
+          hover:bg-blue-700
+          text-white
+          flex
+          items-center
+          justify-center
+          gap-2
+        "
       >
+
         <Plus size={18} />
-        Receive New Bill
+
+        <span>
+          Receive New Bill
+        </span>
+
       </button>
 
     </div>
