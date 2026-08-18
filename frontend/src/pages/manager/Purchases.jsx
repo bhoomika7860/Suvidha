@@ -13,7 +13,9 @@ import ReceiveBillModal from "../../components/purchases/ReceiveBillModal";
 
 import ReceiveBillSheet from "../../components/staff/purchases/ReceiveBillSheet";
 
-export default function Purchases() {
+export default function Purchases({
+  isStaff = false,
+}) {
   const { selectedDate } = useBusinessDate();
 
   const [searchParams] = useSearchParams();
@@ -190,11 +192,13 @@ export default function Purchases() {
 
   return (
     <>
-      {/* ========================================================= */}
-      {/* DESKTOP */}
-      {/* ========================================================= */}
+      {/* =========================================================
+          DESKTOP
+      ========================================================= */}
 
       <div className="hidden lg:block space-y-6">
+
+        {/* Header */}
 
         <div>
 
@@ -206,12 +210,16 @@ export default function Purchases() {
             Manage supplier purchase bills.
           </p>
 
-          <p className="mt-2 text-sm font-medium text-blue-600">
-            Business Date: {selectedDate}
-          </p>
+          {!isStaff && (
+            <p className="mt-2 text-sm font-medium text-blue-600">
+              Business Date: {selectedDate}
+            </p>
+          )}
 
         </div>
 
+
+        {/* Stats */}
 
         <PurchaseStats
           purchases={purchases}
@@ -219,6 +227,8 @@ export default function Purchases() {
           setActiveFilter={setActiveFilter}
         />
 
+
+        {/* Toolbar */}
 
         <PurchaseToolbar
           search={search}
@@ -229,12 +239,16 @@ export default function Purchases() {
         />
 
 
+        {/* Table */}
+
         <PurchaseTable
           purchases={filteredPurchases}
           allPurchases={purchases}
           setPurchases={setPurchases}
         />
 
+
+        {/* Desktop Receive Modal */}
 
         {report && (
           <ReceiveBillModal
@@ -250,30 +264,32 @@ export default function Purchases() {
       </div>
 
 
-      {/* ========================================================= */}
-      {/* MOBILE */}
-      {/* ========================================================= */}
+      {/* =========================================================
+          MOBILE
+      ========================================================= */}
 
-      <div className="lg:hidden min-h-screen bg-gray-50 pb-24">
+      <div className="lg:hidden w-full min-h-screen bg-gray-50 pb-24 overflow-x-hidden">
 
-        <div className="bg-white px-4 pt-5 pb-5 border-b">
+        {/* Header */}
 
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="w-full bg-white border-b px-5 pt-6 pb-5">
+
+          <h1 className="text-3xl font-bold text-gray-900">
             Purchases
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-gray-500">
             Manage supplier purchase bills.
-          </p>
-
-          <p className="mt-2 text-xs font-medium text-blue-600">
-            Business Date: {selectedDate}
           </p>
 
         </div>
 
 
-        <div className="px-4 pt-4">
+        {/* Content */}
+
+        <div className="px-4 pt-5 space-y-4">
+
+          {/* Purchase Stats */}
 
           <PurchaseStats
             purchases={purchases}
@@ -281,10 +297,8 @@ export default function Purchases() {
             setActiveFilter={setActiveFilter}
           />
 
-        </div>
 
-
-        <div className="px-4 pt-4">
+          {/* Search + Receive */}
 
           <PurchaseToolbar
             search={search}
@@ -294,10 +308,8 @@ export default function Purchases() {
             }
           />
 
-        </div>
 
-
-        <div className="px-4 pt-5">
+          {/* Purchase List */}
 
           <PurchaseTable
             purchases={filteredPurchases}
@@ -307,6 +319,8 @@ export default function Purchases() {
 
         </div>
 
+
+        {/* Mobile Receive Sheet */}
 
         {report && (
           <ReceiveBillSheet

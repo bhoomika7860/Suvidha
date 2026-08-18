@@ -11,26 +11,18 @@ import expenseService from "../../services/expenseService";
 
 import { useBusinessDate } from "../../contexts/BusinessDateContext";
 
-export default function Expenses() {
+export default function Expenses({
+  isStaff = false,
+}) {
   const { selectedDate } = useBusinessDate();
 
-  const [searchParams] =
-    useSearchParams();
+  const [searchParams] = useSearchParams();
 
-  const [search, setSearch] =
-    useState("");
-
-  const [showModal, setShowModal] =
-    useState(false);
-
-  const [expenses, setExpenses] =
-    useState([]);
-
-  const [report, setReport] =
-    useState(null);
-
-  const [selectedExpense, setSelectedExpense] =
-    useState(null);
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+  const [report, setReport] = useState(null);
+  const [selectedExpense, setSelectedExpense] = useState(null);
 
   useEffect(() => {
     initializePage();
@@ -41,32 +33,16 @@ export default function Expenses() {
       setReport(null);
       setExpenses([]);
 
-      const reportParam =
-        searchParams.get("report");
+      const reportParam = searchParams.get("report");
 
       let selectedReport;
-
-      /*
-       * Historical report opened explicitly.
-       *
-       * Example:
-       * /manager-expenses?report=17
-       */
 
       if (reportParam) {
         selectedReport =
           await dailyReportsService.getReport(
             Number(reportParam)
           );
-      }
-
-      /*
-       * Normal Expenses page.
-       *
-       * Uses the GLOBAL BUSINESS DATE.
-       */
-
-      else {
+      } else {
         selectedReport =
           await dailyReportsService.getOrCreateReport(
             selectedDate
@@ -75,10 +51,7 @@ export default function Expenses() {
 
       setReport(selectedReport);
 
-      await loadExpenses(
-        selectedReport.id
-      );
-
+      await loadExpenses(selectedReport.id);
     } catch (err) {
       console.error(
         "Failed to initialize expenses page:",
@@ -109,20 +82,11 @@ export default function Expenses() {
           Number(reportId)
         );
 
-      console.log(
-        "EXPENSE PAGE LOAD:",
-        {
-          reportId,
-          expenses: data,
-        }
-      );
-
       setExpenses(
         Array.isArray(data)
           ? data
           : []
       );
-
     } catch (err) {
       console.error(
         "Failed to load expenses:",
@@ -186,7 +150,6 @@ export default function Expenses() {
 
       setShowModal(false);
       setSelectedExpense(null);
-
     } catch (err) {
       console.error(
         "Failed to save expense:",
@@ -224,10 +187,7 @@ export default function Expenses() {
     try {
       await expenseService.deleteExpense(id);
 
-      await loadExpenses(
-        report.id
-      );
-
+      await loadExpenses(report.id);
     } catch (err) {
       console.error(
         "Failed to delete expense:",
@@ -247,6 +207,15 @@ export default function Expenses() {
     }
 
     setSelectedExpense(expense);
+    setShowModal(true);
+  }
+
+  function openAddExpense() {
+    if (report?.is_locked) {
+      return;
+    }
+
+    setSelectedExpense(null);
     setShowModal(true);
   }
 
@@ -272,60 +241,141 @@ export default function Expenses() {
     });
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
 
-      {/* Header */}
+      {/* =====================================================
+          DESKTOP
+      ===================================================== */}
 
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="hidden lg:block space-y-6">
 
-          <h1 className="text-3xl font-bold">
-            Expenses
-          </h1>
+        {/* Header */}
 
-          {report?.is_locked && (
-            <span className="rounded-full border border-green-200 bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
-              Report Locked
-            </span>
+        <div>
+
+          <div className="flex flex-wrap items-center gap-3">
+
+            <h1 className="text-3xl font-bold">
+              Expenses
+            </h1>
+
+            {report?.is_locked && (
+              <span className="rounded-full border border-green-200 bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                Report Locked
+              </span>
+            )}
+
+          </div>
+
+          <p className="mt-1 text-gray-500">
+            Manage expenses for the selected business day.
+          </p>
+
+          {!isStaff && (
+            <p className="mt-2 text-sm font-medium text-blue-600">
+              Business Date:{" "}
+              {report?.report_date || selectedDate}
+            </p>
           )}
 
         </div>
 
-        <p className="mt-1 text-gray-500">
-          Manage expenses for the selected business day.
-        </p>
+        <ExpenseStats
+          expenses={expenses}
+        />
 
-        <p className="mt-2 text-sm font-medium text-blue-600">
-          Business Date: {report?.report_date || selectedDate}
-        </p>
+        <ExpenseToolbar
+          search={search}
+          setSearch={setSearch}
+          onAddExpense={openAddExpense}
+        />
+
+        <ExpenseTable
+          expenses={filteredExpenses}
+          onEdit={handleEdit}
+          onDelete={
+            report?.is_locked
+              ? undefined
+              : handleDelete
+          }
+        />
+
       </div>
 
-      <ExpenseStats
-        expenses={expenses}
-      />
 
-      <ExpenseToolbar
-        search={search}
-        setSearch={setSearch}
-        onAddExpense={() => {
-          if (report?.is_locked) {
-            return;
-          }
+      {/* =====================================================
+          MOBILE
+      ===================================================== */}
 
-          setSelectedExpense(null);
-          setShowModal(true);
-        }}
-      />
+      <div className="lg:hidden w-full min-h-screen bg-gray-50 pb-24 overflow-x-hidden">
 
-      <ExpenseTable
-        expenses={filteredExpenses}
-        onEdit={handleEdit}
-        onDelete={
-          report?.is_locked
-            ? undefined
-            : handleDelete
-        }
-      />
+        {/* Header */}
+
+        <div className="w-full bg-white border-b px-5 pt-6 pb-5">
+
+          <div className="flex items-center justify-between gap-3">
+
+            <div className="min-w-0">
+
+              <h1 className="text-3xl font-bold">
+                Expenses
+              </h1>
+
+              <p className="text-gray-500 mt-1">
+                Manage today's store expenses.
+              </p>
+
+            </div>
+
+            {report?.is_locked && (
+              <span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                Locked
+              </span>
+            )}
+
+          </div>
+
+        </div>
+
+
+        {/* Content */}
+
+        <div className="px-4 pt-5 space-y-4">
+
+          {/* Total */}
+
+          <ExpenseStats
+            expenses={expenses}
+          />
+
+          {/* Search + Add */}
+
+          <ExpenseToolbar
+            search={search}
+            setSearch={setSearch}
+            onAddExpense={openAddExpense}
+          />
+
+          {/* Expenses */}
+
+          <ExpenseTable
+            expenses={filteredExpenses}
+            onEdit={handleEdit}
+            onDelete={
+              report?.is_locked
+                ? undefined
+                : handleDelete
+            }
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          MODAL
+      ===================================================== */}
 
       <AddExpenseModal
         isOpen={showModal}
