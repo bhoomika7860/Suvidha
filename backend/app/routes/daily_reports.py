@@ -363,7 +363,13 @@ def get_report_by_date(
     # --------------------------------------------------
 # Udhaar visible for THIS report date
 # --------------------------------------------------
-
+    report_udhaar_entries = (
+        db.query(UdhaarEntry)
+        .filter(
+        UdhaarEntry.daily_report_id == report.id
+    )
+    .all()
+)
     if report.is_locked:
     # Locked reports are immutable.
     # Never recalculate their Udhaar from
