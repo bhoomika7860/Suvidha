@@ -75,9 +75,16 @@ app.mount(
 # CORS
 # ----------------------------------------------------
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://suvidha-flax.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
