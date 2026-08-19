@@ -245,15 +245,36 @@ def update_purchase(
         current_user["role"] != "owner"
         and purchase.store_id
         != current_user["store_id"]
-    ):
+):
         raise HTTPException(
-            status_code=403,
-            detail="Not allowed",
-        )
+        status_code=403,
+        detail="Not allowed",
+    )
+
+    report = (
+        db.query(DailyReport)
+    .filter(
+        DailyReport.id
+        == purchase.daily_report_id
+    )
+    .first()
+)
+
+    if report is None:
+        raise HTTPException(
+        status_code=404,
+        detail="Daily report not found",
+    )
+
+    if report.is_locked:
+        raise HTTPException(
+        status_code=409,
+        detail="Report is locked",
+    )
 
     was_completed = (
         purchase.status == "completed"
-    )
+)
 
     # ------------------------------------------------
     # Update workflow fields

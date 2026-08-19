@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies.auth import get_current_user
 
 from app.models.cash_denomination import CashDenomination
 from app.models.daily_report import DailyReport
@@ -9,6 +10,7 @@ from app.models.daily_report import DailyReport
 from app.schemas.cash_denomination import (
     CashDenominationCreate,
 )
+
 
 router = APIRouter(
     prefix="/cash-denominations",
@@ -22,13 +24,14 @@ OPENING_CASH = 20000
 @router.post("/")
 def save_cash_denominations(
     data: CashDenominationCreate,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     report = (
         db.query(DailyReport)
         .filter(
-            DailyReport.id == data.daily_report_id
+            DailyReport.id
+            == data.daily_report_id
         )
         .first()
     )
@@ -37,6 +40,22 @@ def save_cash_denominations(
         raise HTTPException(
             status_code=404,
             detail="Daily report not found",
+        )
+
+    if (
+        current_user["role"] != "owner"
+        and report.store_id
+        != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report is locked",
         )
 
     cash = (
@@ -77,7 +96,9 @@ def save_cash_denominations(
 
     else:
 
-        denomination = CashDenomination(**data.model_dump())
+        denomination = CashDenomination(
+            **data.model_dump()
+        )
 
         db.add(denomination)
 
@@ -94,8 +115,32 @@ def save_cash_denominations(
 @router.get("/{report_id}")
 def get_cash_denominations(
     report_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == report_id
+        )
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Daily report not found",
+        )
+
+    if (
+        current_user["role"] != "owner"
+        and report.store_id
+        != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
 
     denomination = (
         db.query(CashDenomination)

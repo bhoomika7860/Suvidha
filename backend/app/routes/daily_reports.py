@@ -102,25 +102,48 @@ def create_daily_report(
     }
 
 
-# Lock report
+# ----------------------------------------------------
+# Lock Report
+# ----------------------------------------------------
+
 @router.put("/{report_id}/lock")
 def lock_daily_report(
     report_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    report = db.query(DailyReport).filter(
-        DailyReport.id == report_id
-    ).first()
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == report_id
+        )
+        .first()
+    )
 
     if not report:
         raise HTTPException(
             status_code=404,
-            detail="Report not found"
+            detail="Report not found",
+        )
+
+    if (
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    if report.is_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="Report already locked",
         )
 
     report.is_submitted = True
     report.is_locked = True
+
     db.commit()
 
     create_audit_log(
@@ -129,7 +152,7 @@ def lock_daily_report(
         action="LOCK",
         table_name="daily_reports",
         record_id=report.id,
-        description="Locked daily report"
+        description="Locked daily report",
     )
 
     return {
@@ -341,19 +364,31 @@ def get_report_by_date(
 # Udhaar visible for THIS report date
 # --------------------------------------------------
 
-    report_udhaar_entries = get_udhaar_for_report_date(
-        db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
+    if report.is_locked:
+    # Locked reports are immutable.
+    # Never recalculate their Udhaar from
+    # current outstanding balances.
+        udhaar_total = float(
+        report.udhaar_sales or 0
+    )
+
+    else:
+        report_udhaar_entries = get_udhaar_for_report_date(
+            db=db,
+            store_id=report.store_id,
+            report_date=report.report_date,
+    )
 
     udhaar_total = sum(
-    float(entry.amount or 0) - float(entry.paid_amount or 0)
-    for entry in report_udhaar_entries
-    if entry.status != "settled"
-)
+        float(entry.amount or 0)
+        - float(entry.paid_amount or 0)
+        for entry in report_udhaar_entries
+        if entry.status != "settled"
+    )
 
-    udhaar_total = float(udhaar_total or 0)
+    udhaar_total = float(
+        udhaar_total or 0
+    )
 
     # --------------------------------------------------
     # Purchases for THIS report
@@ -1162,17 +1197,28 @@ def get_report(
 # Udhaar visible for THIS report date
 # --------------------------------------------------
 
-    report_udhaar_entries = get_udhaar_for_report_date(
-    db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
+    if report.is_locked:
+        udhaar_total = float(
+        report.udhaar_sales or 0
+    )
+
+    else:
+        report_udhaar_entries = get_udhaar_for_report_date(
+        db=db,
+        store_id=report.store_id,
+        report_date=report.report_date,
+    )
 
     udhaar_total = sum(
-    float(entry.amount or 0) - float(entry.paid_amount or 0)
-    for entry in report_udhaar_entries
-    if entry.status != "settled"
-)
+        float(entry.amount or 0)
+        - float(entry.paid_amount or 0)
+        for entry in report_udhaar_entries
+        if entry.status != "settled"
+    )
+
+    udhaar_total = float(
+        udhaar_total or 0
+    )
     
         # --------------------------------------------------
     # Purchases visible for this business date
