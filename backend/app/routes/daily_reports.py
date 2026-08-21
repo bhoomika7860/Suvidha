@@ -40,13 +40,23 @@ def get_purchase_total_for_business_date(
     report_date: date,
 ) -> float:
 
+    selected_date_start = datetime.combine(
+        report_date,
+        datetime.min.time(),
+    ).replace(
+        tzinfo=ZoneInfo("Asia/Kolkata")
+    )
+
+    next_date_start = (
+        selected_date_start + timedelta(days=1)
+    )
+
     purchases = (
         db.query(Purchase)
         .filter(
             Purchase.store_id == store_id,
-            func.date(
-                Purchase.purchase_date
-            ) == report_date,
+            Purchase.received_date >= selected_date_start,
+            Purchase.received_date < next_date_start,
         )
         .all()
     )
@@ -1229,37 +1239,25 @@ def get_report(
     selected_date = report.report_date
 
     selected_date_start = datetime.combine(
-    selected_date,
-    datetime.min.time(),
+        selected_date,
+        datetime.min.time(),
     ).replace(
-    tzinfo=ZoneInfo("Asia/Kolkata")
-)
+        tzinfo=ZoneInfo("Asia/Kolkata")
+    )
 
     selected_date_end = (
         selected_date_start + timedelta(days=1)
 )
 
     purchases = (
-    db.query(Purchase)
-    .filter(
+        db.query(Purchase)
+        .filter(
         Purchase.store_id == report.store_id,
-        or_(
-            and_(
-                Purchase.received_date >= selected_date_start,
-                Purchase.received_date < selected_date_end,
-            ),
-            and_(
-                Purchase.sent_for_entry_at >= selected_date_start,
-                Purchase.sent_for_entry_at < selected_date_end,
-            ),
-            and_(
-                Purchase.completed_at >= selected_date_start,
-                Purchase.completed_at < selected_date_end,
-            ),
-        ),
+        Purchase.received_date >= selected_date_start,
+        Purchase.received_date < selected_date_end,
     )
     .order_by(
-        Purchase.purchase_date.desc(),
+        Purchase.received_date.desc(),
         Purchase.id.desc(),
     )
     .all()

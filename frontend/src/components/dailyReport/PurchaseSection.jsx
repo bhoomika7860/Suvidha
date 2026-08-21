@@ -92,39 +92,52 @@ export default function PurchaseSection({
     report.date;
 
   /*
-   * A purchase belongs to today's
-   * purchase amount when ANY ONE of
-   * these workflow events happened
-   * on the selected business date:
+   * Only purchases RECEIVED on the
+   * selected business date are included.
    *
-   * 1. Received today
-   * 2. Sent for system entry today
-   * 3. Completed today
+   * The current workflow status does not matter.
    *
-   * The purchase is included only once,
-   * even if multiple events happened today.
+   * Example:
+   *
+   * Received: 21 Aug
+   * Status: Received
+   * -> Included
+   *
+   * Received: 21 Aug
+   * Status: Waiting Entry
+   * -> Included
+   *
+   * Received: 21 Aug
+   * Status: Completed
+   * -> Included
+   *
+   * Received: 18 Aug
+   * Status: Waiting Entry
+   * -> Not included
+   *
+   * Received: 18 Aug
+   * Status: Completed on 21 Aug
+   * -> Not included
    */
   const purchasesToday =
-  purchases.filter(
-    (purchase) => {
-      const purchaseDate =
-        getIndiaBusinessDate(
-          purchase.purchase_date
-        );
+    purchases.filter(
+      (purchase) => {
+        const receivedDate =
+          getIndiaBusinessDate(
+            purchase.received_date
+          );
 
-      return (
-        purchaseDate === reportDate
-      );
-    }
-  );
+        return (
+          receivedDate === reportDate
+        );
+      }
+    );
 
   /*
    * Calculate the total purchase amount
    * for the selected business date.
    *
-   * Each purchase appears only once in
-   * purchasesToday, so its amount cannot
-   * be counted multiple times.
+   * Each purchase is included only once.
    */
   const totalPurchaseToday =
     purchasesToday.reduce(
@@ -164,7 +177,7 @@ export default function PurchaseSection({
             </h3>
 
             <p className="text-sm text-gray-500">
-              Purchase bills processed today.
+              Purchase bills received today.
             </p>
 
           </div>
@@ -188,9 +201,9 @@ export default function PurchaseSection({
           </h2>
 
           <p className="mt-2 text-sm text-blue-700/70">
-            Includes bills received, sent for
-            entry, or completed on{" "}
-            {reportDate}.
+            Includes all bills received on{" "}
+            {reportDate}, regardless of their
+            current workflow status.
           </p>
 
         </div>
