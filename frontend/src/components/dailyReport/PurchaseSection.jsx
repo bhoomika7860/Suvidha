@@ -8,30 +8,7 @@ import dailyReportsService from "../../services/dailyReportsService";
  * Convert a server timestamp into the Indian
  * business date (YYYY-MM-DD).
  */
-function getIndiaBusinessDate(value) {
-  if (!value) {
-    return null;
-  }
 
-  try {
-    return new Intl.DateTimeFormat(
-      "en-CA",
-      {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }
-    ).format(new Date(value));
-  } catch (err) {
-    console.error(
-      "Failed to convert purchase date:",
-      err
-    );
-
-    return null;
-  }
-}
 
 export default function PurchaseSection({
   report,
@@ -120,18 +97,7 @@ export default function PurchaseSection({
    * -> Not included
    */
   const purchasesToday =
-    purchases.filter(
-      (purchase) => {
-        const receivedDate =
-          getIndiaBusinessDate(
-            purchase.received_date
-          );
-
-        return (
-          receivedDate === reportDate
-        );
-      }
-    );
+  purchases;
 
   /*
    * Calculate the total purchase amount

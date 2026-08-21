@@ -34,29 +34,15 @@ router = APIRouter(
 def ist_today():
     return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
-def get_purchase_total_for_business_date(
+def get_purchase_total_for_report(
     db: Session,
-    store_id: int,
-    report_date: date,
+    report_id: int,
 ) -> float:
-
-    selected_date_start = datetime.combine(
-        report_date,
-        datetime.min.time(),
-    ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
-    )
-
-    next_date_start = (
-        selected_date_start + timedelta(days=1)
-    )
 
     purchases = (
         db.query(Purchase)
         .filter(
-            Purchase.store_id == store_id,
-            Purchase.received_date >= selected_date_start,
-            Purchase.received_date < next_date_start,
+            Purchase.daily_report_id == report_id,
         )
         .all()
     )
@@ -293,11 +279,15 @@ def get_today_report(
     if entry.status != "settled"
 )
 
-    purchase_total = get_purchase_total_for_business_date(
+    get_purchase_total_for_report(
+        db=db,
+        report_id=report.id,
+)
+
+    purchase_total = get_purchase_total_for_report(
     db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-    )
+    report_id=report.id,
+)
 
     return {
         "id": report.id,
@@ -429,7 +419,7 @@ def get_report_by_date(
     # Purchases for THIS report
     # --------------------------------------------------
 
-    purchase_total = get_purchase_total_for_business_date(
+    purchase_total = get_purchase_total_for_report(
     db=db,
     store_id=report.store_id,
     report_date=report.report_date,
@@ -625,6 +615,11 @@ def submit_report(
             detail="Report already submitted",
         )
 
+    report.total_purchases = get_purchase_total_for_report(
+    db=db,
+    report_id=report.id,
+)
+
     report.is_submitted = True
     report.is_locked = True
 
@@ -739,31 +734,17 @@ def get_report_purchases(
     # --------------------------------------------------
 
     purchases = (
-        db.query(Purchase)
-        .filter(
-            Purchase.store_id == report.store_id,
-
-            or_(
-                # --------------------------------------
-                # A. Purchase belongs directly to report
-                # --------------------------------------
-                Purchase.daily_report_id == report.id,
-
-                # --------------------------------------
-                # B. Older pending purchase
-                # --------------------------------------
-                and_(
-                    Purchase.received_date < selected_date_start,
-                    Purchase.status != "completed",
-                ),
-            ),
-        )
-        .order_by(
-            Purchase.purchase_date.desc(),
-            Purchase.id.desc(),
-        )
-        .all()
+    db.query(Purchase)
+    .filter(
+        Purchase.store_id == report.store_id,
+        Purchase.daily_report_id == report.id,
     )
+    .order_by(
+        Purchase.purchase_date.desc(),
+        Purchase.id.desc(),
+    )
+    .all()
+)
 
     # --------------------------------------------------
     # Return response
@@ -993,7 +974,7 @@ def get_today_reports(
         # Today's received/completed purchases
         # --------------------------------------------------
 
-        purchase_total = get_purchase_total_for_business_date(
+        purchase_total = get_purchase_total_for_report(
         db=db,
         store_id=report.store_id,
         report_date=report.report_date,
@@ -1236,28 +1217,14 @@ def get_report(
     # Purchases visible for this business date
     # --------------------------------------------------
 
-    selected_date = report.report_date
-
-    selected_date_start = datetime.combine(
-        selected_date,
-        datetime.min.time(),
-    ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
-    )
-
-    selected_date_end = (
-        selected_date_start + timedelta(days=1)
-)
-
     purchases = (
-        db.query(Purchase)
-        .filter(
+    db.query(Purchase)
+    .filter(
         Purchase.store_id == report.store_id,
-        Purchase.received_date >= selected_date_start,
-        Purchase.received_date < selected_date_end,
+        Purchase.daily_report_id == report.id,
     )
     .order_by(
-        Purchase.received_date.desc(),
+        Purchase.purchase_date.desc(),
         Purchase.id.desc(),
     )
     .all()

@@ -329,27 +329,8 @@ def update_purchase(
     if (
         not was_completed
         and purchase.status == "completed"
-    ):
+):
         purchase.completed_at = datetime.now(IST)
-
-        report = (
-            db.query(DailyReport)
-            .filter(
-                DailyReport.id
-                == purchase.daily_report_id
-            )
-            .first()
-        )
-
-        if report:
-            report.total_purchases = (
-                float(
-                    report.total_purchases or 0
-                )
-                + float(
-                    purchase.purchase_amount or 0
-                )
-            )
 
     db.commit()
 
