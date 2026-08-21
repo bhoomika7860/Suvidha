@@ -62,9 +62,7 @@ export default function Purchases({
 
       setReport(selectedReport);
 
-      await loadPurchases(
-        selectedReport.id
-      );
+      await loadPurchases();
 
     } catch (err) {
       console.error(
@@ -87,32 +85,36 @@ export default function Purchases({
     }
   }
 
-  async function loadPurchases(reportId) {
-    if (!reportId) {
-      return;
-    }
+  async function loadPurchases() {
+  try {
+    const purchaseData =
+      await purchaseService.getPurchases();
 
-    try {
-      const purchaseData =
-        await dailyReportsService.getPurchases(
-          Number(reportId)
-        );
+    setPurchases(
+      Array.isArray(purchaseData)
+        ? purchaseData
+        : []
+    );
 
-      setPurchases(
-        Array.isArray(purchaseData)
-          ? purchaseData
-          : []
-      );
+  } catch (err) {
+    console.error(
+      "Failed to load purchases:",
+      err
+    );
 
-    } catch (err) {
-      console.error(
-        "Failed to load purchases:",
-        err
-      );
+    console.error(
+      "Status:",
+      err.response?.status
+    );
 
-      setPurchases([]);
-    }
+    console.error(
+      "Backend response:",
+      err.response?.data
+    );
+
+    setPurchases([]);
   }
+}
 
   async function addPurchase(purchase) {
     if (!report) {
