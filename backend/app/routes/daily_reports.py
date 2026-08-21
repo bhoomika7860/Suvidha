@@ -83,12 +83,36 @@ def get_purchase_total_for_report(
         .all()
     )
 
-    return sum(
-        float(
-            purchase.purchase_amount or 0
-        )
+    total = sum(
+        float(purchase.purchase_amount or 0)
         for purchase in purchases
     )
+
+    print(
+        "\n========== PURCHASE DEBUG =========="
+    )
+    print("STORE:", store_id)
+    print("REPORT DATE:", report_date)
+    print("PURCHASE COUNT:", len(purchases))
+
+    for purchase in purchases:
+        print(
+            "ID:",
+            purchase.id,
+            "| BILL:",
+            purchase.bill_number,
+            "| AMOUNT:",
+            purchase.purchase_amount,
+            "| RECEIVED:",
+            purchase.received_date,
+            "| STATUS:",
+            purchase.status,
+        )
+
+    print("TOTAL:", total)
+    print("====================================\n")
+
+    return total
 
 def get_udhaar_for_report_date(
     db: Session,
