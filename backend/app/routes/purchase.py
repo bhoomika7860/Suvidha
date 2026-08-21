@@ -273,14 +273,26 @@ def update_purchase(
     )
 
     was_completed = (
-        purchase.status == "completed"
+    purchase.status == "completed"
 )
 
-    # ------------------------------------------------
-    # Update workflow fields
-    # ------------------------------------------------
+    was_sent_for_entry = (
+        purchase.status == "sent_for_entry"
+)
+
+# ------------------------------------------------
+# Update workflow fields
+# ------------------------------------------------
 
     purchase.status = data.status
+
+# Record the exact time the bill is sent
+# for system entry.
+    if (
+        not was_sent_for_entry
+        and purchase.status == "sent_for_entry"
+):
+        purchase.sent_for_entry_at = datetime.now(IST)
 
     if data.checked_by is not None:
         purchase.checked_by = data.checked_by

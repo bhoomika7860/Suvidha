@@ -71,6 +71,11 @@ class Purchase(Base):
         nullable=False,
     )
 
+    sent_for_entry_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     purchase_order_id = Column(
         Integer,
         ForeignKey("purchase_orders.id"),

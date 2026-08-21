@@ -34,6 +34,49 @@ router = APIRouter(
 def ist_today():
     return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
+def get_purchase_total_for_business_date(
+    db: Session,
+    store_id: int,
+    report_date: date,
+):
+    start = datetime.combine(
+        report_date,
+        datetime.min.time(),
+    ).replace(
+        tzinfo=ZoneInfo("Asia/Kolkata")
+    )
+
+    end = start + timedelta(days=1)
+
+    purchases = (
+        db.query(Purchase)
+        .filter(
+            Purchase.store_id == store_id,
+            or_(
+                and_(
+                    Purchase.received_date >= start,
+                    Purchase.received_date < end,
+                ),
+                and_(
+                    Purchase.sent_for_entry_at >= start,
+                    Purchase.sent_for_entry_at < end,
+                ),
+                and_(
+                    Purchase.completed_at >= start,
+                    Purchase.completed_at < end,
+                ),
+            ),
+        )
+        .all()
+    )
+
+    return float(
+        sum(
+            float(purchase.purchase_amount or 0)
+            for purchase in purchases
+        )
+    )
+
 def get_udhaar_for_report_date(
     db: Session,
     store_id: int,
@@ -259,18 +302,10 @@ def get_today_report(
     if entry.status != "settled"
 )
 
-    purchase_total = (
-        db.query(
-            func.coalesce(
-                func.sum(Purchase.purchase_amount),
-                0,
-            )
-        )
-        .filter(
-            Purchase.daily_report_id == report.id,
-            Purchase.status == "completed",
-        )
-        .scalar()
+    purchase_total = get_purchase_total_for_business_date(
+    db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
     )
 
     return {
@@ -400,23 +435,11 @@ def get_report_by_date(
     # Purchases for THIS report
     # --------------------------------------------------
 
-    purchase_total = (
-        db.query(
-            func.coalesce(
-                func.sum(
-                    Purchase.purchase_amount
-                ),
-                0,
-            )
-        )
-        .filter(
-            Purchase.daily_report_id == report.id,
-            Purchase.status == "completed",
-        )
-        .scalar()
-    )
-
-    purchase_total = float(purchase_total or 0)
+    purchase_total = get_purchase_total_for_business_date(
+    db=db,
+    store_id=report.store_id,
+    report_date=report.report_date,
+)
 
     # --------------------------------------------------
     # Total Sales
@@ -972,26 +995,11 @@ def get_today_reports(
         # Today's received/completed purchases
         # --------------------------------------------------
 
-        purchase_total = (
-            db.query(
-                func.coalesce(
-                    func.sum(
-                        Purchase.purchase_amount
-                    ),
-                    0,
-                )
-            )
-            .filter(
-                Purchase.daily_report_id == report.id,
-                Purchase.status == "completed",
-            )
-            .scalar()
-        )
-
-        purchase_total = float(
-            purchase_total or 0
-        )
-
+        purchase_total = get_purchase_total_for_business_date(
+        db=db,
+        store_id=report.store_id,
+        report_date=report.report_date,
+)
         # --------------------------------------------------
         # Response
         # --------------------------------------------------
@@ -1232,45 +1240,42 @@ def get_report(
 
     selected_date = report.report_date
 
+    selected_date_start = datetime.combine(
+    selected_date,
+    datetime.min.time(),
+    ).replace(
+    tzinfo=ZoneInfo("Asia/Kolkata")
+)
+
+    selected_date_end = (
+        selected_date_start + timedelta(days=1)
+)
+
     purchases = (
-        db.query(Purchase)
-        .join(
-            DailyReport,
-            Purchase.daily_report_id
-            == DailyReport.id,
-        )
-        .filter(
-            Purchase.store_id
-            == report.store_id,
-
-            DailyReport.report_date
-            <= selected_date,
-
-            (
-                (
-                    DailyReport.report_date
-                    == selected_date
-                )
-                |
-                (
-                    (
-                        DailyReport.report_date
-                        < selected_date
-                    )
-                    &
-                    (
-                        Purchase.status
-                        != "completed"
-                    )
-                )
+    db.query(Purchase)
+    .filter(
+        Purchase.store_id == report.store_id,
+        or_(
+            and_(
+                Purchase.received_date >= selected_date_start,
+                Purchase.received_date < selected_date_end,
             ),
-        )
-        .order_by(
-            Purchase.purchase_date.desc(),
-            Purchase.id.desc(),
-        )
-        .all()
+            and_(
+                Purchase.sent_for_entry_at >= selected_date_start,
+                Purchase.sent_for_entry_at < selected_date_end,
+            ),
+            and_(
+                Purchase.completed_at >= selected_date_start,
+                Purchase.completed_at < selected_date_end,
+            ),
+        ),
     )
+    .order_by(
+        Purchase.purchase_date.desc(),
+        Purchase.id.desc(),
+    )
+    .all()
+)
 
     
 
@@ -1320,9 +1325,8 @@ def get_report(
             "bills": report.total_bills,
             "deliveries": report.deliveries,
             "purchases": sum(
-    purchase.purchase_amount
+    float(purchase.purchase_amount or 0)
     for purchase in purchases
-    if purchase.status == "completed"
 ),
             "expenses": sum(
     expense.amount

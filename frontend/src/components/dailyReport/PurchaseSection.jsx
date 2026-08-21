@@ -7,9 +7,6 @@ import dailyReportsService from "../../services/dailyReportsService";
 /*
  * Convert a server timestamp into the Indian
  * business date (YYYY-MM-DD).
- *
- * Purchase timestamps coming from the backend
- * are UTC timestamps.
  */
 function getIndiaBusinessDate(value) {
   if (!value) {
@@ -90,66 +87,66 @@ export default function PurchaseSection({
     return null;
   }
 
-  /*
-   * The report's business date is the date
-   * we need to compare against.
-   */
   const reportDate =
     report.report_date ||
     report.date;
 
   /*
-   * ONLY purchases that:
+   * A purchase belongs to today's
+   * purchase amount when ANY ONE of
+   * these workflow events happened
+   * on the selected business date:
    *
-   * 1. Have status "received"
-   * 2. Were received on THIS business date
+   * 1. Received today
+   * 2. Sent for system entry today
+   * 3. Completed today
    *
-   * Older received purchases are excluded.
+   * The purchase is included only once,
+   * even if multiple events happened today.
    */
-  const receivedToday =
+  const purchasesToday =
     purchases.filter(
       (purchase) => {
-        const status =
-          String(
-            purchase.status || ""
-          ).toLowerCase();
-
-        if (
-          status !== "received"
-        ) {
-          return false;
-        }
-
-        /*
-         * received_date is the authoritative
-         * date for this Daily Report.
-         */
         const receivedDate =
           getIndiaBusinessDate(
             purchase.received_date
           );
 
+        const sentForEntryDate =
+          getIndiaBusinessDate(
+            purchase.sent_for_entry_at
+          );
+
+        const completedDate =
+          getIndiaBusinessDate(
+            purchase.completed_at
+          );
+
         return (
-          receivedDate ===
-          reportDate
+          receivedDate === reportDate ||
+          sentForEntryDate === reportDate ||
+          completedDate === reportDate
         );
       }
     );
 
   /*
-   * Calculate ONLY today's received
-   * purchase amount.
+   * Calculate the total purchase amount
+   * for the selected business date.
+   *
+   * Each purchase appears only once in
+   * purchasesToday, so its amount cannot
+   * be counted multiple times.
    */
-  const totalReceivedToday =
-    receivedToday.reduce(
+  const totalPurchaseToday =
+    purchasesToday.reduce(
       (
         sum,
         purchase
       ) =>
         sum +
         Number(
-          purchase.purchase_amount ||
-            0
+          purchase.purchase_amount || 0
         ),
       0
     );
@@ -179,7 +176,7 @@ export default function PurchaseSection({
             </h3>
 
             <p className="text-sm text-gray-500">
-              Purchase bills received today.
+              Purchase bills processed today.
             </p>
 
           </div>
@@ -187,28 +184,25 @@ export default function PurchaseSection({
         </div>
 
 
-        {/* TODAY'S RECEIVED PURCHASE AMOUNT */}
+        {/* TODAY'S PURCHASE AMOUNT */}
 
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
 
           <p className="text-sm font-medium text-blue-700">
-            Purchases Received Today
+            Purchases Today
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-blue-600">
-
             ₹
-            {totalReceivedToday.toLocaleString(
+            {totalPurchaseToday.toLocaleString(
               "en-IN"
             )}
-
           </h2>
 
           <p className="mt-2 text-sm text-blue-700/70">
-
-            Only bills received on{" "}
-            {reportDate} are included.
-
+            Includes bills received, sent for
+            entry, or completed on{" "}
+            {reportDate}.
           </p>
 
         </div>
