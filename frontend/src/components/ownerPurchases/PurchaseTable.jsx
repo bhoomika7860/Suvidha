@@ -22,6 +22,48 @@ const STATUS_STYLES = {
   },
 };
 
+/*
+ * Show the date of the CURRENT workflow stage.
+ *
+ * received  -> received_date
+ * checking  -> received_date
+ * entered   -> sent_for_entry_at
+ * completed -> completed_at
+ */
+function getWorkflowDate(purchase) {
+  let value = null;
+
+  if (
+    purchase.status === "entered" &&
+    purchase.sent_for_entry_at
+  ) {
+    value = purchase.sent_for_entry_at;
+  } else if (
+    purchase.status === "completed" &&
+    purchase.completed_at
+  ) {
+    value = purchase.completed_at;
+  } else if (
+    purchase.received_date
+  ) {
+    value = purchase.received_date;
+  } else {
+    value = purchase.purchase_date;
+  }
+
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleDateString("en-IN");
+}
+
 export default function PurchaseTable({
   purchases,
   loading,
@@ -101,32 +143,32 @@ export default function PurchaseTable({
 
             <tr
               key={purchase.id}
-              onClick={() => onRowClick(purchase)}
+              onClick={() =>
+                onRowClick?.(purchase)
+              }
               className="cursor-pointer border-t transition-all duration-200 hover:bg-blue-50"
             >
 
               <td className="px-6 py-4">
-                {new Date(
-                  purchase.purchase_date
-                ).toLocaleDateString("en-IN")}
+                {getWorkflowDate(purchase)}
               </td>
 
               <td className="px-6 py-4 font-medium">
-                {purchase.store_name}
+                {purchase.store_name || "-"}
               </td>
 
               <td className="px-6 py-4">
-                {purchase.supplier_name}
+                {purchase.supplier_name || "-"}
               </td>
 
               <td className="px-6 py-4">
-                {purchase.bill_number}
+                {purchase.bill_number || "-"}
               </td>
 
               <td className="px-6 py-4 font-semibold">
                 ₹
                 {Number(
-                  purchase.purchase_amount
+                  purchase.purchase_amount || 0
                 ).toLocaleString("en-IN")}
               </td>
 
@@ -134,11 +176,18 @@ export default function PurchaseTable({
 
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    STATUS_STYLES[purchase.status]?.className
+                    STATUS_STYLES[
+                      purchase.status
+                    ]?.className ||
+                    "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {STATUS_STYLES[purchase.status]?.label ??
-                    purchase.status}
+                  {
+                    STATUS_STYLES[
+                      purchase.status
+                    ]?.label ||
+                    purchase.status
+                  }
                 </span>
 
               </td>

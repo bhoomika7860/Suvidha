@@ -804,6 +804,10 @@ def get_report_purchases(
 
             "received_date": purchase.received_date,
 
+            "sent_for_entry_at": purchase.sent_for_entry_at,
+
+            "completed_at": purchase.completed_at,
+
             "bill_image": purchase.bill_image,
         }
         for purchase in purchases
