@@ -244,78 +244,51 @@ const SalesSection = forwardRef(
            */
           if (savedCash) {
             setCash({
-              note_500:
-                savedCash.note_500 !=
-                null
-                  ? String(
-                      savedCash.note_500
-                    )
-                  : "",
+  note_500:
+    Number(savedCash.note_500 || 0) > 0
+      ? String(savedCash.note_500)
+      : "",
 
-              note_200:
-                savedCash.note_200 !=
-                null
-                  ? String(
-                      savedCash.note_200
-                    )
-                  : "",
+  note_200:
+    Number(savedCash.note_200 || 0) > 0
+      ? String(savedCash.note_200)
+      : "",
 
-              note_100:
-                savedCash.note_100 !=
-                null
-                  ? String(
-                      savedCash.note_100
-                    )
-                  : "",
+  note_100:
+    Number(savedCash.note_100 || 0) > 0
+      ? String(savedCash.note_100)
+      : "",
 
-              note_50:
-                savedCash.note_50 !=
-                null
-                  ? String(
-                      savedCash.note_50
-                    )
-                  : "",
+  note_50:
+    Number(savedCash.note_50 || 0) > 0
+      ? String(savedCash.note_50)
+      : "",
 
-              note_20:
-                savedCash.note_20 !=
-                null
-                  ? String(
-                      savedCash.note_20
-                    )
-                  : "",
+  note_20:
+    Number(savedCash.note_20 || 0) > 0
+      ? String(savedCash.note_20)
+      : "",
 
-              note_10:
-                savedCash.note_10 !=
-                null
-                  ? String(
-                      savedCash.note_10
-                    )
-                  : "",
+  note_10:
+    Number(savedCash.note_10 || 0) > 0
+      ? String(savedCash.note_10)
+      : "",
 
-              coin_5:
-                savedCash.coin_5 !=
-                null
-                  ? String(
-                      savedCash.coin_5
-                    )
-                  : "",
+  coin_5:
+    Number(savedCash.coin_5 || 0) > 0
+      ? String(savedCash.coin_5)
+      : "",
 
-              coin_2:
-                savedCash.coin_2 !=
-                null
-                  ? String(
-                      savedCash.coin_2
-                    )
-                  : "",
+  coin_2:
+    Number(savedCash.coin_2 || 0) > 0
+      ? String(savedCash.coin_2)
+      : "",
 
-              coin_1:
-                savedCash.coin_1 !=
-                null
-                  ? String(
-                      savedCash.coin_1
-                    )
-                  : "",
-            });
+  coin_1:
+    Number(savedCash.coin_1 || 0) > 0
+      ? String(savedCash.coin_1)
+      : "",
+});
           } else {
             setCash(
               EMPTY_CASH
@@ -617,13 +590,9 @@ const SalesSection = forwardRef(
         report.id,
         {
           total_bills:
-            Number(
-              report.total_bills || 0
-            ) > 0
-              ? String(
-                  report.total_bills
-                )
-              : "",
+  Number(
+    form.total_bills || 0
+  ),
 
           cash_sales:
             Number(

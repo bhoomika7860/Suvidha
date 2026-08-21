@@ -106,17 +106,75 @@ export default function DailyReport() {
       );
 
       await loadReport();
+
     } catch (err) {
       console.error(
         "Failed to submit daily report:",
         err
       );
 
-      alert(
-        err.response?.data?.detail ||
-          err.message ||
-          "Failed to submit daily report."
+      console.error(
+        "Submit status:",
+        err?.response?.status
       );
+
+      console.error(
+        "Submit backend response:",
+        err?.response?.data
+      );
+
+      const backendDetail =
+        err?.response?.data?.detail;
+
+      let errorMessage =
+        "Failed to submit daily report.";
+
+      if (
+        typeof backendDetail ===
+        "string"
+      ) {
+        errorMessage =
+          backendDetail;
+      } else if (
+        Array.isArray(
+          backendDetail
+        )
+      ) {
+        errorMessage =
+          backendDetail
+            .map((item) =>
+              typeof item === "string"
+                ? item
+                : item?.msg ||
+                  JSON.stringify(item)
+            )
+            .join("\n");
+      } else if (
+        backendDetail &&
+        typeof backendDetail ===
+          "object"
+      ) {
+        errorMessage =
+          backendDetail.message ||
+          backendDetail.msg ||
+          JSON.stringify(
+            backendDetail
+          );
+      } else if (
+        typeof err?.response?.data ===
+        "string"
+      ) {
+        errorMessage =
+          err.response.data;
+      } else if (
+        err?.message
+      ) {
+        errorMessage =
+          err.message;
+      }
+
+      alert(errorMessage);
+
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +198,8 @@ export default function DailyReport() {
     );
   }
 
-  const isLocked = report.is_locked;
+  const isLocked =
+    report.is_locked;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] pb-16">
@@ -148,6 +207,7 @@ export default function DailyReport() {
       {/* HEADER */}
 
       <header className="mb-8">
+
         <div className="flex flex-wrap items-start justify-between gap-4">
 
           <div>
@@ -184,6 +244,7 @@ export default function DailyReport() {
           </div>
 
         </div>
+
       </header>
 
 
