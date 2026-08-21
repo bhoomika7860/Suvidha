@@ -38,43 +38,24 @@ def get_purchase_total_for_business_date(
     db: Session,
     store_id: int,
     report_date: date,
-):
-    start = datetime.combine(
-        report_date,
-        datetime.min.time(),
-    ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
-    )
-
-    end = start + timedelta(days=1)
+) -> float:
 
     purchases = (
         db.query(Purchase)
         .filter(
             Purchase.store_id == store_id,
-            or_(
-                and_(
-                    Purchase.received_date >= start,
-                    Purchase.received_date < end,
-                ),
-                and_(
-                    Purchase.sent_for_entry_at >= start,
-                    Purchase.sent_for_entry_at < end,
-                ),
-                and_(
-                    Purchase.completed_at >= start,
-                    Purchase.completed_at < end,
-                ),
-            ),
+            func.date(
+                Purchase.purchase_date
+            ) == report_date,
         )
         .all()
     )
 
-    return float(
-        sum(
-            float(purchase.purchase_amount or 0)
-            for purchase in purchases
+    return sum(
+        float(
+            purchase.purchase_amount or 0
         )
+        for purchase in purchases
     )
 
 def get_udhaar_for_report_date(

@@ -105,30 +105,18 @@ export default function PurchaseSection({
    * even if multiple events happened today.
    */
   const purchasesToday =
-    purchases.filter(
-      (purchase) => {
-        const receivedDate =
-          getIndiaBusinessDate(
-            purchase.received_date
-          );
-
-        const sentForEntryDate =
-          getIndiaBusinessDate(
-            purchase.sent_for_entry_at
-          );
-
-        const completedDate =
-          getIndiaBusinessDate(
-            purchase.completed_at
-          );
-
-        return (
-          receivedDate === reportDate ||
-          sentForEntryDate === reportDate ||
-          completedDate === reportDate
+  purchases.filter(
+    (purchase) => {
+      const purchaseDate =
+        getIndiaBusinessDate(
+          purchase.purchase_date
         );
-      }
-    );
+
+      return (
+        purchaseDate === reportDate
+      );
+    }
+  );
 
   /*
    * Calculate the total purchase amount
