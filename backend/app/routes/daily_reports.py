@@ -36,13 +36,49 @@ def ist_today():
 
 def get_purchase_total_for_report(
     db: Session,
-    report_id: int,
+    store_id: int,
+    report_date: date,
 ) -> float:
+    """
+    Calculate purchase total for a business date.
+
+    Only the date the bill was RECEIVED matters.
+
+    Current workflow status does not matter.
+
+    Example:
+        Received: 21 Aug
+        Status: received       -> included
+        Status: checking       -> included
+        Status: entered        -> included
+        Status: completed      -> included
+
+        Received: 18 Aug
+        Completed: 21 Aug      -> NOT included in 21 Aug
+
+    This prevents old bills from being counted again
+    when they move through the workflow.
+    """
+
+    business_timezone = ZoneInfo("Asia/Kolkata")
+
+    start_of_day = datetime.combine(
+        report_date,
+        datetime.min.time(),
+    ).replace(
+        tzinfo=business_timezone
+    )
+
+    start_of_next_day = (
+        start_of_day + timedelta(days=1)
+    )
 
     purchases = (
         db.query(Purchase)
         .filter(
-            Purchase.daily_report_id == report_id,
+            Purchase.store_id == store_id,
+            Purchase.received_date >= start_of_day,
+            Purchase.received_date < start_of_next_day,
         )
         .all()
     )
@@ -279,14 +315,10 @@ def get_today_report(
     if entry.status != "settled"
 )
 
-    get_purchase_total_for_report(
-        db=db,
-        report_id=report.id,
-)
-
     purchase_total = get_purchase_total_for_report(
     db=db,
-    report_id=report.id,
+    store_id=report.store_id,
+    report_date=report.report_date,
 )
 
     return {
@@ -617,7 +649,8 @@ def submit_report(
 
     report.total_purchases = get_purchase_total_for_report(
     db=db,
-    report_id=report.id,
+    store_id=report.store_id,
+    report_date=report.report_date,
 )
 
     report.is_submitted = True
@@ -1213,18 +1246,32 @@ def get_report(
         udhaar_total or 0
     )
     
-        # --------------------------------------------------
-    # Purchases visible for this business date
-    # --------------------------------------------------
+       # --------------------------------------------------
+# Purchases visible for this business date
+# --------------------------------------------------
+
+    business_timezone = ZoneInfo("Asia/Kolkata")
+
+    selected_date_start = datetime.combine(
+        report.report_date,
+        datetime.min.time(),
+    ).replace(
+        tzinfo=business_timezone
+)
+
+    next_date_start = (
+        selected_date_start + timedelta(days=1)
+)
 
     purchases = (
-    db.query(Purchase)
+        db.query(Purchase)
     .filter(
         Purchase.store_id == report.store_id,
-        Purchase.daily_report_id == report.id,
+        Purchase.received_date >= selected_date_start,
+        Purchase.received_date < next_date_start,
     )
     .order_by(
-        Purchase.purchase_date.desc(),
+        Purchase.received_date.desc(),
         Purchase.id.desc(),
     )
     .all()
