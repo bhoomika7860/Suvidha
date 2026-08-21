@@ -406,26 +406,29 @@ def get_report_by_date(
     .all()
 )
     if report.is_locked:
-    # Locked reports are immutable.
-    # Never recalculate their Udhaar from
-    # current outstanding balances.
+
         udhaar_total = float(
         report.udhaar_sales or 0
     )
 
     else:
+
         report_udhaar_entries = get_udhaar_for_report_date(
-            db=db,
-            store_id=report.store_id,
-            report_date=report.report_date,
+        db=db,
+        store_id=report.store_id,
+        report_date=report.report_date,
     )
 
-    udhaar_total = sum(
+        udhaar_total = sum(
         float(entry.amount or 0)
         - float(entry.paid_amount or 0)
         for entry in report_udhaar_entries
         if entry.status != "settled"
     )
+
+    udhaar_total = float(
+        udhaar_total or 0
+)
 
     udhaar_total = float(
         udhaar_total or 0
