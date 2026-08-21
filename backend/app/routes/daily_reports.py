@@ -704,23 +704,26 @@ def get_report_purchases(
     db: Session = Depends(get_db),
 ):
     """
-    Return purchases visible for a specific business-date report.
+    Return purchases RECEIVED on the selected business date.
 
-    Rules:
+    The purchase workflow status does not matter.
 
-    1. Purchases directly belonging to this report are ALWAYS visible.
-       The daily_report_id is the source of truth for these purchases.
+    Examples:
 
-    2. Older purchases that are still pending are carried forward.
+    Received 21 Aug + Received status
+        -> visible
 
-    3. Future purchases are never carried forward.
+    Received 21 Aug + Waiting Entry
+        -> visible
 
-    4. Older completed purchases are not carried forward.
+    Received 21 Aug + Completed
+        -> visible
 
-    5. We NEVER modify daily_report_id while displaying carried-forward
-       purchases.
+    Received 20 Aug + Waiting Entry
+        -> not visible
 
-    6. Store managers can only see purchases belonging to their own store.
+    Received 20 Aug + Completed on 21 Aug
+        -> not visible
     """
 
     # --------------------------------------------------
@@ -758,50 +761,44 @@ def get_report_purchases(
     # Business-date boundaries
     # --------------------------------------------------
 
+    business_timezone = ZoneInfo("Asia/Kolkata")
+
     selected_date_start = datetime.combine(
         report.report_date,
         datetime.min.time(),
     ).replace(
-        tzinfo=ZoneInfo("Asia/Kolkata")
+        tzinfo=business_timezone
     )
 
     next_date_start = (
-        selected_date_start + timedelta(days=1)
+        selected_date_start
+        + timedelta(days=1)
     )
 
     # --------------------------------------------------
-    # Purchase visibility
+    # ONLY purchases received on this business date
     #
-    # A purchase is visible when:
+    # Status does not matter.
     #
-    # A. It belongs directly to this report
-    #
-    # OR
-    #
-    # B. It was received before this business date
-    #    and is still pending.
-    #
-    # IMPORTANT:
-    #
-    # Direct report purchases are NOT filtered by
-    # received_date.
-    #
-    # This protects historical purchases that were
-    # created before the business-date system was fixed.
+    # This means an old bill completed today will NOT
+    # appear in today's purchase list.
     # --------------------------------------------------
 
     purchases = (
-    db.query(Purchase)
-    .filter(
-        Purchase.store_id == report.store_id,
-        Purchase.daily_report_id == report.id,
+        db.query(Purchase)
+        .filter(
+            Purchase.store_id == report.store_id,
+
+            Purchase.received_date >= selected_date_start,
+
+            Purchase.received_date < next_date_start,
+        )
+        .order_by(
+            Purchase.received_date.desc(),
+            Purchase.id.desc(),
+        )
+        .all()
     )
-    .order_by(
-        Purchase.purchase_date.desc(),
-        Purchase.id.desc(),
-    )
-    .all()
-)
 
     # --------------------------------------------------
     # Return response
