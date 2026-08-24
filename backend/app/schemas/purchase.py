@@ -39,7 +39,22 @@ class PurchaseCreate(
 
 
 class PurchaseUpdate(BaseModel):
-    status: str
+    """
+    Used for both workflow updates and
+    purchase information edits.
+
+    Every field is optional so the frontend
+    can update only the fields that changed.
+    """
+
+    status: str | None = None
+
+    product_name: str | None = None
+    quantity: int | None = None
+    supplier_name: str | None = None
+    purchase_amount: float | None = None
+    bill_number: str | None = None
+    purchase_date: datetime | None = None
 
     checked_by: str | None = None
     entered_by: str | None = None

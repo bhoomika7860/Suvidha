@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Upload, Camera, Image as ImageIcon } from "lucide-react";
+import {
+  X,
+  Upload,
+  Camera,
+  Image as ImageIcon,
+} from "lucide-react";
+
 import purchaseService from "../../../services/purchaseService";
+import supplierService from "../../../services/supplierService";
 
 export default function ReceiveBillSheet({
   isOpen,
@@ -13,15 +20,41 @@ export default function ReceiveBillSheet({
   const [billNumber, setBillNumber] = useState("");
   const [billImage, setBillImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [suppliers, setSuppliers] = useState([]);
+  const [loadingSuppliers, setLoadingSuppliers] =
+    useState(false);
+
+  const [showSuggestions, setShowSuggestions] =
+    useState(false);
+
+  const [highlightedIndex, setHighlightedIndex] =
+    useState(-1);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const suggestionRefs = useRef([]);
+
+  const filteredSuppliers =
+    suppliers
+      .filter((item) =>
+        item.name
+          .toLowerCase()
+          .includes(supplier.toLowerCase())
+      )
+      .slice(0, 8);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today =
+      new Date()
+        .toLocaleDateString("en-CA");
 
     setSupplier("");
     setPurchaseDate(today);
@@ -29,8 +62,41 @@ export default function ReceiveBillSheet({
     setBillNumber("");
     setBillImage(null);
     setPreviewUrl(null);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
     setIsSubmitting(false);
+
+    loadSuppliers();
   }, [isOpen]);
+
+  async function loadSuppliers() {
+    try {
+      setLoadingSuppliers(true);
+
+      const data =
+        await supplierService.getSuppliers();
+
+      setSuppliers(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load suppliers:",
+        error
+      );
+
+      setSuppliers([]);
+
+      alert(
+        error?.response?.data?.detail ||
+          "Failed to load suppliers."
+      );
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -40,31 +106,113 @@ export default function ReceiveBillSheet({
     };
   }, [previewUrl]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (
+      highlightedIndex >= 0 &&
+      suggestionRefs.current[
+        highlightedIndex
+      ]
+    ) {
+      suggestionRefs.current[
+        highlightedIndex
+      ].scrollIntoView({
+        block: "nearest",
+      });
+    }
+  }, [highlightedIndex]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  function selectSupplier(item) {
+    setSupplier(item.name);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  }
+
+  function handleSupplierKeyDown(event) {
+    if (!showSuggestions) {
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+
+        setHighlightedIndex((previous) =>
+          previous <
+          filteredSuppliers.length - 1
+            ? previous + 1
+            : 0
+        );
+
+        break;
+
+      case "ArrowUp":
+        event.preventDefault();
+
+        setHighlightedIndex((previous) =>
+          previous > 0
+            ? previous - 1
+            : filteredSuppliers.length - 1
+        );
+
+        break;
+
+      case "Enter":
+        event.preventDefault();
+
+        if (highlightedIndex >= 0) {
+          selectSupplier(
+            filteredSuppliers[
+              highlightedIndex
+            ]
+          );
+        }
+
+        break;
+
+      case "Escape":
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+        break;
+
+      default:
+        break;
+    }
+  }
 
   const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
+    const file =
+      event.target.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
 
     setBillImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    setPreviewUrl(
+      URL.createObjectURL(file)
+    );
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!supplier.trim()) {
-      alert("Please enter supplier name.");
+      alert("Please select a supplier.");
       return;
     }
 
     if (!amount || Number(amount) <= 0) {
-      alert("Please enter a valid purchase amount.");
+      alert(
+        "Please enter a valid purchase amount."
+      );
       return;
     }
 
@@ -77,14 +225,26 @@ export default function ReceiveBillSheet({
 
     try {
       const payload = {
-        supplier_name: supplier.trim(),
-        purchase_date: purchaseDate,
-        purchase_amount: Number(amount),
-        bill_number: billNumber.trim(),
-        bill_image: billImage,
+        supplier_name:
+          supplier.trim(),
+
+        purchase_date:
+          purchaseDate,
+
+        purchase_amount:
+          Number(amount),
+
+        bill_number:
+          billNumber.trim(),
+
+        bill_image:
+          billImage,
       };
 
-      const response = await purchaseService.receiveBill(payload);
+      const response =
+        await purchaseService.receiveBill(
+          payload
+        );
 
       if (onSave) {
         onSave(response);
@@ -92,7 +252,11 @@ export default function ReceiveBillSheet({
 
       onClose();
     } catch (error) {
-      console.error("Failed to submit purchase bill:", error);
+      console.error(
+        "Failed to submit purchase bill:",
+        error
+      );
+
       alert(
         error?.response?.data?.detail ||
           "Failed to submit purchase bill. Please try again."
@@ -104,15 +268,23 @@ export default function ReceiveBillSheet({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end bg-black/40">
+
       <div className="w-full max-h-[92vh] overflow-hidden rounded-t-[24px] bg-white">
+
         {/* Handle */}
+
         <div className="flex justify-center pt-3">
+
           <div className="h-1.5 w-14 rounded-full bg-gray-300" />
+
         </div>
 
         {/* Header */}
+
         <div className="flex items-start justify-between border-b border-gray-200 px-5 pb-4 pt-3">
+
           <div>
+
             <h2 className="text-[24px] font-semibold text-gray-950">
               Receive Bill
             </h2>
@@ -120,6 +292,7 @@ export default function ReceiveBillSheet({
             <p className="mt-1 text-sm text-gray-500">
               Upload today's supplier bill
             </p>
+
           </div>
 
           <button
@@ -128,17 +301,25 @@ export default function ReceiveBillSheet({
             className="mt-1 rounded-full p-1 text-gray-900"
             aria-label="Close"
           >
-            <X size={25} strokeWidth={2} />
+            <X
+              size={25}
+              strokeWidth={2}
+            />
           </button>
+
         </div>
 
         {/* Form */}
+
         <form
           onSubmit={handleSubmit}
           className="max-h-[calc(92vh-145px)] overflow-y-auto px-5 pb-6 pt-5"
         >
+
           {/* Supplier */}
-          <div className="mb-5">
+
+          <div className="relative mb-5">
+
             <label className="mb-2 block text-sm font-medium text-gray-900">
               Supplier
             </label>
@@ -146,14 +327,83 @@ export default function ReceiveBillSheet({
             <input
               type="text"
               value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
-              placeholder="Search Supplier..."
-              className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500"
+              onChange={(event) => {
+                setSupplier(
+                  event.target.value
+                );
+
+                setShowSuggestions(true);
+                setHighlightedIndex(-1);
+              }}
+              onFocus={() => {
+                setShowSuggestions(true);
+                setHighlightedIndex(-1);
+              }}
+              onKeyDown={
+                handleSupplierKeyDown
+              }
+              placeholder={
+                loadingSuppliers
+                  ? "Loading suppliers..."
+                  : "Search Supplier..."
+              }
+              disabled={loadingSuppliers}
+              className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500 disabled:bg-gray-50"
             />
+
+            {showSuggestions &&
+              filteredSuppliers.length > 0 && (
+
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+
+                  {filteredSuppliers.map(
+                    (item, index) => (
+
+                      <button
+                        key={item.id}
+                        ref={(element) => {
+                          suggestionRefs.current[
+                            index
+                          ] = element;
+                        }}
+                        type="button"
+                        onClick={() =>
+                          selectSupplier(item)
+                        }
+                        className={`w-full px-4 py-3 text-left text-sm ${
+                          highlightedIndex ===
+                          index
+                            ? "bg-blue-100"
+                            : "hover:bg-blue-50"
+                        }`}
+                      >
+                        {item.name}
+                      </button>
+
+                    )
+                  )}
+
+                </div>
+
+              )}
+
+            {showSuggestions &&
+              !loadingSuppliers &&
+              supplier.trim() &&
+              filteredSuppliers.length === 0 && (
+
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 shadow-lg">
+                  No supplier found.
+                </div>
+
+              )}
+
           </div>
 
           {/* Purchase Date */}
+
           <div className="mb-5">
+
             <label className="mb-2 block text-sm font-medium text-gray-900">
               Purchase Date
             </label>
@@ -161,13 +411,20 @@ export default function ReceiveBillSheet({
             <input
               type="date"
               value={purchaseDate}
-              onChange={(e) => setPurchaseDate(e.target.value)}
+              onChange={(event) =>
+                setPurchaseDate(
+                  event.target.value
+                )
+              }
               className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500"
             />
+
           </div>
 
           {/* Amount */}
+
           <div className="mb-5">
+
             <label className="mb-2 block text-sm font-medium text-gray-900">
               Amount
             </label>
@@ -177,14 +434,21 @@ export default function ReceiveBillSheet({
               min="0"
               step="0.01"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(event) =>
+                setAmount(
+                  event.target.value
+                )
+              }
               placeholder="Enter Purchase Amount"
               className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500"
             />
+
           </div>
 
           {/* Bill Number */}
+
           <div className="mb-5">
+
             <label className="mb-2 block text-sm font-medium text-gray-900">
               Bill Number
             </label>
@@ -192,14 +456,21 @@ export default function ReceiveBillSheet({
             <input
               type="text"
               value={billNumber}
-              onChange={(e) => setBillNumber(e.target.value)}
+              onChange={(event) =>
+                setBillNumber(
+                  event.target.value
+                )
+              }
               placeholder="Enter Bill Number"
               className="h-11 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500"
             />
+
           </div>
 
           {/* Upload Bill */}
+
           <div className="mb-5">
+
             <label className="mb-2 block text-sm font-medium text-gray-900">
               Upload Bill
             </label>
@@ -222,9 +493,12 @@ export default function ReceiveBillSheet({
             />
 
             {!previewUrl ? (
+
               <button
                 type="button"
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={() =>
+                  cameraInputRef.current?.click()
+                }
                 className="flex min-h-[150px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-500"
               >
                 <Upload
@@ -237,8 +511,11 @@ export default function ReceiveBillSheet({
                   Click to upload bill image
                 </span>
               </button>
+
             ) : (
+
               <div className="overflow-hidden rounded-xl border border-gray-200">
+
                 <img
                   src={previewUrl}
                   alt="Bill preview"
@@ -246,9 +523,12 @@ export default function ReceiveBillSheet({
                 />
 
                 <div className="flex gap-2 border-t border-gray-200 p-3">
+
                   <button
                     type="button"
-                    onClick={() => cameraInputRef.current?.click()}
+                    onClick={() =>
+                      cameraInputRef.current?.click()
+                    }
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-sm"
                   >
                     <Camera size={17} />
@@ -257,27 +537,42 @@ export default function ReceiveBillSheet({
 
                   <button
                     type="button"
-                    onClick={() => galleryInputRef.current?.click()}
+                    onClick={() =>
+                      galleryInputRef.current?.click()
+                    }
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-sm"
                   >
                     <ImageIcon size={17} />
                     Gallery
                   </button>
+
                 </div>
+
               </div>
+
             )}
+
           </div>
 
           {/* Submit */}
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting ||
+              loadingSuppliers
+            }
             className="h-12 w-full rounded-xl bg-blue-600 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {isSubmitting ? "Submitting..." : "Submit Bill"}
+            {isSubmitting
+              ? "Submitting..."
+              : "Submit Bill"}
           </button>
+
         </form>
+
       </div>
+
     </div>
   );
 }

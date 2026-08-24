@@ -6,7 +6,10 @@ from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
 
+# ----------------------------------------------------
 # Import models so SQLAlchemy creates tables
+# ----------------------------------------------------
+
 from app.models.store import Store
 from app.models.daily_report import DailyReport
 from app.models.expense import Expense
@@ -21,19 +24,23 @@ from app.models.purchase import Purchase
 from app.models.purchase_order import PurchaseOrder
 from app.models.supplier import Supplier
 from app.models.purchase_order_item import PurchaseOrderItem
-from app.routes import delivery_assignments
+from app.models.payment_machine import PaymentMachine
+from app.models.payment_machine_entry import PaymentMachineEntry
+
+# ----------------------------------------------------
 # Import routers
+# ----------------------------------------------------
+
 from app.routes.auth import router as auth_router
-from app.routes import cash_denominations
 from app.routes.stores import router as store_router
 from app.routes.users import router as user_router
 from app.routes.daily_reports import router as daily_report_router
 from app.routes.expenses import router as expense_router
 from app.routes.deliveries import router as delivery_router
-from app.models.payment_machine import PaymentMachine
-from app.models.payment_machine_entry import PaymentMachineEntry
-from app.routes import payment_machine_entries
+
 from app.routes import (
+    cash_denominations,
+    payment_machine_entries,
     udhaar,
     adjustments,
     audit_logs,
@@ -44,6 +51,7 @@ from app.routes import (
     purchase,
     purchase_orders,
     payment_machines,
+    delivery_assignments,
     suppliers,
 )
 
@@ -77,9 +85,6 @@ app.mount(
 # CORS
 # ----------------------------------------------------
 
-from fastapi.middleware.cors import CORSMiddleware
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -97,7 +102,11 @@ app.add_middleware(
 # ----------------------------------------------------
 
 print("Creating database tables...")
-Base.metadata.create_all(bind=engine)
+
+Base.metadata.create_all(
+    bind=engine
+)
+
 print("Database tables created.")
 
 # ----------------------------------------------------
@@ -118,13 +127,16 @@ app.include_router(products.router)
 app.include_router(analytics.router)
 app.include_router(tasks.router)
 app.include_router(export.router)
+
 app.include_router(purchase.router)
 app.include_router(purchase_orders.router)
 app.include_router(suppliers.router)
+
 app.include_router(delivery_assignments.router)
 app.include_router(cash_denominations.router)
 app.include_router(payment_machines.router)
 app.include_router(payment_machine_entries.router)
+
 # ----------------------------------------------------
 # Health Routes
 # ----------------------------------------------------
@@ -141,4 +153,3 @@ def health():
     return {
         "status": "healthy"
     }
-

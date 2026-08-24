@@ -9,6 +9,7 @@ import {
   X,
   Wallet,
   LogOut,
+  Truck,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -45,15 +46,20 @@ const navItems = [
     path: "/tasks",
   },
   {
-  label: "Purchases",
-  icon: FileText,
-  path: "/owner-purchases",
-},
-{
-  label: "Udhaar",
-  path: "/owner/udhaar",
-  icon: Wallet,
-},
+    label: "Purchases",
+    icon: FileText,
+    path: "/owner-purchases",
+  },
+  {
+    label: "Suppliers",
+    icon: Truck,
+    path: "/suppliers",
+  },
+  {
+    label: "Udhaar",
+    path: "/owner/udhaar",
+    icon: Wallet,
+  },
   {
     label: "Analytics",
     icon: BarChart3,
@@ -72,25 +78,27 @@ export default function Sidebar({ open, onClose }) {
 
   const token = localStorage.getItem("token");
 
-const user = token ? jwtDecode(token) : null;
+  const user = token ? jwtDecode(token) : null;
 
-const displayName =
-  user?.full_name || user?.username || "";
+  const displayName =
+    user?.full_name ||
+    user?.username ||
+    "";
 
-const initials = displayName
-  ? displayName
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-  : "?";
+  const initials = displayName
+    ? displayName
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+    : "?";
 
-const roleMap = {
-  owner: "Owner",
-  store_manager: "Store Manager",
-  staff: "Staff",
-  delivery: "Delivery Boy",
-};
+  const roleMap = {
+    owner: "Owner",
+    store_manager: "Store Manager",
+    staff: "Staff",
+    delivery: "Delivery Boy",
+  };
 
   return (
     <>
@@ -102,18 +110,18 @@ const roleMap = {
       )}
 
       <aside
-  className={`
-    fixed top-0 left-0 z-50 h-screen w-64
-    flex flex-col bg-white border-r border-[#E2E8F0]
-    transform transition-transform duration-300
-    ${
-      open
-        ? "translate-x-0"
-        : "-translate-x-full"
-    }
-    lg:translate-x-0
-  `}
->
+        className={`
+          fixed top-0 left-0 z-50 h-screen w-64
+          flex flex-col bg-white border-r border-[#E2E8F0]
+          transform transition-transform duration-300
+          ${
+            open
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+          lg:translate-x-0
+        `}
+      >
 
         {/* Logo */}
 
@@ -148,60 +156,70 @@ const roleMap = {
 
         <nav className="flex-1 px-3 py-5 space-y-1">
 
-          {navItems.map(({ label, icon: Icon, path }) => {
+          {navItems.map(
+            ({
+              label,
+              icon: Icon,
+              path,
+            }) => {
 
-            const active =
-              location.pathname.startsWith(path);
+              const active =
+                location.pathname.startsWith(
+                  path
+                );
 
-            return (
-              <button
-                key={label}
-                onClick={() => navigate(path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium text-[16px]
-                  ${
-                    active
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-100"
+              return (
+                <button
+                  key={label}
+                  onClick={() =>
+                    navigate(path)
                   }
-                `}
-              >
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium text-[16px]
+                    ${
+                      active
+                        ? "bg-blue-100 text-blue-700"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }
+                  `}
+                >
 
-                <Icon size={20} />
+                  <Icon size={20} />
 
-                <span>{label}</span>
+                  <span>{label}</span>
 
-              </button>
-            );
+                </button>
+              );
 
-          })}
+            }
+          )}
 
         </nav>
 
         {/* Footer */}
 
-       <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-4">
 
-  <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4">
 
-    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
-      {initials}
-    </div>
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
+              {initials}
+            </div>
 
-    <div>
+            <div>
 
-      <p className="font-semibold">
-  {user?.full_name || user?.username || "User"}
-</p>
+              <p className="font-semibold">
+                {user?.full_name ||
+                  user?.username ||
+                  "User"}
+              </p>
 
-      <p className="text-sm text-gray-500">
-        {roleMap[user?.role] || ""}
-      </p>
+              <p className="text-sm text-gray-500">
+                {roleMap[user?.role] || ""}
+              </p>
 
-    </div>
+            </div>
 
-  </div>
-
-
+          </div>
 
           <button
             onClick={logout}
