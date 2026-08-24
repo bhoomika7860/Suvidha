@@ -1,69 +1,48 @@
 import api from "../api/api";
 
 const purchaseService = {
-
   getPurchases: async () => {
-    const response =
-      await api.get(
-        "/purchases/"
-      );
-
+    const response = await api.get("/purchases/");
     return response.data;
   },
 
   getTodayPurchases: async () => {
-    const response =
-      await api.get(
-        "/purchases/today"
-      );
+    const response = await api.get("/purchases/today");
+    return response.data;
+  },
+
+  getStorePurchases: async (storeId) => {
+    const response = await api.get(
+      `/purchases/store/${storeId}`
+    );
 
     return response.data;
   },
 
-  getStorePurchases: async (
-    storeId
-  ) => {
-    const response =
-      await api.get(
-        `/purchases/store/${storeId}`
-      );
+  createPurchase: async (purchase) => {
+    const formData = new FormData();
 
-    return response.data;
-  },
-
-  createPurchase: async (
-    purchase
-  ) => {
-    const formData =
-      new FormData();
-
-    Object.entries(
-      purchase
-    ).forEach(
+    Object.entries(purchase).forEach(
       ([key, value]) => {
         if (
           value !== null &&
           value !== undefined
         ) {
-          formData.append(
-            key,
-            value
-          );
+          formData.append(key, value);
         }
       }
     );
 
-    const response =
-      await api.post(
-        "/purchases/",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
+    const response = await api.post(
+      "/purchases/",
+      formData,
+      {
+        headers: {
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
+    );
 
     return response.data;
   },
@@ -72,11 +51,18 @@ const purchaseService = {
     purchaseId,
     data
   ) => {
-    const response =
-      await api.put(
-        `/purchases/${purchaseId}`,
-        data
-      );
+    const response = await api.put(
+      `/purchases/${purchaseId}`,
+      data
+    );
+
+    return response.data;
+  },
+
+  deletePurchase: async (purchaseId) => {
+    const response = await api.delete(
+      `/purchases/${purchaseId}`
+    );
 
     return response.data;
   },
@@ -86,18 +72,16 @@ const purchaseService = {
     page = 1,
     pageSize = 10
   ) => {
-    const response =
-      await api.get(
-        "/purchases/owner",
-        {
-          params: {
-            ...filters,
-            page,
-            page_size:
-              pageSize,
-          },
-        }
-      );
+    const response = await api.get(
+      "/purchases/owner",
+      {
+        params: {
+          ...filters,
+          page,
+          page_size: pageSize,
+        },
+      }
+    );
 
     return response.data;
   },

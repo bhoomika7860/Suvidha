@@ -198,3 +198,73 @@ def update_supplier(
     db.refresh(supplier)
 
     return supplier
+
+
+# ---------------------------------------------------------
+# TEMPORARY PRODUCTION SEED
+# Owner only
+#
+# Used because Railway does not currently provide Shell
+# access for this deployment.
+#
+# REMOVE THIS ENDPOINT AFTER SEEDING PRODUCTION.
+# ---------------------------------------------------------
+
+@router.post(
+    "/seed",
+)
+def seed_suppliers_production(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    require_owner(current_user)
+
+    from seed_suppliers import SUPPLIERS
+
+    added = 0
+    skipped = 0
+
+    try:
+        for name in SUPPLIERS:
+            name = name.strip()
+
+            if not name:
+                continue
+
+            existing = (
+                db.query(Supplier)
+                .filter(
+                    Supplier.name.ilike(name)
+                )
+                .first()
+            )
+
+            if existing:
+                skipped += 1
+                continue
+
+            supplier = Supplier(
+                name=name,
+                is_active=True,
+            )
+
+            db.add(supplier)
+            added += 1
+
+        db.commit()
+
+        total = (
+            db.query(Supplier)
+            .count()
+        )
+
+        return {
+            "message": "Supplier seed completed successfully.",
+            "added": added,
+            "skipped": skipped,
+            "total": total,
+        }
+
+    except Exception:
+        db.rollback()
+        raise
