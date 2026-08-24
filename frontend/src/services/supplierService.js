@@ -1,13 +1,17 @@
 import api from "../api/api";
 
 const supplierService = {
+  // Active suppliers.
+  // Used by purchase forms and the Owner Suppliers page.
   getSuppliers: async () => {
     const response = await api.get("/suppliers/");
     return response.data;
   },
 
+  // Keep this method for existing code,
+  // but use the same verified active-supplier endpoint.
   getAllSuppliers: async () => {
-    const response = await api.get("/suppliers/all");
+    const response = await api.get("/suppliers/");
     return response.data;
   },
 
