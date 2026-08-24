@@ -19,6 +19,7 @@ from app.models.product import Product
 from app.models.task import Task
 from app.models.purchase import Purchase
 from app.models.purchase_order import PurchaseOrder
+from app.models.supplier import Supplier
 from app.models.purchase_order_item import PurchaseOrderItem
 from app.routes import delivery_assignments
 # Import routers
@@ -43,6 +44,7 @@ from app.routes import (
     purchase,
     purchase_orders,
     payment_machines,
+    suppliers,
 )
 
 # ----------------------------------------------------
@@ -118,6 +120,7 @@ app.include_router(tasks.router)
 app.include_router(export.router)
 app.include_router(purchase.router)
 app.include_router(purchase_orders.router)
+app.include_router(suppliers.router)
 app.include_router(delivery_assignments.router)
 app.include_router(cash_denominations.router)
 app.include_router(payment_machines.router)
