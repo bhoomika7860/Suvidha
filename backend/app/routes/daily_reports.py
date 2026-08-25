@@ -166,7 +166,7 @@ def create_daily_report(
     cash_sales=data.cash_sales,
     upi_sales=data.upi_sales,
     card_sales=data.card_sales,
-    udhaar_sales=data.udhaar_sales,
+    udhaar_sales=0,
     system_sales=data.system_sales,
     total_expenses=data.total_expenses,
     total_purchases=data.total_purchases,
@@ -432,16 +432,17 @@ def get_report_by_date(
         for expense, _ in expenses
     )
 
-    # --------------------------------------------------
+# --------------------------------------------------
 # Udhaar visible for THIS report date
 # --------------------------------------------------
-    report_udhaar_entries = (
-        db.query(UdhaarEntry)
-        .filter(
-        UdhaarEntry.daily_report_id == report.id
-    )
-    .all()
-)
+#
+# Locked report:
+#     historical submitted snapshot
+#
+# Open report:
+#     current outstanding balance
+# --------------------------------------------------
+
     if report.is_locked:
 
         udhaar_total = float(
@@ -456,7 +457,7 @@ def get_report_by_date(
         report_date=report.report_date,
     )
 
-        udhaar_total = sum(
+    udhaar_total = sum(
         float(entry.amount or 0)
         - float(entry.paid_amount or 0)
         for entry in report_udhaar_entries
@@ -465,12 +466,7 @@ def get_report_by_date(
 
     udhaar_total = float(
         udhaar_total or 0
-)
-
-    udhaar_total = float(
-        udhaar_total or 0
     )
-
     # --------------------------------------------------
     # Purchases for THIS report
     # --------------------------------------------------
@@ -655,7 +651,9 @@ def submit_report(
 ):
     report = (
         db.query(DailyReport)
-        .filter(DailyReport.id == report_id)
+        .filter(
+            DailyReport.id == report_id
+        )
         .first()
     )
 
@@ -665,22 +663,73 @@ def submit_report(
             detail="Report not found",
         )
 
+    # --------------------------------------------------
+    # Store isolation
+    # --------------------------------------------------
+
+    if (
+        current_user["role"] != "owner"
+        and report.store_id != current_user["store_id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    # --------------------------------------------------
+    # Prevent duplicate submission
+    # --------------------------------------------------
+
     if report.is_locked:
         raise HTTPException(
             status_code=409,
             detail="Report already submitted",
         )
 
-    report.total_purchases = get_purchase_total_for_report(
-    db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
+    # --------------------------------------------------
+    # Calculate Udhaar for this business date
+    #
+    # Includes:
+    # - Udhaar created today
+    # - Previous unsettled Udhaar
+    #
+    # Excludes:
+    # - Future Udhaar
+    # - Settled Udhaar
+    # --------------------------------------------------
+
+    report_udhaar_entries = get_udhaar_for_report_date(
+        db=db,
+        store_id=report.store_id,
+        report_date=report.report_date,
+    )
+
+    udhaar_total = sum(
+        float(entry.amount or 0)
+        - float(entry.paid_amount or 0)
+        for entry in report_udhaar_entries
+        if entry.status != "settled"
+    )
+
+    udhaar_total = float(
+        udhaar_total or 0
+    )
+
+    # --------------------------------------------------
+    # SAVE THE UDHAR SNAPSHOT BEFORE LOCKING
+    # --------------------------------------------------
+
+    report.udhaar_sales = udhaar_total
 
     report.is_submitted = True
     report.is_locked = True
 
     db.commit()
+    db.refresh(report)
+
+    # --------------------------------------------------
+    # Audit log
+    # --------------------------------------------------
 
     create_audit_log(
         db=db,
@@ -688,11 +737,16 @@ def submit_report(
         action="SUBMIT",
         table_name="daily_reports",
         record_id=report.id,
-        description="Submitted daily report",
+        description=(
+            f"Submitted daily report. "
+            f"Udhaar snapshot: ₹{udhaar_total:,.2f}"
+        ),
     )
 
     return {
-        "message": "Daily report submitted successfully"
+        "message": "Daily report submitted successfully",
+        "report_id": report.id,
+        "udhaar_sales": udhaar_total,
     }
 
 
@@ -1244,12 +1298,25 @@ def get_report(
 # Udhaar visible for THIS report date
 # --------------------------------------------------
 
+    # --------------------------------------------------
+# UDHAR
+# --------------------------------------------------
+#
+# LOCKED REPORT:
+#     Use the historical snapshot saved at submission.
+#
+# OPEN REPORT:
+#     Calculate the current outstanding Udhaar.
+# --------------------------------------------------
+
     if report.is_locked:
+
         udhaar_total = float(
         report.udhaar_sales or 0
     )
 
     else:
+
         report_udhaar_entries = get_udhaar_for_report_date(
         db=db,
         store_id=report.store_id,
@@ -1266,6 +1333,7 @@ def get_report(
     udhaar_total = float(
         udhaar_total or 0
     )
+
     
        # --------------------------------------------------
 # Purchases visible for this business date

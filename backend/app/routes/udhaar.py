@@ -35,6 +35,28 @@ def recalculate_report_udhaar_sales(
     db: Session,
     report_id: int,
 ):
+    report = (
+        db.query(DailyReport)
+        .filter(
+            DailyReport.id == report_id
+        )
+        .first()
+    )
+
+    if not report:
+        return
+
+    # ------------------------------------------------
+    # NEVER modify the Udhaar snapshot of a locked
+    # report.
+    #
+    # A locked report represents the state of the
+    # business at the time it was submitted.
+    # ------------------------------------------------
+
+    if report.is_locked:
+        return
+
     total = (
         db.query(
             func.coalesce(
@@ -55,19 +77,9 @@ def recalculate_report_udhaar_sales(
         .scalar()
     )
 
-    report = (
-        db.query(DailyReport)
-        .filter(
-            DailyReport.id == report_id
-        )
-        .first()
+    report.udhaar_sales = float(
+        total or 0
     )
-
-    if report:
-        report.udhaar_sales = float(
-            total or 0
-        )
-
 
 # ----------------------------------------------------
 # Create Udhaar
@@ -279,13 +291,17 @@ def repay_udhaar(
 
         udhaar.status = "settled"
 
-    # Keep the original report's
-    # Udhaar sales calculation intact.
-    recalculate_report_udhaar_sales(
-        db=db,
-        report_id=
-            udhaar.daily_report_id,
-    )
+    # ------------------------------------------------
+# IMPORTANT:
+#
+# Do NOT recalculate the original report here.
+#
+# If that report is locked, its Udhaar value is a
+# historical snapshot and must remain unchanged.
+#
+# The repayment automatically changes the current
+# outstanding Udhaar through paid_amount/status.
+# ------------------------------------------------
 
     db.commit()
 
