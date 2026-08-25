@@ -313,37 +313,62 @@ def get_today_report(
         db.commit()
         db.refresh(report)
 
-       
-
     expenses_total = (
-        db.query(func.coalesce(func.sum(Expense.amount), 0))
+        db.query(
+            func.coalesce(
+                func.sum(Expense.amount),
+                0,
+            )
+        )
         .filter(
             Expense.daily_report_id == report.id,
         )
         .scalar()
     )
 
-    # ----------------------------------
-# Udhaar visible for today's report
-# ----------------------------------
+    # --------------------------------------------------
+    # Udhaar
+    # --------------------------------------------------
+    #
+    # LOCKED REPORT:
+    # Use the historical snapshot saved when
+    # the report was submitted.
+    #
+    # OPEN REPORT:
+    # Calculate the current outstanding Udhaar,
+    # including carried-forward unsettled balances.
+    # --------------------------------------------------
 
-    report_udhaar_entries = get_udhaar_for_report_date(
-    db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
+    if report.is_locked:
 
-    udhaar_total = sum(
-    float(entry.amount or 0) - float(entry.paid_amount or 0)
-    for entry in report_udhaar_entries
-    if entry.status != "settled"
-)
+        udhaar_total = float(
+            report.udhaar_sales or 0
+        )
+
+    else:
+
+        report_udhaar_entries = get_udhaar_for_report_date(
+            db=db,
+            store_id=report.store_id,
+            report_date=report.report_date,
+        )
+
+        udhaar_total = sum(
+            float(entry.amount or 0)
+            - float(entry.paid_amount or 0)
+            for entry in report_udhaar_entries
+            if entry.status != "settled"
+        )
+
+        udhaar_total = float(
+            udhaar_total or 0
+        )
 
     purchase_total = get_purchase_total_for_report(
-    db=db,
-    store_id=report.store_id,
-    report_date=report.report_date,
-)
+        db=db,
+        store_id=report.store_id,
+        report_date=report.report_date,
+    )
 
     return {
         "id": report.id,
@@ -359,13 +384,13 @@ def get_today_report(
 
         "udhaar_sales": udhaar_total,
         "system_sales": report.system_sales,
+
         "total_expenses": expenses_total,
         "total_purchases": purchase_total,
 
         "notes": report.notes,
         "is_locked": report.is_locked,
     }
-
 # ----------------------------------------------------
 # Get / Create Report By Date
 # ----------------------------------------------------
@@ -431,26 +456,21 @@ def get_report_by_date(
         float(expense.amount or 0)
         for expense, _ in expenses
     )
-
 # --------------------------------------------------
 # Udhaar visible for THIS report date
-# --------------------------------------------------
-#
-# Locked report:
-#     historical submitted snapshot
-#
-# Open report:
-#     current outstanding balance
 # --------------------------------------------------
 
     if report.is_locked:
 
+    # Locked report = historical snapshot
         udhaar_total = float(
         report.udhaar_sales or 0
     )
 
     else:
 
+    # Open report = current outstanding balance
+    # including carried-forward Udhaar.
         report_udhaar_entries = get_udhaar_for_report_date(
         db=db,
         store_id=report.store_id,
@@ -1294,29 +1314,30 @@ def get_report(
     .all()
 )
 
-    # --------------------------------------------------
-# Udhaar visible for THIS report date
 # --------------------------------------------------
-
-    # --------------------------------------------------
-# UDHAR
+# Udhaar visible for THIS report date
 # --------------------------------------------------
 #
 # LOCKED REPORT:
-#     Use the historical snapshot saved at submission.
+# Use the historical Udhaar snapshot saved when
+# the report was submitted.
 #
 # OPEN REPORT:
-#     Calculate the current outstanding Udhaar.
+# Calculate the current outstanding Udhaar,
+# including carried-forward Udhaar.
 # --------------------------------------------------
 
     if report.is_locked:
 
+    # Locked report = immutable historical snapshot.
         udhaar_total = float(
         report.udhaar_sales or 0
     )
 
     else:
 
+    # Open report = current outstanding Udhaar,
+    # including previous unsettled balances.
         report_udhaar_entries = get_udhaar_for_report_date(
         db=db,
         store_id=report.store_id,
