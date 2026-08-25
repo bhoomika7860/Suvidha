@@ -17,10 +17,23 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const currentUser = await authService.getCurrentUser();
+        console.log("AUTH: existing token found");
+
+        const currentUser =
+          await authService.getCurrentUser();
+
+        console.log(
+          "AUTH: existing token verified",
+          currentUser
+        );
 
         setUser(currentUser);
       } catch (error) {
+        console.error(
+          "AUTH: existing token verification failed",
+          error
+        );
+
         authService.logout();
       } finally {
         setLoading(false);
@@ -31,20 +44,62 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (username, password) => {
-    const result = await authService.login(username, password);
+    try {
+      console.log(
+        "LOGIN: sending credentials",
+        username
+      );
 
-console.log("RESULT:", result);
-console.log("ACCESS TOKEN:", result.access_token);
+      const result =
+        await authService.login(
+          username,
+          password
+        );
 
-    localStorage.setItem("token", result.access_token);
+      console.log(
+        "LOGIN: response received",
+        result
+      );
 
-    const currentUser = await authService.getCurrentUser();
+      if (!result?.access_token) {
+        throw new Error(
+          result?.message || "Login failed"
+        );
+      }
 
-    localStorage.setItem("user", JSON.stringify(currentUser));
+      localStorage.setItem(
+        "token",
+        result.access_token
+      );
 
-    setUser(currentUser);
+      console.log(
+        "LOGIN: token saved"
+      );
 
-    return currentUser;
+      const currentUser =
+        await authService.getCurrentUser();
+
+      console.log(
+        "LOGIN: /me successful",
+        currentUser
+      );
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(currentUser)
+      );
+
+      setUser(currentUser);
+
+      return currentUser;
+    } catch (error) {
+      console.error(
+        "LOGIN FLOW FAILED:",
+        error
+      );
+
+      throw error;
+    }
   };
 
   const logout = () => {
