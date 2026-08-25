@@ -428,8 +428,6 @@ def get_report_by_date(
         db.commit()
         db.refresh(report)
 
-   
-
     # --------------------------------------------------
     # Expenses for THIS report
     # --------------------------------------------------
@@ -456,37 +454,44 @@ def get_report_by_date(
         float(expense.amount or 0)
         for expense, _ in expenses
     )
-# --------------------------------------------------
-# Udhaar visible for THIS report date
-# --------------------------------------------------
+
+    # --------------------------------------------------
+    # Udhaar
+    #
+    # LOCKED REPORT:
+    # Use the historical snapshot saved when
+    # the report was submitted.
+    #
+    # OPEN REPORT:
+    # Calculate live outstanding Udhaar,
+    # including carried-forward balances.
+    # --------------------------------------------------
 
     if report.is_locked:
 
-    # Locked report = historical snapshot
         udhaar_total = float(
-        report.udhaar_sales or 0
-    )
+            report.udhaar_sales or 0
+        )
 
     else:
 
-    # Open report = current outstanding balance
-    # including carried-forward Udhaar.
         report_udhaar_entries = get_udhaar_for_report_date(
-        db=db,
-        store_id=report.store_id,
-        report_date=report.report_date,
-    )
+            db=db,
+            store_id=report.store_id,
+            report_date=report.report_date,
+        )
 
-    udhaar_total = sum(
-        float(entry.amount or 0)
-        - float(entry.paid_amount or 0)
-        for entry in report_udhaar_entries
-        if entry.status != "settled"
-    )
+        udhaar_total = sum(
+            float(entry.amount or 0)
+            - float(entry.paid_amount or 0)
+            for entry in report_udhaar_entries
+            if entry.status != "settled"
+        )
 
-    udhaar_total = float(
-        udhaar_total or 0
-    )
+        udhaar_total = float(
+            udhaar_total or 0
+        )
+
     # --------------------------------------------------
     # Purchases for THIS report
     # --------------------------------------------------
@@ -497,6 +502,9 @@ def get_report_by_date(
     report_date=report.report_date,
 )
 
+    purchase_total = float(
+        purchase_total or 0
+)
     # --------------------------------------------------
     # Total Sales
     #
@@ -531,12 +539,10 @@ def get_report_by_date(
     ]
 
     # --------------------------------------------------
-    # Response
+    # Return report
     # --------------------------------------------------
 
     return {
-        "exists": True,
-
         "id": report.id,
         "store_id": report.store_id,
         "report_date": report.report_date,
@@ -560,7 +566,6 @@ def get_report_by_date(
 
         "notes": report.notes,
         "is_locked": report.is_locked,
-        "is_submitted": report.is_submitted,
     }
 @router.put("/{report_id}/sales")
 def update_sales(
