@@ -336,15 +336,53 @@ def update_purchase(
         )
 
     # ------------------------------------------------
-    # Locked reports cannot be changed
+    # Determine what is being changed
     # ------------------------------------------------
 
-    if report.is_locked:
+    information_edit_requested = any(
+        value is not None
+        for value in [
+            data.product_name,
+            data.quantity,
+            data.supplier_name,
+            data.purchase_amount,
+            data.bill_number,
+            data.purchase_date,
+        ]
+    )
+
+    workflow_update_requested = any(
+        value is not None
+        for value in [
+            data.status,
+            data.checked_by,
+            data.entered_by,
+            data.grn_number,
+        ]
+    )
+
+    # ------------------------------------------------
+    # Locked reports
+    #
+    # Workflow updates remain allowed because a
+    # purchase may be completed days after the
+    # daily report was locked.
+    #
+    # Actual purchase information edits remain
+    # blocked because they would alter the historical
+    # financial data of a locked report.
+    # ------------------------------------------------
+
+    if (
+        report.is_locked
+        and information_edit_requested
+    ):
         raise HTTPException(
             status_code=409,
             detail=(
                 "This purchase belongs to a locked "
-                "daily report and cannot be edited."
+                "daily report. Purchase information "
+                "cannot be edited."
             ),
         )
 
@@ -501,6 +539,9 @@ def update_purchase(
 
     # ------------------------------------------------
     # Recalculate Daily Report total
+    #
+    # This remains safe because workflow-only
+    # changes do not alter purchase_amount.
     # ------------------------------------------------
 
     new_total = (
@@ -561,7 +602,7 @@ def update_purchase(
 
     if changes:
         description = (
-            f"Edited purchase bill "
+            f"Updated purchase bill "
             f"{purchase.bill_number}: "
             + "; ".join(changes)
             + f". Daily report purchase total "
@@ -585,7 +626,6 @@ def update_purchase(
     )
 
     return purchase
-
 
 # ----------------------------------------------------
 # Delete Purchase
