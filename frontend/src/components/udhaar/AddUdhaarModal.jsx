@@ -17,10 +17,8 @@ export default function AddUdhaarModal({
       },
     ]);
 
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
+  const [saving, setSaving] =
+    useState(false);
 
   const billRefs =
     useRef([]);
@@ -38,8 +36,7 @@ export default function AddUdhaarModal({
     value
   ) {
     setRows((previous) => {
-      const updated =
-        [...previous];
+      const updated = [...previous];
 
       updated[index] = {
         ...updated[index],
@@ -164,27 +161,38 @@ export default function AddUdhaarModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
 
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-6">
+      <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white p-5 sm:max-w-2xl sm:rounded-2xl sm:p-6">
 
-        <h2 className="text-2xl font-bold">
-          Add Udhaar Entries
-        </h2>
+        {/* Header */}
 
-        <p className="mt-1 text-gray-500">
-          Enter Udhaar bills for the selected business date.
-        </p>
+        <div>
 
-        <div className="mt-6 overflow-hidden rounded-xl border">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Add Udhaar Entries
+          </h2>
 
-          <div className="grid grid-cols-[2fr_1fr_60px] bg-gray-100">
+          <p className="mt-1 text-sm text-gray-500">
+            Enter Udhaar bills for the selected business date.
+          </p>
 
-            <div className="px-4 py-3 font-semibold">
+        </div>
+
+
+        {/* Rows */}
+
+        <div className="mt-5 overflow-hidden rounded-xl border border-gray-200">
+
+          {/* Desktop/table header */}
+
+          <div className="hidden grid-cols-[2fr_1fr_60px] bg-gray-100 sm:grid">
+
+            <div className="px-4 py-3 text-sm font-semibold">
               Bill Number
             </div>
 
-            <div className="px-4 py-3 font-semibold">
+            <div className="px-4 py-3 text-sm font-semibold">
               Amount
             </div>
 
@@ -192,81 +200,110 @@ export default function AddUdhaarModal({
 
           </div>
 
+
           {rows.map(
             (row, index) => (
 
               <div
                 key={index}
-                className="grid grid-cols-[2fr_1fr_60px] border-t"
+                className="border-t border-gray-200 sm:grid sm:grid-cols-[2fr_1fr_60px]"
               >
 
-                <input
-                  ref={(el) => {
-                    billRefs.current[
-                      index
-                    ] = el;
-                  }}
-                  value={
-                    row.bill_number
-                  }
-                  disabled={saving}
-                  onChange={(e) =>
-                    updateRow(
-                      index,
-                      "bill_number",
-                      e.target.value
-                    )
-                  }
-                  onKeyDown={(e) =>
-                    handleKeyDown(
-                      e,
-                      index,
-                      "bill"
-                    )
-                  }
-                  placeholder="Bill Number"
-                  className="border-r px-4 py-3 outline-none disabled:bg-gray-100"
-                />
+                {/* Bill */}
 
-                <input
-                  ref={(el) => {
-                    amountRefs.current[
-                      index
-                    ] = el;
-                  }}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={row.amount}
-                  disabled={saving}
-                  onChange={(e) =>
-                    updateRow(
-                      index,
-                      "amount",
-                      e.target.value
-                    )
-                  }
-                  onKeyDown={(e) =>
-                    handleKeyDown(
-                      e,
-                      index,
-                      "amount"
-                    )
-                  }
-                  placeholder="₹"
-                  className="border-r px-4 py-3 outline-none disabled:bg-gray-100"
-                />
+                <div className="p-3 sm:p-0">
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeRow(index)
-                  }
-                  disabled={saving}
-                  className="text-red-500 hover:bg-red-50 disabled:opacity-50"
-                >
-                  ✕
-                </button>
+                  <label className="mb-1 block text-xs font-medium text-gray-500 sm:hidden">
+                    Bill Number
+                  </label>
+
+                  <input
+                    ref={(el) => {
+                      billRefs.current[
+                        index
+                      ] = el;
+                    }}
+                    value={
+                      row.bill_number
+                    }
+                    disabled={saving}
+                    onChange={(e) =>
+                      updateRow(
+                        index,
+                        "bill_number",
+                        e.target.value
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleKeyDown(
+                        e,
+                        index,
+                        "bill"
+                      )
+                    }
+                    placeholder="Bill Number"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-blue-500 sm:rounded-none sm:border-0 sm:border-r"
+                  />
+
+                </div>
+
+
+                {/* Amount */}
+
+                <div className="px-3 pb-3 sm:p-0">
+
+                  <label className="mb-1 block text-xs font-medium text-gray-500 sm:hidden">
+                    Amount
+                  </label>
+
+                  <input
+                    ref={(el) => {
+                      amountRefs.current[
+                        index
+                      ] = el;
+                    }}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row.amount}
+                    disabled={saving}
+                    onChange={(e) =>
+                      updateRow(
+                        index,
+                        "amount",
+                        e.target.value
+                      )
+                    }
+                    onKeyDown={(e) =>
+                      handleKeyDown(
+                        e,
+                        index,
+                        "amount"
+                      )
+                    }
+                    placeholder="₹"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-blue-500 sm:rounded-none sm:border-0 sm:border-r"
+                  />
+
+                </div>
+
+
+                {/* Remove */}
+
+                <div className="flex justify-end px-3 pb-3 sm:p-0">
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeRow(index)
+                    }
+                    disabled={saving}
+                    className="rounded-lg px-4 py-2 text-sm text-red-500 hover:bg-red-50 disabled:opacity-50 sm:h-full sm:w-full sm:rounded-none"
+                  >
+                    ✕
+                  </button>
+
+                </div>
 
               </div>
 
@@ -275,22 +312,28 @@ export default function AddUdhaarModal({
 
         </div>
 
+
+        {/* Add Row */}
+
         <button
           type="button"
           onClick={addRow}
           disabled={saving}
-          className="mt-4 rounded-xl border px-4 py-2 hover:bg-gray-50 disabled:opacity-50"
+          className="mt-4 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           + Add Row
         </button>
 
-        <div className="mt-8 flex justify-end gap-3">
+
+        {/* Actions */}
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-xl border px-5 py-2 disabled:opacity-50"
+            className="w-full rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50 sm:w-auto sm:py-2"
           >
             Cancel
           </button>
@@ -299,7 +342,7 @@ export default function AddUdhaarModal({
             type="button"
             onClick={submit}
             disabled={saving}
-            className="rounded-xl bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto sm:py-2"
           >
             {saving
               ? "Saving..."

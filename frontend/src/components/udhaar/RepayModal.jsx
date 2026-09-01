@@ -72,21 +72,29 @@ export default function RepayModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
 
-      <div className="w-full max-w-md rounded-xl bg-white p-6">
+      <div className="w-full rounded-t-2xl bg-white p-5 sm:max-w-md sm:rounded-2xl sm:p-6">
 
-        <h2 className="text-xl font-bold">
+        {/* Header */}
+
+        <h2 className="text-xl font-bold text-gray-900">
           Repay Udhaar
         </h2>
+
+
+        {/* Bill Number */}
 
         <p className="mt-4 text-sm text-gray-500">
           Bill Number
         </p>
 
-        <div className="text-lg font-semibold">
+        <div className="text-lg font-semibold text-gray-900">
           {entry.bill_number}
         </div>
+
+
+        {/* Remaining */}
 
         <p className="mt-5 text-sm text-gray-500">
           Remaining Amount
@@ -99,11 +107,18 @@ export default function RepayModal({
           )}
         </div>
 
+
+        {/* Amount */}
+
+        <label className="mt-5 block text-sm font-medium text-gray-700">
+          Amount Paid
+        </label>
+
         <input
           type="number"
           min="0"
           step="0.01"
-          placeholder="Amount Paid"
+          placeholder="Enter amount"
           value={amount}
           disabled={saving}
           onChange={(e) =>
@@ -111,16 +126,19 @@ export default function RepayModal({
               e.target.value
             )
           }
-          className="mt-5 w-full rounded-lg border p-3 disabled:bg-gray-100"
+          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-gray-100"
         />
 
-        <div className="mt-6 flex justify-end gap-3">
+
+        {/* Actions */}
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border px-4 py-2 disabled:opacity-50"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50 sm:w-auto sm:py-2"
           >
             Cancel
           </button>
@@ -129,7 +147,7 @@ export default function RepayModal({
             type="button"
             onClick={submit}
             disabled={saving}
-            className="rounded-lg bg-green-600 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto sm:py-2"
           >
             {saving
               ? "Submitting..."
