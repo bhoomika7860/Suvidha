@@ -15,6 +15,7 @@ export default function RepayModal({
   const [saving, setSaving] =
     useState(false);
 
+
   useEffect(() => {
     if (!open) {
       setAmount("");
@@ -22,13 +23,16 @@ export default function RepayModal({
     }
   }, [open]);
 
+
   if (!open || !entry) {
     return null;
   }
 
+
   const remaining =
     Number(entry.amount || 0) -
     Number(entry.paid_amount || 0);
+
 
   async function submit() {
     const repayment =
@@ -71,83 +75,149 @@ export default function RepayModal({
     }
   }
 
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-40 bg-black/40"
+      onClick={onClose}
+    >
 
-      <div className="w-full rounded-t-2xl bg-white p-5 sm:max-w-md sm:rounded-2xl sm:p-6">
+      {/* =====================================================
+          DESKTOP
+      ===================================================== */}
 
-        {/* Header */}
+      <div
+        className="hidden lg:flex h-full items-center justify-center p-4"
+      >
 
-        <h2 className="text-xl font-bold text-gray-900">
-          Repay Udhaar
-        </h2>
-
-
-        {/* Bill Number */}
-
-        <p className="mt-4 text-sm text-gray-500">
-          Bill Number
-        </p>
-
-        <div className="text-lg font-semibold text-gray-900">
-          {entry.bill_number}
-        </div>
-
-
-        {/* Remaining */}
-
-        <p className="mt-5 text-sm text-gray-500">
-          Remaining Amount
-        </p>
-
-        <div className="text-2xl font-bold text-red-600">
-          ₹
-          {remaining.toLocaleString(
-            "en-IN"
-          )}
-        </div>
-
-
-        {/* Amount */}
-
-        <label className="mt-5 block text-sm font-medium text-gray-700">
-          Amount Paid
-        </label>
-
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Enter amount"
-          value={amount}
-          disabled={saving}
-          onChange={(e) =>
-            setAmount(
-              e.target.value
-            )
+        <div
+          onClick={(e) =>
+            e.stopPropagation()
           }
-          className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-gray-100"
-        />
+          className="w-full max-w-md rounded-xl bg-white p-6"
+        >
 
+          <h2 className="text-xl font-bold">
+            Repay Udhaar
+          </h2>
 
-        {/* Actions */}
+          <p className="mt-4 text-sm text-gray-500">
+            Bill Number
+          </p>
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <div className="text-lg font-semibold">
+            {entry.bill_number}
+          </div>
 
-          <button
-            type="button"
-            onClick={onClose}
+          <p className="mt-5 text-sm text-gray-500">
+            Remaining Amount
+          </p>
+
+          <div className="text-2xl font-bold text-red-600">
+            ₹{remaining.toLocaleString("en-IN")}
+          </div>
+
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Amount Paid"
+            value={amount}
             disabled={saving}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50 sm:w-auto sm:py-2"
-          >
-            Cancel
-          </button>
+            onChange={(e) =>
+              setAmount(e.target.value)
+            }
+            className="mt-5 w-full rounded-lg border p-3 disabled:bg-gray-100"
+          />
+
+          <div className="mt-6 flex justify-end gap-3">
+
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="rounded-lg border px-4 py-2"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={saving}
+              className="rounded-lg bg-green-600 px-4 py-2 text-white disabled:bg-gray-400"
+            >
+              {saving
+                ? "Submitting..."
+                : "Submit"}
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          MOBILE — BOTTOM SHEET
+      ===================================================== */}
+
+      <div className="lg:hidden flex h-full items-end">
+
+        <div
+          onClick={(e) =>
+            e.stopPropagation()
+          }
+          className="w-full rounded-t-2xl bg-white px-5 pb-5 pt-5"
+        >
+
+          <h2 className="text-xl font-bold text-gray-900">
+            Repay Udhaar
+          </h2>
+
+
+          <p className="mt-5 text-sm text-gray-500">
+            Bill Number
+          </p>
+
+          <div className="text-base font-semibold text-gray-900">
+            {entry.bill_number}
+          </div>
+
+
+          <p className="mt-5 text-sm text-gray-500">
+            Remaining Amount
+          </p>
+
+          <div className="text-2xl font-bold text-red-600">
+            ₹{remaining.toLocaleString("en-IN")}
+          </div>
+
+
+          <p className="mt-5 text-sm text-gray-700">
+            Amount Paid
+          </p>
+
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Enter amount"
+            value={amount}
+            disabled={saving}
+            onChange={(e) =>
+              setAmount(e.target.value)
+            }
+            className="mt-2 h-12 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500 disabled:bg-gray-100"
+          />
+
 
           <button
             type="button"
             onClick={submit}
             disabled={saving}
-            className="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto sm:py-2"
+            className="mt-5 h-11 w-full rounded-xl bg-green-600 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {saving
               ? "Submitting..."

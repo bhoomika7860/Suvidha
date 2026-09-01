@@ -1,3 +1,5 @@
+import { Building2 } from "lucide-react";
+
 export default function UdhaarTable({
   entries,
   onRepay,
@@ -14,10 +16,8 @@ export default function UdhaarTable({
   const totalOutstanding = entries.reduce(
     (sum, entry) =>
       sum +
-      (
-        Number(entry.amount || 0) -
-        Number(entry.paid_amount || 0)
-      ),
+      Number(entry.amount || 0) -
+      Number(entry.paid_amount || 0),
     0
   );
 
@@ -32,7 +32,6 @@ export default function UdhaarTable({
         <table className="min-w-full">
 
           <thead className="bg-slate-100">
-
             <tr>
 
               <th className="px-6 py-4 text-left">
@@ -58,7 +57,6 @@ export default function UdhaarTable({
               )}
 
             </tr>
-
           </thead>
 
           <tbody>
@@ -117,7 +115,6 @@ export default function UdhaarTable({
 
         </table>
 
-        {/* Desktop Footer */}
 
         <div className="flex justify-end border-t bg-slate-50 px-6 py-5">
 
@@ -157,30 +154,36 @@ export default function UdhaarTable({
 
           return (
             <div
-              key={entry.id}
-              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-            >
+  key={entry.id}
+  className="rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
+>
 
-              {/* Bill + Repay */}
+              {/* Top section */}
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
 
-                <div className="min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+  <Building2 size={18} />
+</div>
+
+
+                <div className="min-w-0 flex-1">
 
                   <p className="text-xs text-slate-500">
                     Bill No.
                   </p>
 
-                  <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">
+                  <p className="mt-1 text-sm font-medium text-gray-900">
                     {entry.bill_number}
                   </p>
 
                 </div>
 
+
                 {!isOwner && (
                   <button
                     onClick={() => onRepay(entry)}
-                    className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white active:bg-blue-700"
+                    className="shrink-0 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white"
                   >
                     Repay
                   </button>
@@ -189,17 +192,31 @@ export default function UdhaarTable({
               </div>
 
 
-              {/* Amounts */}
+              {/* Remaining */}
 
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3">
+              <div className="mt-3 rounded-lg bg-red-50 px-3 py-2">
 
+                <p className="text-xs text-slate-500">
+                  Remaining
+                </p>
+
+                <p className="mt-0.5 text-base font-bold text-red-600">
+                  ₹{remaining.toLocaleString("en-IN")}
+                </p>
+
+              </div>
+
+
+              {/* Total / Paid */}
+
+              <div className="mt-3 grid grid-cols-2 gap-4 border-t border-gray-100 pt-2.5">
                 <div>
 
                   <p className="text-xs text-slate-500">
                     Total
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-gray-900">
+                  <p className="mt-0.5 text-sm font-medium text-gray-900">
                     ₹{amount.toLocaleString("en-IN")}
                   </p>
 
@@ -218,19 +235,6 @@ export default function UdhaarTable({
 
                 </div>
 
-
-                <div>
-
-                  <p className="text-xs text-slate-500">
-                    Remaining
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-red-600">
-                    ₹{remaining.toLocaleString("en-IN")}
-                  </p>
-
-                </div>
-
               </div>
 
             </div>
@@ -238,7 +242,7 @@ export default function UdhaarTable({
         })}
 
 
-        {/* Mobile Total */}
+        {/* Total */}
 
         <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
 

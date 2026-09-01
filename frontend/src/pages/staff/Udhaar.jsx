@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 
 import udhaarService from "../../services/udhaarService";
 import dailyReportsService from "../../services/dailyReportsService";
@@ -10,9 +11,7 @@ import RepayModal from "../../components/udhaar/RepayModal";
 
 export default function Udhaar() {
   const user =
-    JSON.parse(
-      localStorage.getItem("user")
-    );
+    JSON.parse(localStorage.getItem("user"));
 
   const isOwner =
     user?.role === "owner";
@@ -22,6 +21,9 @@ export default function Udhaar() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [search, setSearch] =
+    useState("");
 
   const [showAdd, setShowAdd] =
     useState(false);
@@ -75,11 +77,11 @@ export default function Udhaar() {
   }
 
 
-  async function addUdhaar(entries) {
+  async function addUdhaar(newEntries) {
     try {
       await udhaarService.createUdhaar(
         reportId,
-        entries
+        newEntries
       );
 
       setShowAdd(false);
@@ -120,6 +122,23 @@ export default function Udhaar() {
   }
 
 
+  const filteredEntries =
+    entries.filter((entry) => {
+      const searchValue =
+        search.toLowerCase().trim();
+
+      if (!searchValue) {
+        return true;
+      }
+
+      return (
+        String(entry.bill_number || "")
+          .toLowerCase()
+          .includes(searchValue)
+      );
+    });
+
+
   return (
     <div className="w-full">
 
@@ -128,8 +147,6 @@ export default function Udhaar() {
       ===================================================== */}
 
       <div className="hidden lg:block space-y-6">
-
-        {/* Header */}
 
         <div className="flex items-center justify-between">
 
@@ -158,26 +175,17 @@ export default function Udhaar() {
 
         </div>
 
-
-        {/* KPIs */}
-
         <UdhaarKPIs
           entries={entries}
         />
 
-
-        {/* Table */}
-
         {loading ? (
-
           <div className="rounded-xl bg-white p-10 text-center">
             Loading...
           </div>
-
         ) : (
-
           <UdhaarTable
-            entries={entries}
+            entries={filteredEntries}
             onRepay={
               isOwner
                 ? undefined
@@ -188,7 +196,6 @@ export default function Udhaar() {
             }
             isOwner={isOwner}
           />
-
         )}
 
       </div>
@@ -204,30 +211,15 @@ export default function Udhaar() {
 
         <div className="w-full bg-white border-b px-5 pt-6 pb-5">
 
-          <div className="flex items-center justify-between gap-3">
+          <div>
 
-            <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Udhaar
+            </h1>
 
-              <h1 className="text-3xl font-bold text-gray-900">
-                Udhaar
-              </h1>
-
-              <p className="mt-1 text-gray-500">
-                Manage customer credit.
-              </p>
-
-            </div>
-
-            {!isOwner && (
-              <button
-                onClick={() =>
-                  setShowAdd(true)
-                }
-                className="shrink-0 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white"
-              >
-                Add Udhaar
-              </button>
-            )}
+            <p className="mt-1 text-gray-500">
+              Manage customer credit.
+            </p>
 
           </div>
 
@@ -238,14 +230,54 @@ export default function Udhaar() {
 
         <div className="px-4 pt-5 space-y-4">
 
-          {/* Udhaar Stats */}
+          {/* KPIs */}
 
           <UdhaarKPIs
             entries={entries}
           />
 
 
-          {/* Udhaar List */}
+          {/* Search */}
+
+          <div className="relative">
+
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+
+            <input
+              type="text"
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search Bills..."
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm outline-none placeholder:text-gray-400 focus:border-blue-500"
+            />
+
+          </div>
+
+
+          {/* Add Udhaar */}
+
+          {!isOwner && (
+            <button
+              onClick={() =>
+                setShowAdd(true)
+              }
+              className="flex h-11 w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white active:bg-blue-700"
+            >
+              <span className="mr-2 text-lg leading-none">
+                +
+              </span>
+
+              Add Udhaar
+            </button>
+          )}
+
+
+          {/* Udhaar Cards */}
 
           {loading ? (
 
@@ -256,7 +288,7 @@ export default function Udhaar() {
           ) : (
 
             <UdhaarTable
-              entries={entries}
+              entries={filteredEntries}
               onRepay={
                 isOwner
                   ? undefined
@@ -275,9 +307,7 @@ export default function Udhaar() {
       </div>
 
 
-      {/* =====================================================
-          ADD UDHAAR MODAL
-      ===================================================== */}
+      {/* Add Modal */}
 
       {!isOwner && (
         <AddUdhaarModal
@@ -291,9 +321,7 @@ export default function Udhaar() {
       )}
 
 
-      {/* =====================================================
-          REPAY MODAL
-      ===================================================== */}
+      {/* Repay Modal */}
 
       {!isOwner && (
         <RepayModal
