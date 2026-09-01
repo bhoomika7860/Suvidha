@@ -18,46 +18,52 @@ export default function KPICard({
 }) {
   if (split) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+
+        {/* TOP */}
 
         <div className="flex items-center gap-3">
 
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-green-50"
-          >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 sm:h-10 sm:w-10">
             {topIcon}
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold">
+          <div className="min-w-0">
+
+            <h2 className="text-xl font-bold sm:text-2xl">
               {topValue}
             </h2>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               {topLabel}
             </p>
+
           </div>
 
         </div>
 
-        <div className="my-4 border-t" />
+
+        <div className="my-3 border-t sm:my-4" />
+
+
+        {/* BOTTOM */}
 
         <div className="flex items-center gap-3">
 
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-violet-50"
-          >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 sm:h-10 sm:w-10">
             {bottomIcon}
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold">
+          <div className="min-w-0">
+
+            <h2 className="text-xl font-bold sm:text-2xl">
               {bottomValue}
             </h2>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               {bottomLabel}
             </p>
+
           </div>
 
         </div>
@@ -67,20 +73,24 @@ export default function KPICard({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
 
       <div
-        className="w-11 h-11 rounded-full flex items-center justify-center mb-5"
-        style={{ backgroundColor: iconBg }}
+        className="mb-4 flex h-9 w-9 items-center justify-center rounded-full sm:mb-5 sm:h-11 sm:w-11"
+        style={{
+          backgroundColor: iconBg,
+        }}
       >
         {icon}
       </div>
 
-      <h2 className={`text-3xl font-bold tracking-tight leading-none ${valueColor}`}>
+      <h2
+        className={`text-2xl font-bold leading-none tracking-tight sm:text-3xl ${valueColor}`}
+      >
         {value}
       </h2>
 
-      <p className="mt-3 text-sm font-medium text-gray-500">
+      <p className="mt-2 text-xs font-medium text-gray-500 sm:mt-3 sm:text-sm">
         {label}
       </p>
 

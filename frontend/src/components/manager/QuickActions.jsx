@@ -2,7 +2,6 @@ import {
   FileText,
   Plus,
   Package,
-  AlertTriangle,
   ChevronRight,
 } from "lucide-react";
 
@@ -12,29 +11,28 @@ export default function QuickActions() {
   const navigate = useNavigate();
 
   const actions = [
-  {
-    icon: FileText,
-    text: "Continue Daily Report",
-    primary: true,
-    path: "/daily-report",
-  },
-  {
-    icon: Plus,
-    text: "Add Expense",
-    path: "/manager-expenses",
-  },
-  {
-    icon: Package,
-    text: "Add Purchase",
-    path: "/manager-purchases",
-  },
-  
-];
+    {
+      icon: FileText,
+      text: "Continue Daily Report",
+      primary: true,
+      path: "/daily-report",
+    },
+    {
+      icon: Plus,
+      text: "Add Expense",
+      path: "/manager-expenses",
+    },
+    {
+      icon: Package,
+      text: "Add Purchase",
+      path: "/manager-purchases",
+    },
+  ];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
 
-      <h2 className="text-lg font-semibold mb-6">
+      <h2 className="mb-5 text-lg font-semibold">
         Quick Actions
       </h2>
 
@@ -47,18 +45,23 @@ export default function QuickActions() {
           return (
             <button
               key={action.text}
-              onClick={() => navigate(action.path)}
-              className={`w-full flex items-center justify-between rounded-xl px-4 h-12 transition ${
+              onClick={() =>
+                navigate(action.path)
+              }
+              className={`flex h-11 w-full items-center justify-between rounded-xl px-4 text-sm transition sm:h-12 ${
                 action.primary
-                  ? "bg-blue-600 text-white"
-                  : "border hover:bg-gray-50"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "border border-gray-200 hover:bg-gray-50"
               }`}
             >
+
               <div className="flex items-center gap-3">
 
                 <Icon size={18} />
 
-                {action.text}
+                <span>
+                  {action.text}
+                </span>
 
               </div>
 

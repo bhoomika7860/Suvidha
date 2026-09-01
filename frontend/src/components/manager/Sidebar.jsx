@@ -6,6 +6,7 @@ import {
   Wallet,
   ClipboardCheck,
   LogOut,
+  HandCoins,
 } from "lucide-react";
 
 import {
@@ -46,7 +47,7 @@ const menuItems = [
 
   {
     title: "Udhaar",
-    icon: Wallet,
+    icon: HandCoins,
     path: "/manager/udhaar",
   },
 
@@ -68,27 +69,29 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 bg-white border-r border-gray-200 flex flex-col">
+    <aside className="flex w-60 flex-col border-r border-gray-200 bg-white">
 
-      {/* Logo */}
+      {/* LOGO */}
 
-      <div className="px-5 py-5 border-b border-gray-200">
+      <div className="border-b border-gray-200 px-5 py-5">
 
         <h1 className="text-xl font-bold text-blue-600">
           Suvidha
         </h1>
 
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="mt-1 text-sm text-gray-500">
           Store Manager
         </p>
 
       </div>
 
-      {/* Navigation */}
 
-      <nav className="flex-1 px-3 py-5 space-y-1">
+      {/* NAVIGATION */}
+
+      <nav className="flex-1 space-y-1 px-3 py-5">
 
         {menuItems.map((item) => {
+
           const Icon = item.icon;
 
           return (
@@ -96,31 +99,37 @@ export default function Sidebar() {
               key={item.title}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-xl text-[15px] transition ${
+                `flex items-center gap-3 rounded-xl px-4 py-2.5 text-[15px] transition ${
                   isActive
-                    ? "bg-blue-50 text-blue-600 font-semibold"
+                    ? "bg-blue-50 font-semibold text-blue-600"
                     : "text-gray-600 hover:bg-gray-100"
                 }`
               }
             >
+
               <Icon size={18} />
 
-              <span>{item.title}</span>
+              <span>
+                {item.title}
+              </span>
 
             </NavLink>
           );
+
         })}
 
       </nav>
 
-      {/* Logout */}
+
+      {/* LOGOUT */}
 
       <div className="border-t border-gray-200 p-3">
 
         <button
           onClick={logout}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[15px] text-red-600 hover:bg-red-50 transition"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-[15px] text-red-600 transition hover:bg-red-50"
         >
+
           <LogOut size={18} />
 
           Logout

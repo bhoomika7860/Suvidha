@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
+
 import ProgressRing from "./ProgressRing";
-import ReportInfo from "./ReportInfo";
-import ProgressSummary from "./ProgressSummary";
-import ContinueButton from "./ContinueButton";
 import analyticsService from "../../../services/analyticsService";
 
 export default function HeroCard() {
@@ -12,7 +10,8 @@ export default function HeroCard() {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await analyticsService.getManagerHero();
+        const data =
+          await analyticsService.getManagerHero();
 
         setReport(data.report);
         setUser(data.user);
@@ -25,50 +24,76 @@ export default function HeroCard() {
   }, []);
 
   if (!report || !user) {
-    return <div>Loading...</div>;
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        Loading...
+      </div>
+    );
   }
 
   const completedSections = [
-  report.sales_completed,
-  report.expenses_completed,
-  report.purchases_completed,
-  report.deliveries_completed,
-  
-].filter(Boolean).length;
+    report.sales_completed,
+    report.expenses_completed,
+    report.purchases_completed,
+    report.deliveries_completed,
+  ].filter(Boolean).length;
 
-  const totalSections =4 ;
+  const totalSections = 4;
 
   const progress = Math.round(
     (completedSections / totalSections) * 100
   );
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-6 py-4">
-      <div className="flex items-center justify-between gap-8">
+  const managerName =
+    user.full_name ||
+    user.username ||
+    "Manager";
 
-        <div className="flex-1 pr-6">
-          <ReportInfo
-            report={report}
-            user={user}
-          />
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+
+      <div className="flex items-center justify-between gap-4">
+
+        {/* LEFT SIDE */}
+
+        <div className="min-w-0">
+
+          <p className="text-sm text-slate-500">
+            Good Afternoon,
+          </p>
+
+          <h1 className="mt-1 truncate text-2xl font-bold text-gray-900 sm:text-3xl">
+            {managerName}
+          </h1>
+
         </div>
 
-        <div className="w-60 flex flex-col items-center">
 
-          <ProgressSummary
-            completed={completedSections}
-            total={totalSections}
-          />
+        {/* RIGHT SIDE */}
 
-          <div className="my-2">
-            <ProgressRing progress={progress} />
+        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+
+          <div className="text-right">
+
+            <p className="text-xs text-gray-500 sm:text-sm">
+              Progress
+            </p>
+
+            <p className="text-base font-bold text-gray-900 sm:text-lg">
+              {completedSections}/{totalSections} sections
+            </p>
+
           </div>
 
-          <ContinueButton />
+          <ProgressRing
+            progress={progress}
+            size={64}
+          />
 
         </div>
 
       </div>
+
     </div>
   );
 }
