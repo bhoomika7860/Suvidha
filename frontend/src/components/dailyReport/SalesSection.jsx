@@ -1050,39 +1050,72 @@ const SalesSection = forwardRef(
 
                           {/* COLLECTION SUMMARY */}
 
-                          <div className="grid grid-cols-2 gap-2">
+<div className="grid grid-cols-2 gap-2">
 
-                            <div className="rounded-xl border border-gray-200 bg-white p-3">
+  {/* CASH FROM TILL */}
 
-                              <p className="text-[10px] text-gray-400">
-                                Cash from Till
-                              </p>
+  <div className="rounded-xl border border-gray-200 bg-white p-3">
+    <p className="text-[10px] text-gray-400">
+      Cash from Till
+    </p>
 
-                              <p className="mt-1 text-base font-bold text-gray-900">
-                                ₹
-                                {cashFromTill.toLocaleString(
-                                  "en-IN"
-                                )}
-                              </p>
+    <p className="mt-1 text-base font-bold text-gray-900">
+      ₹
+      {cashFromTill.toLocaleString(
+        "en-IN"
+      )}
+    </p>
+  </div>
 
-                            </div>
 
-                            <div className="rounded-xl border border-green-100 bg-green-50 p-3">
+  {/* UDHAAR */}
 
-                              <p className="text-[10px] text-green-700">
-                                Total Cash Sales
-                              </p>
+  <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3">
+    <p className="text-[10px] text-yellow-700">
+      Udhaar
+    </p>
 
-                              <p className="mt-1 text-base font-bold text-green-600">
-                                ₹
-                                {totalCashSales.toLocaleString(
-                                  "en-IN"
-                                )}
-                              </p>
+    <p className="mt-1 text-base font-bold text-yellow-700">
+      ₹
+      {udhaarSales.toLocaleString(
+        "en-IN"
+      )}
+    </p>
 
-                            </div>
+    <p className="mt-0.5 text-[9px] text-yellow-700/70">
+      Added to cash sales
+    </p>
+  </div>
 
-                          </div>
+
+  {/* TOTAL CASH SALES */}
+
+  <div className="col-span-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2.5">
+
+    <div className="flex items-center justify-between gap-3">
+
+      <div>
+        <p className="text-[10px] font-medium text-green-700">
+          Total Cash Sales
+        </p>
+
+        <p className="text-[9px] text-green-700/70">
+          Cash from Till + Udhaar
+        </p>
+      </div>
+
+      <p className="text-lg font-bold text-green-600">
+        ₹
+        {totalCashSales.toLocaleString(
+          "en-IN"
+        )}
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
 
                         </div>
                       )}
