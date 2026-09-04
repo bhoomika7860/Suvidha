@@ -16,7 +16,7 @@ import {
 
 import Sidebar from "../manager/Sidebar";
 import Header from "../manager/Header";
-import MobileBusinessDate from "../components/manager/MobileBusinessDate";
+import MobileBusinessDate from "../manager/MobileBusinessDate";
 
 const mobileNavItems = [
   {
