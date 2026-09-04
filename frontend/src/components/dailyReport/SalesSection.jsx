@@ -10,11 +10,16 @@ import {
 
 import {
   CreditCard,
-  Wallet,
   ShoppingBag,
+  Wallet,
   Receipt,
   Truck,
   Banknote,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  ClipboardCheck,
+  ShieldCheck,
 } from "lucide-react";
 
 import SectionCard from "./SectionCard";
@@ -61,9 +66,11 @@ const SalesSection = forwardRef(
     {
       report,
       refreshReport,
+      mobile = false,
     },
     ref
   ) {
+
     const [form, setForm] = useState({
       total_bills: "",
       cash_sales: "",
@@ -86,27 +93,19 @@ const SalesSection = forwardRef(
       setCash,
     ] = useState(EMPTY_CASH);
 
+    const [
+      mobileSection,
+      setMobileSection,
+    ] = useState("collections");
+
     const denominationRefs =
       useRef([]);
 
-    /*
-     * Udhaar remains read-only.
-     *
-     * It is calculated by the backend and
-     * returned as part of the current report.
-     */
     const udhaarSales =
       Number(
         report?.udhaar_sales || 0
       );
 
-    /*
-     * Expenses and purchases are also
-     * read-only here.
-     *
-     * They are already calculated by the
-     * report endpoint.
-     */
     const totalExpenses =
       Number(
         report?.total_expenses || 0
@@ -117,12 +116,6 @@ const SalesSection = forwardRef(
         report?.total_purchases || 0
       );
 
-    /*
-     * Payment machine total.
-     *
-     * Existing PaymentMachines component
-     * continues to control this value.
-     */
     const handleMachineTotal =
       useCallback(
         (total) => {
@@ -143,10 +136,6 @@ const SalesSection = forwardRef(
         []
       );
 
-    /*
-     * Load all existing values for this
-     * daily report.
-     */
     useEffect(() => {
       if (!report?.id) {
         return;
@@ -156,9 +145,7 @@ const SalesSection = forwardRef(
 
       async function loadSection() {
         try {
-          /*
-           * Cash denominations
-           */
+
           const savedCash =
             await cashDenominationService.get(
               report.id
@@ -168,9 +155,6 @@ const SalesSection = forwardRef(
             return;
           }
 
-          /*
-           * Existing report values.
-           */
           setForm({
             total_bills:
               Number(
@@ -222,9 +206,6 @@ const SalesSection = forwardRef(
                 : "",
           });
 
-          /*
-           * Deliveries
-           */
           const deliveryValue =
             Number(
               report.deliveries || 0
@@ -238,67 +219,99 @@ const SalesSection = forwardRef(
               : ""
           );
 
-          /*
-           * Restore saved cash
-           * denomination values.
-           */
           if (savedCash) {
+
             setCash({
-  note_500:
-    Number(savedCash.note_500 || 0) > 0
-      ? String(savedCash.note_500)
-      : "",
+              note_500:
+                Number(
+                  savedCash.note_500 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_500
+                    )
+                  : "",
 
-  note_200:
-    Number(savedCash.note_200 || 0) > 0
-      ? String(savedCash.note_200)
-      : "",
+              note_200:
+                Number(
+                  savedCash.note_200 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_200
+                    )
+                  : "",
 
-  note_100:
-    Number(savedCash.note_100 || 0) > 0
-      ? String(savedCash.note_100)
-      : "",
+              note_100:
+                Number(
+                  savedCash.note_100 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_100
+                    )
+                  : "",
 
-  note_50:
-    Number(savedCash.note_50 || 0) > 0
-      ? String(savedCash.note_50)
-      : "",
+              note_50:
+                Number(
+                  savedCash.note_50 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_50
+                    )
+                  : "",
 
-  note_20:
-    Number(savedCash.note_20 || 0) > 0
-      ? String(savedCash.note_20)
-      : "",
+              note_20:
+                Number(
+                  savedCash.note_20 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_20
+                    )
+                  : "",
 
-  note_10:
-    Number(savedCash.note_10 || 0) > 0
-      ? String(savedCash.note_10)
-      : "",
+              note_10:
+                Number(
+                  savedCash.note_10 || 0
+                ) > 0
+                  ? String(
+                      savedCash.note_10
+                    )
+                  : "",
 
-  coin_5:
-    Number(savedCash.coin_5 || 0) > 0
-      ? String(savedCash.coin_5)
-      : "",
+              coin_5:
+                Number(
+                  savedCash.coin_5 || 0
+                ) > 0
+                  ? String(
+                      savedCash.coin_5
+                    )
+                  : "",
 
-  coin_2:
-    Number(savedCash.coin_2 || 0) > 0
-      ? String(savedCash.coin_2)
-      : "",
+              coin_2:
+                Number(
+                  savedCash.coin_2 || 0
+                ) > 0
+                  ? String(
+                      savedCash.coin_2
+                    )
+                  : "",
 
-  coin_1:
-    Number(savedCash.coin_1 || 0) > 0
-      ? String(savedCash.coin_1)
-      : "",
-});
+              coin_1:
+                Number(
+                  savedCash.coin_1 || 0
+                ) > 0
+                  ? String(
+                      savedCash.coin_1
+                    )
+                  : "",
+            });
+
           } else {
+
             setCash(
               EMPTY_CASH
             );
+
           }
 
-          /*
-           * Restore payment machine
-           * entries.
-           */
           const machineData =
             await paymentMachineEntryService.get(
               report.id
@@ -328,13 +341,16 @@ const SalesSection = forwardRef(
                 )
               : []
           );
+
         } catch (err) {
+
           if (!cancelled) {
             console.error(
               "Failed to load sales section:",
               err
             );
           }
+
         }
       }
 
@@ -344,10 +360,6 @@ const SalesSection = forwardRef(
         cancelled = true;
       };
     }, [report?.id]);
-
-    /*
-     * CASH CALCULATIONS
-     */
 
     const cashCounted =
       useMemo(() => {
@@ -390,30 +402,16 @@ const SalesSection = forwardRef(
         );
       }, [cash]);
 
-    /*
-     * Cash physically generated from
-     * today's operations.
-     *
-     * Opening cash is not today's sales.
-     */
     const cashFromTill =
       cashCounted -
       OPENING_CASH;
 
-    /*
-     * Total cash sales include:
-     *
-     * Cash from Till + Udhaar
-     */
     const totalCashSales =
       Number(
         cashFromTill || 0
       ) +
       udhaarSales;
 
-    /*
-     * Digital collection.
-     */
     const digitalSales =
       Number(
         form.upi_sales || 0
@@ -422,26 +420,11 @@ const SalesSection = forwardRef(
         form.card_sales || 0
       );
 
-    /*
-     * Total Sales:
-     *
-     * Total Cash Sales
-     * + UPI
-     * + Card
-     * + Expenses
-     *
-     * Purchases are deliberately NOT included.
-     */
     const totalSales =
       totalCashSales +
       digitalSales +
       totalExpenses;
 
-    /*
-     * Difference:
-     *
-     * Actual Sales - System Sales
-     */
     const salesDifference =
       totalSales -
       Number(
@@ -507,9 +490,6 @@ const SalesSection = forwardRef(
         return;
       }
 
-      /*
-       * Save payment machines.
-       */
       await paymentMachineEntryService.save({
         daily_report_id:
           report.id,
@@ -528,9 +508,6 @@ const SalesSection = forwardRef(
           ),
       });
 
-      /*
-       * Save cash denominations.
-       */
       await cashDenominationService.save({
         daily_report_id:
           report.id,
@@ -581,18 +558,13 @@ const SalesSection = forwardRef(
           ),
       });
 
-      /*
-       * Save Sales.
-       *
-       * Existing backend logic is preserved.
-       */
       await dailyReportsService.updateSales(
         report.id,
         {
           total_bills:
-  Number(
-    form.total_bills || 0
-  ),
+            Number(
+              form.total_bills || 0
+            ),
 
           cash_sales:
             Number(
@@ -625,13 +597,6 @@ const SalesSection = forwardRef(
         }
       );
 
-      /*
-       * Save Deliveries.
-       *
-       * This uses the same existing
-       * backend endpoint previously used
-       * by DeliverySection.
-       */
       await dailyReportsService.updateDeliveries(
         report.id,
         Number(
@@ -639,10 +604,6 @@ const SalesSection = forwardRef(
         )
       );
 
-      /*
-       * Reload the report after everything
-       * has been persisted.
-       */
       await refreshReport();
     }
 
@@ -707,14 +668,880 @@ const SalesSection = forwardRef(
       ],
     ];
 
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    if (mobile) {
+
+      const collectionsComplete =
+        cashCounted > 0 ||
+        machineEntries.some(
+          (entry) =>
+            Number(
+              entry.amount || 0
+            ) > 0
+        );
+
+      const operationsComplete =
+        Number(
+          form.total_bills || 0
+        ) > 0 ||
+        Number(
+          deliveries || 0
+        ) > 0;
+
+      const reconciliationComplete =
+        Number(
+          form.system_sales || 0
+        ) > 0;
+
+      const reviewComplete =
+        report.is_locked;
+
+      const sections = [
+        {
+          id: "collections",
+          number: "01",
+          title:
+            "Collections & Payments",
+          subtitle:
+            "Record cash and digital collections.",
+          icon: Banknote,
+          iconClass:
+            "bg-blue-50 text-blue-600",
+          complete:
+            collectionsComplete,
+        },
+
+        {
+          id: "operations",
+          number: "02",
+          title:
+            "Daily Operations",
+          subtitle:
+            "Record today's bills and deliveries.",
+          icon: ClipboardCheck,
+          iconClass:
+            "bg-violet-50 text-violet-600",
+          complete:
+            operationsComplete,
+        },
+
+        {
+          id: "reconciliation",
+          number: "03",
+          title:
+            "Reconciliation",
+          subtitle:
+            "Compare actual sales with system sales.",
+          icon: ShieldCheck,
+          iconClass:
+            "bg-orange-50 text-orange-600",
+          complete:
+            reconciliationComplete,
+        },
+
+        {
+          id: "review",
+          number: "04",
+          title:
+            "Review & Submit",
+          subtitle:
+            "Check everything before locking.",
+          icon: CheckCircle2,
+          iconClass:
+            "bg-green-50 text-green-600",
+          complete:
+            reviewComplete,
+        },
+      ];
+
+      function toggleSection(id) {
+        setMobileSection(
+          (current) =>
+            current === id
+              ? null
+              : id
+        );
+      }
+
+      return (
+        <div className="space-y-3">
+
+          {sections.map(
+            (section) => {
+
+              const Icon =
+                section.icon;
+
+              const isOpen =
+                mobileSection ===
+                section.id;
+
+              return (
+                <div
+                  key={section.id}
+                  className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${
+                    isOpen
+                      ? "border-blue-200"
+                      : "border-gray-200"
+                  }`}
+                >
+
+                  {/* SECTION HEADER */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toggleSection(
+                        section.id
+                      )
+                    }
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+                  >
+
+                    <span className="w-5 shrink-0 text-xs font-semibold tracking-wide text-blue-600">
+                      {section.number}
+                    </span>
+
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${section.iconClass}`}
+                    >
+                      <Icon size={18} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+
+                      <div className="flex items-center gap-1.5">
+
+                        <h2 className="text-[15px] font-bold text-gray-900">
+                          {section.title}
+                        </h2>
+
+                        {section.complete && (
+                          <CheckCircle2
+                            size={15}
+                            className="shrink-0 text-green-500"
+                          />
+                        )}
+
+                      </div>
+
+                      <p className="mt-0.5 text-[11px] leading-4 text-gray-500">
+                        {section.subtitle}
+                      </p>
+
+                    </div>
+
+                    {isOpen ? (
+                      <ChevronUp
+                        size={18}
+                        className="shrink-0 text-gray-400"
+                      />
+                    ) : (
+                      <ChevronDown
+                        size={18}
+                        className="shrink-0 text-gray-400"
+                      />
+                    )}
+
+                  </button>
+
+
+                  {/* =================================================
+                      SECTION CONTENT
+                  ================================================= */}
+
+                  {isOpen && (
+                    <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3.5">
+
+
+                      {/* =================================================
+                          01 COLLECTIONS & PAYMENTS
+                      ================================================= */}
+
+                      {section.id ===
+                        "collections" && (
+
+                        <div className="space-y-3">
+
+                          {/* CASH */}
+
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+
+                            <div className="flex items-center gap-3">
+
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-100">
+
+                                <Banknote
+                                  size={18}
+                                  className="text-green-600"
+                                />
+
+                              </div>
+
+                              <div className="min-w-0">
+
+                                <h3 className="text-[15px] font-bold text-gray-900">
+                                  Cash Collection
+                                </h3>
+
+                                <p className="text-[11px] text-gray-500">
+                                  Count today's cash
+                                </p>
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="mt-3 rounded-xl bg-white px-3 py-2">
+
+                              <p className="text-[10px] text-gray-400">
+                                Opening Cash
+                              </p>
+
+                              <p className="text-sm font-semibold text-gray-800">
+                                ₹
+                                {OPENING_CASH.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+
+                            </div>
+
+
+                            <div className="mt-2.5 grid grid-cols-2 gap-2">
+
+                              {denominations.map(
+                                (
+                                  [
+                                    key,
+                                    label,
+                                  ],
+                                  index
+                                ) => (
+
+                                  <div
+                                    key={key}
+                                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-2.5 py-2"
+                                  >
+
+                                    <span className="text-xs font-semibold text-gray-700">
+                                      {label}
+                                    </span>
+
+                                    <input
+                                      ref={(el) =>
+                                        (denominationRefs.current[
+                                          index
+                                        ] = el)
+                                      }
+                                      type="number"
+                                      min="0"
+                                      value={
+                                        cash[
+                                          key
+                                        ]
+                                      }
+                                      disabled={
+                                        report.is_locked
+                                      }
+                                      onChange={(e) =>
+                                        handleCashChange(
+                                          key,
+                                          e
+                                            .target
+                                            .value
+                                        )
+                                      }
+                                      onKeyDown={(e) =>
+                                        handleCashKeyDown(
+                                          e,
+                                          index
+                                        )
+                                      }
+                                      onWheel={
+                                        handleNumberWheel
+                                      }
+                                      className={`${NUMBER_INPUT_CLASS} h-8 w-[52px] rounded-lg border border-gray-200 px-1 text-center text-xs font-semibold outline-none focus:border-blue-500 disabled:bg-gray-100`}
+                                      placeholder="0"
+                                    />
+
+                                  </div>
+
+                                )
+                              )}
+
+                            </div>
+
+
+                            <div className="mt-2.5 flex items-center justify-between rounded-xl bg-blue-50 px-3 py-2.5">
+
+                              <span className="text-xs font-semibold text-blue-700">
+                                Cash Counted
+                              </span>
+
+                              <span className="text-base font-bold text-blue-600">
+                                ₹
+                                {cashCounted.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </span>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* DIGITAL PAYMENTS */}
+
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+
+                            <div className="mb-3 flex items-center justify-between gap-3">
+
+                              <div className="flex items-center gap-3">
+
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100">
+
+                                  <CreditCard
+                                    size={18}
+                                    className="text-blue-600"
+                                  />
+
+                                </div>
+
+                                <div>
+
+                                  <h3 className="text-[15px] font-bold text-gray-900">
+                                    Digital Payments
+                                  </h3>
+
+                                  <p className="text-[11px] text-gray-500">
+                                    UPI / Card collections
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                            <div className="rounded-xl bg-white p-3">
+
+                              <PaymentMachines
+                                reportId={
+                                  report.id
+                                }
+                                onTotalChange={
+                                  handleMachineTotal
+                                }
+                                onMachinesChange={
+                                  setMachineEntries
+                                }
+                              />
+
+                            </div>
+
+                          </div>
+
+
+                          {/* COLLECTION SUMMARY */}
+
+                          <div className="grid grid-cols-2 gap-2">
+
+                            <div className="rounded-xl border border-gray-200 bg-white p-3">
+
+                              <p className="text-[10px] text-gray-400">
+                                Cash from Till
+                              </p>
+
+                              <p className="mt-1 text-base font-bold text-gray-900">
+                                ₹
+                                {cashFromTill.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+
+                            </div>
+
+                            <div className="rounded-xl border border-green-100 bg-green-50 p-3">
+
+                              <p className="text-[10px] text-green-700">
+                                Total Cash Sales
+                              </p>
+
+                              <p className="mt-1 text-base font-bold text-green-600">
+                                ₹
+                                {totalCashSales.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+                      )}
+
+
+                      {/* =================================================
+                          02 DAILY OPERATIONS
+                      ================================================= */}
+
+                      {section.id ===
+                        "operations" && (
+
+                        <div className="space-y-3">
+
+                          {/* INPUTS */}
+
+                          <div className="grid grid-cols-2 gap-2.5">
+
+                            {/* BILLS */}
+
+                            <div className="rounded-2xl border border-gray-200 bg-white p-3.5">
+
+                              <div className="flex items-center gap-2">
+
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+
+                                  <Receipt
+                                    size={16}
+                                    className="text-blue-600"
+                                  />
+
+                                </div>
+
+                                <p className="text-xs font-semibold text-gray-700">
+                                  Total Bills
+                                </p>
+
+                              </div>
+
+                              <input
+                                name="total_bills"
+                                type="number"
+                                min="0"
+                                value={
+                                  form.total_bills
+                                }
+                                disabled={
+                                  report.is_locked
+                                }
+                                onChange={
+                                  handleChange
+                                }
+                                onWheel={
+                                  handleNumberWheel
+                                }
+                                className={`${NUMBER_INPUT_CLASS} mt-3 h-10 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-semibold outline-none focus:border-blue-500 disabled:bg-gray-100`}
+                                placeholder="0"
+                              />
+
+                            </div>
+
+
+                            {/* DELIVERIES */}
+
+                            <div className="rounded-2xl border border-gray-200 bg-white p-3.5">
+
+                              <div className="flex items-center gap-2">
+
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+
+                                  <Truck
+                                    size={16}
+                                    className="text-violet-600"
+                                  />
+
+                                </div>
+
+                                <p className="text-xs font-semibold text-gray-700">
+                                  Deliveries
+                                </p>
+
+                              </div>
+
+                              <input
+                                type="number"
+                                min="0"
+                                value={
+                                  deliveries
+                                }
+                                disabled={
+                                  report.is_locked
+                                }
+                                onChange={(e) =>
+                                  setDeliveries(
+                                    normalizeNumberInput(
+                                      e
+                                        .target
+                                        .value
+                                    )
+                                  )
+                                }
+                                onWheel={
+                                  handleNumberWheel
+                                }
+                                className={`${NUMBER_INPUT_CLASS} mt-3 h-10 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-semibold outline-none focus:border-blue-500 disabled:bg-gray-100`}
+                                placeholder="0"
+                              />
+
+                            </div>
+
+                          </div>
+
+
+                          {/* PURCHASES + EXPENSES */}
+
+                          <div className="rounded-2xl border border-gray-200 bg-white p-3.5">
+
+                            <div className="mb-3">
+
+                              <h3 className="text-[15px] font-bold text-gray-900">
+                                Today's Activity
+                              </h3>
+
+                              <p className="mt-0.5 text-[11px] text-gray-500">
+                                Automatically pulled from the store records.
+                              </p>
+
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+
+                              <div className="rounded-xl bg-gray-50 p-3">
+
+                                <div className="flex items-center gap-2">
+
+                                  <ShoppingBag
+                                    size={15}
+                                    className="text-blue-600"
+                                  />
+
+                                  <p className="text-[11px] font-medium text-gray-500">
+                                    Purchases
+                                  </p>
+
+                                </div>
+
+                                <p className="mt-1 text-base font-bold text-gray-900">
+                                  ₹
+                                  {totalPurchases.toLocaleString(
+                                    "en-IN"
+                                  )}
+                                </p>
+
+                              </div>
+
+
+                              <div className="rounded-xl bg-gray-50 p-3">
+
+                                <div className="flex items-center gap-2">
+
+                                  <Wallet
+                                    size={15}
+                                    className="text-orange-500"
+                                  />
+
+                                  <p className="text-[11px] font-medium text-gray-500">
+                                    Expenses
+                                  </p>
+
+                                </div>
+
+                                <p className="mt-1 text-base font-bold text-gray-900">
+                                  ₹
+                                  {totalExpenses.toLocaleString(
+                                    "en-IN"
+                                  )}
+                                </p>
+
+                              </div>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+                      )}
+
+
+                      {/* =================================================
+                          03 RECONCILIATION
+                      ================================================= */}
+
+                      {section.id ===
+                        "reconciliation" && (
+
+                        <div className="space-y-2.5">
+
+                          {/* COMPACT SUMMARY */}
+
+                          <div className="grid grid-cols-2 gap-2">
+
+                            <div className="rounded-xl bg-blue-50 px-3.5 py-3">
+
+                              <p className="text-[10px] font-medium text-blue-600">
+                                Calculated Sales
+                              </p>
+
+                              <p className="mt-0.5 text-lg font-bold text-blue-600">
+                                ₹
+                                {totalSales.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+
+                            </div>
+
+
+                            <div
+                              className={`rounded-xl px-3.5 py-3 ${
+                                salesDifference === 0
+                                  ? "bg-green-50"
+                                  : "bg-red-50"
+                              }`}
+                            >
+
+                              <p
+                                className={`text-[10px] font-medium ${
+                                  salesDifference === 0
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                Difference
+                              </p>
+
+                              <p
+                                className={`mt-0.5 text-lg font-bold ${
+                                  salesDifference === 0
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                ₹
+                                {salesDifference.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* SYSTEM SALES */}
+
+                          <div className="rounded-xl border border-gray-200 bg-white p-3.5">
+
+                            <div className="flex items-center justify-between gap-3">
+
+                              <label className="text-xs font-semibold text-gray-700">
+                                System Sales Today
+                              </label>
+
+                              {salesDifference ===
+                                0 && (
+                                <CheckCircle2
+                                  size={16}
+                                  className="text-green-500"
+                                />
+                              )}
+
+                            </div>
+
+                            <input
+                              name="system_sales"
+                              type="number"
+                              min="0"
+                              value={
+                                form.system_sales
+                              }
+                              disabled={
+                                report.is_locked
+                              }
+                              onChange={
+                                handleChange
+                              }
+                              onWheel={
+                                handleNumberWheel
+                              }
+                              className={`${NUMBER_INPUT_CLASS} mt-2.5 h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm font-semibold outline-none focus:border-blue-500 disabled:bg-gray-100`}
+                              placeholder="Enter system sales"
+                            />
+
+                          </div>
+
+
+                          {/* EXPLANATION */}
+
+                          <div
+                            className={`rounded-xl px-3.5 py-2.5 ${
+                              salesDifference === 0
+                                ? "bg-green-50"
+                                : "bg-red-50"
+                            }`}
+                          >
+
+                            <p
+                              className={`text-[10px] ${
+                                salesDifference === 0
+                                  ? "text-green-700"
+                                  : "text-red-700"
+                              }`}
+                            >
+                              Actual Sales − System Sales
+                            </p>
+
+                          </div>
+
+                        </div>
+                      )}
+
+
+                      {/* =================================================
+                          04 REVIEW
+                      ================================================= */}
+
+                      {section.id ===
+                        "review" && (
+
+                        <div className="space-y-2.5">
+
+                          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+
+                            <div className="flex items-center justify-between">
+
+                              <span className="text-xs text-gray-500">
+                                Total Sales
+                              </span>
+
+                              <span className="text-sm font-bold text-gray-900">
+                                ₹
+                                {totalSales.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </span>
+
+                            </div>
+
+                            <div className="mt-2.5 flex items-center justify-between">
+
+                              <span className="text-xs text-gray-500">
+                                Total Bills
+                              </span>
+
+                              <span className="text-sm font-semibold text-gray-900">
+                                {form.total_bills ||
+                                  0}
+                              </span>
+
+                            </div>
+
+                            <div className="mt-2.5 flex items-center justify-between">
+
+                              <span className="text-xs text-gray-500">
+                                Deliveries
+                              </span>
+
+                              <span className="text-sm font-semibold text-gray-900">
+                                {deliveries ||
+                                  0}
+                              </span>
+
+                            </div>
+
+                            <div className="mt-2.5 flex items-center justify-between">
+
+                              <span className="text-xs text-gray-500">
+                                Difference
+                              </span>
+
+                              <span
+                                className={`text-sm font-bold ${
+                                  salesDifference ===
+                                  0
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                ₹
+                                {salesDifference.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </span>
+
+                            </div>
+
+                          </div>
+
+
+                          <div
+                            className={`rounded-xl px-3.5 py-3 ${
+                              report.is_locked
+                                ? "bg-green-50"
+                                : "bg-amber-50"
+                            }`}
+                          >
+
+                            <p
+                              className={`text-xs font-semibold ${
+                                report.is_locked
+                                  ? "text-green-700"
+                                  : "text-amber-700"
+                              }`}
+                            >
+                              {report.is_locked
+                                ? "Report is locked"
+                                : "Ready for submission"}
+                            </p>
+
+                            <p
+                              className={`mt-0.5 text-[10px] ${
+                                report.is_locked
+                                  ? "text-green-700/70"
+                                  : "text-amber-700/70"
+                              }`}
+                            >
+                              {report.is_locked
+                                ? "This report has already been submitted."
+                                : "Review the information before submitting."}
+                            </p>
+
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+                  )}
+
+                </div>
+              );
+            }
+          )}
+
+        </div>
+      );
+    }
+
+
+    /* =========================================================
+       DESKTOP UI
+       ========================================================= */
+
     return (
       <SectionCard title="Sales">
 
         <div className="space-y-6">
 
-          {/* =================================================
-              CASH DENOMINATIONS
-          ================================================= */}
+          {/* CASH */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
@@ -755,8 +1582,6 @@ const SalesSection = forwardRef(
 
             </div>
 
-            {/* DENOMINATIONS */}
-
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
 
               {denominations.map(
@@ -791,18 +1616,13 @@ const SalesSection = forwardRef(
                       disabled={
                         report.is_locked
                       }
-                      onChange={(
-                        e
-                      ) =>
+                      onChange={(e) =>
                         handleCashChange(
                           key,
-                          e.target
-                            .value
+                          e.target.value
                         )
                       }
-                      onKeyDown={(
-                        e
-                      ) =>
+                      onKeyDown={(e) =>
                         handleCashKeyDown(
                           e,
                           index
@@ -820,8 +1640,6 @@ const SalesSection = forwardRef(
               )}
 
             </div>
-
-            {/* CASH SUMMARY */}
 
             <div className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
 
@@ -901,9 +1719,8 @@ const SalesSection = forwardRef(
 
           </div>
 
-          {/* =================================================
-              DIGITAL PAYMENTS
-          ================================================= */}
+
+          {/* DIGITAL PAYMENTS */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
@@ -946,9 +1763,8 @@ const SalesSection = forwardRef(
 
           </div>
 
-          {/* =================================================
-              OPERATIONS
-          ================================================= */}
+
+          {/* OPERATIONS */}
 
           <div>
 
@@ -966,8 +1782,6 @@ const SalesSection = forwardRef(
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-              {/* PURCHASES */}
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
 
@@ -1009,7 +1823,6 @@ const SalesSection = forwardRef(
 
               </div>
 
-              {/* EXPENSES */}
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
 
@@ -1051,7 +1864,6 @@ const SalesSection = forwardRef(
 
               </div>
 
-              {/* DELIVERIES */}
 
               <div className="rounded-xl border border-gray-200 bg-white p-4">
 
@@ -1105,7 +1917,6 @@ const SalesSection = forwardRef(
 
               </div>
 
-              {/* TOTAL BILLS */}
 
               <div className="rounded-xl border border-gray-200 bg-white p-4">
 
@@ -1144,7 +1955,9 @@ const SalesSection = forwardRef(
                   disabled={
                     report.is_locked
                   }
-                  onChange={handleChange}
+                  onChange={
+                    handleChange
+                  }
                   onWheel={
                     handleNumberWheel
                   }
@@ -1158,9 +1971,8 @@ const SalesSection = forwardRef(
 
           </div>
 
-          {/* =================================================
-              SALES RECONCILIATION
-          ================================================= */}
+
+          {/* RECONCILIATION */}
 
           <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
 
@@ -1178,8 +1990,6 @@ const SalesSection = forwardRef(
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-
-              {/* TOTAL SALES */}
 
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
 
@@ -1200,7 +2010,6 @@ const SalesSection = forwardRef(
 
               </div>
 
-              {/* SYSTEM SALES */}
 
               <div className="rounded-xl border border-gray-200 bg-white p-4">
 
@@ -1230,7 +2039,6 @@ const SalesSection = forwardRef(
 
               </div>
 
-              {/* DIFFERENCE */}
 
               <div
                 className={`rounded-xl border p-4 ${

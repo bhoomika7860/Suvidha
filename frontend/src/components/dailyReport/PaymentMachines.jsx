@@ -19,14 +19,9 @@ export default function PaymentMachines({
   onTotalChange,
   onMachinesChange,
 }) {
-  const [machines, setMachines] =
-    useState([]);
-
-  const [newMachine, setNewMachine] =
-    useState("");
-
-  const [showAdd, setShowAdd] =
-    useState(false);
+  const [machines, setMachines] = useState([]);
+  const [newMachine, setNewMachine] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
 
   async function loadMachines() {
     if (!reportId) {
@@ -34,63 +29,34 @@ export default function PaymentMachines({
     }
 
     try {
-      /*
-       * Load the permanent machine list.
-       */
       const machineList =
         await paymentMachineService.getMachines();
 
-      /*
-       * Load the saved amounts for THIS
-       * daily report.
-       *
-       * Therefore refreshing the browser
-       * loads the saved amounts again.
-       */
       const entries =
-        await paymentMachineEntryService.get(
-          reportId
+        await paymentMachineEntryService.get(reportId);
+
+      const merged = machineList.map((machine) => {
+        const existing = entries.find(
+          (entry) =>
+            entry.machine_id === machine.id
         );
 
-      const merged =
-        machineList.map(
-          (machine) => {
-            const existing =
-              entries.find(
-                (entry) =>
-                  entry.machine_id ===
-                  machine.id
-              );
+        const savedAmount =
+          existing?.amount !== undefined &&
+          existing?.amount !== null
+            ? Number(existing.amount)
+            : 0;
 
-            const savedAmount =
-              existing?.amount !==
-                undefined &&
-              existing?.amount !==
-                null
-                ? Number(
-                    existing.amount
-                  )
-                : 0;
-
-            return {
-              ...machine,
-
-              /*
-               * Keep zero amounts visually
-               * empty instead of displaying 0.
-               */
-              amount:
-                savedAmount > 0
-                  ? String(
-                      savedAmount
-                    )
-                  : "",
-            };
-          }
-        );
+        return {
+          ...machine,
+          amount:
+            savedAmount > 0
+              ? String(savedAmount)
+              : "",
+        };
+      });
 
       setMachines(merged);
-
     } catch (err) {
       console.error(
         "Failed to load payment machines:",
@@ -103,88 +69,54 @@ export default function PaymentMachines({
     loadMachines();
   }, [reportId]);
 
-  const total =
-    useMemo(() => {
-      return machines.reduce(
-        (sum, machine) =>
-          sum +
-          Number(
-            machine.amount || 0
-          ),
-        0
-      );
-    }, [machines]);
+  const total = useMemo(() => {
+    return machines.reduce(
+      (sum, machine) =>
+        sum + Number(machine.amount || 0),
+      0
+    );
+  }, [machines]);
 
   useEffect(() => {
-    onTotalChange?.(
-      total
-    );
-  }, [
-    total,
-    onTotalChange,
-  ]);
+    onTotalChange?.(total);
+  }, [total, onTotalChange]);
 
   useEffect(() => {
     onMachinesChange?.(
-      machines.map(
-        (machine) => ({
-          machine_id:
-            machine.id,
-
-          amount:
-            Number(
-              machine.amount || 0
-            ),
-        })
-      )
+      machines.map((machine) => ({
+        machine_id: machine.id,
+        amount: Number(machine.amount || 0),
+      }))
     );
-  }, [
-    machines,
-    onMachinesChange,
-  ]);
+  }, [machines, onMachinesChange]);
 
-  function changeAmount(
-    id,
-    value
-  ) {
-    setMachines(
-      (prev) =>
-        prev.map(
-          (machine) =>
-            machine.id === id
-              ? {
-                  ...machine,
-                  amount: value,
-                }
-              : machine
-        )
+  function changeAmount(id, value) {
+    setMachines((prev) =>
+      prev.map((machine) =>
+        machine.id === id
+          ? {
+              ...machine,
+              amount: value,
+            }
+          : machine
+      )
     );
   }
 
   async function addMachine() {
-    if (
-      !newMachine.trim()
-    ) {
+    if (!newMachine.trim()) {
       return;
     }
 
     try {
-      await paymentMachineService.addMachine(
-        {
-          machine_name:
-            newMachine,
-        }
-      );
+      await paymentMachineService.addMachine({
+        machine_name: newMachine,
+      });
 
       setNewMachine("");
       setShowAdd(false);
 
-      /*
-       * Reload the permanent machine list
-       * after adding a machine.
-       */
       await loadMachines();
-
     } catch (err) {
       console.error(
         "Failed to add payment machine:",
@@ -193,9 +125,7 @@ export default function PaymentMachines({
     }
   }
 
-  async function deleteMachine(
-    id
-  ) {
+  async function deleteMachine(id) {
     if (
       !window.confirm(
         "Delete this machine?"
@@ -205,16 +135,9 @@ export default function PaymentMachines({
     }
 
     try {
-      await paymentMachineService.deleteMachine(
-        id
-      );
+      await paymentMachineService.deleteMachine(id);
 
-      /*
-       * Reload the machine list after
-       * deleting a machine.
-       */
       await loadMachines();
-
     } catch (err) {
       console.error(
         "Failed to delete payment machine:",
@@ -224,20 +147,20 @@ export default function PaymentMachines({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-6">
 
-      <div className="mb-6 flex items-center justify-between">
+      {/* HEADER */}
 
-        <h4 className="text-lg font-semibold text-gray-900">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-6">
+
+        <h4 className="text-base font-semibold text-gray-900 sm:text-lg">
           UPI / Card Payments
         </h4>
 
         <button
           type="button"
-          onClick={() =>
-            setShowAdd(true)
-          }
-          className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          onClick={() => setShowAdd(true)}
+          className="shrink-0 rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 sm:px-3 sm:py-2 sm:text-sm"
         >
           + Machine
         </button>
@@ -245,112 +168,110 @@ export default function PaymentMachines({
       </div>
 
 
-      {machines.map(
-        (machine) => (
+      {/* MACHINES */}
 
-          <div
-            key={machine.id}
-            className="mb-3 flex items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-          >
+      {machines.map((machine) => (
+        <div
+          key={machine.id}
+          className="mb-2 rounded-xl border border-gray-200 bg-gray-50 p-2.5 sm:mb-3 sm:flex sm:items-center sm:gap-4 sm:px-4 sm:py-3"
+        >
 
-            <div className="min-w-0 flex-1 font-medium text-gray-900">
-              {machine.machine_name}
-            </div>
+          {/* MACHINE NAME */}
 
+          <div className="mb-2 min-w-0 truncate text-sm font-medium text-gray-900 sm:mb-0 sm:flex-1">
+            {machine.machine_name}
+          </div>
+
+
+          {/* AMOUNT + DELETE */}
+
+          <div className="flex items-center gap-2">
 
             <input
               type="number"
               min="0"
-              value={
-                machine.amount
-              }
+              value={machine.amount}
               onChange={(e) =>
                 changeAmount(
                   machine.id,
                   e.target.value
                 )
               }
-              onWheel={
-                handleNumberWheel
-              }
-              className={`${NUMBER_INPUT_CLASS} h-9 w-28 rounded-lg border border-gray-200 bg-white px-2 text-right text-base font-medium outline-none focus:border-blue-500`}
+              onWheel={handleNumberWheel}
+              placeholder="Amount"
+              className={`${NUMBER_INPUT_CLASS} h-9 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2.5 text-right text-sm font-medium outline-none focus:border-blue-500 sm:h-9 sm:w-28 sm:flex-none sm:px-2 sm:text-base`}
             />
-
 
             <button
               type="button"
               onClick={() =>
-                deleteMachine(
-                  machine.id
-                )
+                deleteMachine(machine.id)
               }
-              className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm text-red-500 hover:bg-red-50"
+              aria-label={`Delete ${machine.machine_name}`}
             >
               🗑
             </button>
 
           </div>
 
-        )
-      )}
+        </div>
+      ))}
 
+
+      {/* ADD MACHINE */}
 
       {showAdd && (
-
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 p-3">
+        <div className="mt-3 flex flex-col gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50 p-2.5 sm:mt-4 sm:flex-row sm:items-center sm:gap-3 sm:p-3">
 
           <input
-            value={
-              newMachine
-            }
+            value={newMachine}
             onChange={(e) =>
-              setNewMachine(
-                e.target.value
-              )
+              setNewMachine(e.target.value)
             }
             placeholder="Machine Name"
-            className="h-10 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
           />
 
-          <button
-            type="button"
-            onClick={
-              addMachine
-            }
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Add
-          </button>
+          <div className="flex gap-2">
 
-          <button
-            type="button"
-            onClick={() => {
-              setShowAdd(false);
-              setNewMachine("");
-            }}
-            className="rounded-lg border px-4 py-2 hover:bg-gray-100"
-          >
-            Cancel
-          </button>
+            <button
+              type="button"
+              onClick={addMachine}
+              className="flex-1 rounded-lg bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 sm:flex-none"
+            >
+              Add
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowAdd(false);
+                setNewMachine("");
+              }}
+              className="flex-1 rounded-lg border px-4 py-1.5 text-sm hover:bg-gray-100 sm:flex-none"
+            >
+              Cancel
+            </button>
+
+          </div>
 
         </div>
-
       )}
 
 
-      <div className="mt-6 border-t pt-5">
+      {/* TOTAL */}
 
-        <div className="flex items-center justify-between">
+      <div className="mt-4 border-t pt-3 sm:mt-6 sm:pt-5">
 
-          <span className="text-base font-medium text-gray-700">
+        <div className="flex items-center justify-between gap-3">
+
+          <span className="text-sm font-medium text-gray-700 sm:text-base">
             Total Digital Collection
           </span>
 
-          <span className="text-3xl font-bold text-blue-600">
-            ₹
-            {total.toLocaleString(
-              "en-IN"
-            )}
+          <span className="shrink-0 text-2xl font-bold text-blue-600 sm:text-3xl">
+            ₹{total.toLocaleString("en-IN")}
           </span>
 
         </div>

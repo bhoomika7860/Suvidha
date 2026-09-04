@@ -1,4 +1,6 @@
-import { Bell } from "lucide-react";
+import {
+  Bell,
+} from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { useBusinessDate } from "../../contexts/BusinessDateContext";
 
@@ -29,13 +31,14 @@ export default function Header() {
 
   const today = new Date();
 
-  const currentTime = today.toLocaleTimeString(
-    "en-IN",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  const currentTime =
+    today.toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
 
   const businessDate = new Date(
     `${selectedDate}T12:00:00`
@@ -53,12 +56,11 @@ export default function Header() {
     );
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-8 py-5">
+    <header className="hidden items-center justify-between border-b border-gray-200 bg-white px-8 py-5 lg:flex">
 
       {/* LEFT */}
 
       <div>
-
         <h1 className="text-2xl font-bold text-gray-900">
           {storeName}
         </h1>
@@ -66,7 +68,6 @@ export default function Header() {
         <p className="mt-1 text-sm text-gray-500">
           Store Manager Dashboard
         </p>
-
       </div>
 
 
@@ -77,7 +78,6 @@ export default function Header() {
         {/* BUSINESS DATE */}
 
         <div className="text-right">
-
           <input
             type="date"
             value={selectedDate}
@@ -88,13 +88,13 @@ export default function Header() {
           />
 
           <p className="mt-1 text-xs text-gray-500">
-            Business Date: {formattedBusinessDate}
+            Business Date:{" "}
+            {formattedBusinessDate}
           </p>
 
           <p className="text-xs text-gray-400">
             {currentTime}
           </p>
-
         </div>
 
 
@@ -117,7 +117,6 @@ export default function Header() {
           </div>
 
           <div>
-
             <p className="text-sm font-semibold text-gray-900">
               {managerName}
             </p>
@@ -125,7 +124,6 @@ export default function Header() {
             <p className="text-xs text-gray-500">
               Store Manager
             </p>
-
           </div>
 
         </div>
