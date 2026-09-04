@@ -43,9 +43,11 @@ export default function Udhaar() {
   const [report, setReport] =
     useState(null);
 
+
   useEffect(() => {
     loadPage();
   }, [selectedDate, searchParams]);
+
 
   async function loadPage() {
     try {
@@ -55,6 +57,7 @@ export default function Udhaar() {
         searchParams.get("report");
 
       let selectedReport;
+
 
       /*
        * Historical report.
@@ -67,8 +70,9 @@ export default function Udhaar() {
           );
       }
 
+
       /*
-       * Normal Udhaar page.
+       * Normal Manager Udhaar page.
        *
        * Follow global Business Date.
        */
@@ -80,6 +84,7 @@ export default function Udhaar() {
           );
       }
 
+
       /*
        * Owner does not need a store daily report
        * unless a historical report is explicitly opened.
@@ -89,30 +94,18 @@ export default function Udhaar() {
         selectedReport || null
       );
 
+
       const reportId =
         selectedReport?.id
           ? Number(selectedReport.id)
           : null;
+
 
       const data =
         await udhaarService.getUdhaar(
           reportId
         );
 
-      console.log(
-        "UDHAAR BUSINESS DATE:",
-        selectedDate
-      );
-
-      console.log(
-        "UDHAAR REPORT:",
-        selectedReport
-      );
-
-      console.log(
-        "UDHAAR DATA:",
-        data
-      );
 
       setEntries(
         Array.isArray(data)
@@ -143,11 +136,13 @@ export default function Udhaar() {
     }
   }
 
+
   async function addUdhaar(newEntries) {
     if (!report?.id) {
       console.error(
         "Cannot add Udhaar: report missing."
       );
+
       return;
     }
 
@@ -174,6 +169,7 @@ export default function Udhaar() {
     }
   }
 
+
   async function repay(id, amount) {
     try {
       await udhaarService.repayUdhaar(
@@ -199,70 +195,196 @@ export default function Udhaar() {
     }
   }
 
+
   return (
-    <div className="space-y-6">
+    <div className="w-full">
 
-      {/* Header */}
+      {/* =====================================================
+          DESKTOP
+      ===================================================== */}
 
-      <div className="flex items-center justify-between">
+      <div className="hidden space-y-6 lg:block">
 
-        <div>
-          <h1 className="text-3xl font-bold">
-            Udhaar
-          </h1>
+        {/* HEADER */}
 
-          <p className="mt-1 text-slate-500">
-            Manage customer credit.
-          </p>
+        <div className="flex items-center justify-between">
 
-          <p className="mt-2 text-sm font-medium text-blue-600">
-            Business Date: {report?.report_date || selectedDate}
-          </p>
+          <div>
+
+            <div className="flex items-center gap-3">
+
+              <h1 className="text-3xl font-bold">
+                Udhaar
+              </h1>
+
+            </div>
+
+            <p className="mt-1 text-slate-500">
+              Manage customer credit.
+            </p>
+
+            <p className="mt-2 text-sm font-medium text-blue-600">
+              Business Date:{" "}
+              {report?.report_date ||
+                selectedDate}
+            </p>
+
+          </div>
+
+
+          {!isOwner && (
+            <button
+              onClick={() =>
+                setShowAdd(true)
+              }
+              disabled={
+                !report ||
+                report.is_locked
+              }
+              className={`rounded-xl px-5 py-2.5 font-semibold text-white ${
+                report &&
+                !report.is_locked
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "cursor-not-allowed bg-gray-400"
+              }`}
+            >
+              Add Udhaar
+            </button>
+          )}
+
         </div>
 
-        {!isOwner && (
-          <button
-            onClick={() =>
-              setShowAdd(true)
+
+        {/* KPIs */}
+
+        <UdhaarKPIs
+          entries={entries}
+        />
+
+
+        {/* TABLE */}
+
+        {loading ? (
+
+          <div className="rounded-xl bg-white p-10 text-center">
+            Loading...
+          </div>
+
+        ) : (
+
+          <UdhaarTable
+            entries={entries}
+            onRepay={
+              isOwner ||
+              report?.is_locked
+                ? undefined
+                : (entry) => {
+                    setSelected(entry);
+                    setShowRepay(true);
+                  }
             }
-            disabled={
-              !report ||
-              report.is_locked
-            }
-            className={`rounded-xl px-5 py-2.5 font-semibold text-white ${
-              report && !report.is_locked
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "cursor-not-allowed bg-gray-400"
-            }`}
-          >
-            Add Udhaar
-          </button>
+            isOwner={isOwner}
+          />
+
         )}
 
       </div>
 
-      <UdhaarKPIs
-        entries={entries}
-      />
 
-      {loading ? (
-        <div className="rounded-xl bg-white p-10 text-center">
-          Loading...
+      {/* =====================================================
+          MOBILE
+      ===================================================== */}
+
+      <div className="min-h-screen w-full overflow-x-hidden bg-gray-50 pb-24 lg:hidden">
+
+        {/* PAGE HEADER */}
+
+        <div className="border-b border-gray-200 bg-white px-5 py-4">
+
+          <h1 className="text-2xl font-bold leading-tight text-gray-900">
+            Udhaar
+          </h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Manage customer credit.
+          </p>
+
         </div>
-      ) : (
-        <UdhaarTable
-          entries={entries}
-          onRepay={
-            isOwner || report?.is_locked
-              ? undefined
-              : (entry) => {
-                  setSelected(entry);
-                  setShowRepay(true);
-                }
-          }
-          isOwner={isOwner}
-        />
-      )}
+
+
+        {/* CONTENT */}
+
+        <div className="space-y-3 px-4 pt-4">
+
+          {/* KPIs */}
+
+          <UdhaarKPIs
+            entries={entries}
+          />
+
+
+          {/* ADD UDHAAR */}
+
+          {!isOwner && (
+            <button
+              type="button"
+              onClick={() =>
+                setShowAdd(true)
+              }
+              disabled={
+                !report ||
+                report.is_locked
+              }
+              className={`flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold text-white shadow-sm transition ${
+                report &&
+                !report.is_locked
+                  ? "bg-blue-600 active:bg-blue-700"
+                  : "cursor-not-allowed bg-gray-400"
+              }`}
+            >
+              <span className="mr-1.5 text-lg leading-none">
+                +
+              </span>
+
+              Add Udhaar
+            </button>
+          )}
+
+
+          {/* UDHAAR ENTRIES */}
+
+          {loading ? (
+
+            <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+              Loading...
+            </div>
+
+          ) : (
+
+            <UdhaarTable
+              entries={entries}
+              onRepay={
+                isOwner ||
+                report?.is_locked
+                  ? undefined
+                  : (entry) => {
+                      setSelected(entry);
+                      setShowRepay(true);
+                    }
+              }
+              isOwner={isOwner}
+            />
+
+          )}
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          ADD UDHAAR MODAL
+      ===================================================== */}
 
       {!isOwner && (
         <AddUdhaarModal
@@ -274,6 +396,11 @@ export default function Udhaar() {
           dailyReportId={report?.id}
         />
       )}
+
+
+      {/* =====================================================
+          REPAY MODAL
+      ===================================================== */}
 
       {!isOwner && (
         <RepayModal
