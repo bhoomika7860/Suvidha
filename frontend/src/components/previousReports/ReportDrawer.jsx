@@ -11,10 +11,6 @@ import {
 /*
  * Convert a purchase timestamp into the
  * Indian business date.
- *
- * Backend timestamps are handled using
- * Asia/Kolkata so the purchase is counted
- * against the correct pharmacy business date.
  */
 function getIndiaBusinessDate(value) {
   if (!value) {
@@ -54,16 +50,12 @@ export default function ReportDrawer({
   }
 
   const rawExpenses =
-    Array.isArray(
-      report.expenses
-    )
+    Array.isArray(report.expenses)
       ? report.expenses
       : [];
 
   const purchases =
-    Array.isArray(
-      report.purchases
-    )
+    Array.isArray(report.purchases)
       ? report.purchases
       : Array.isArray(
           report.completed_purchases
@@ -150,13 +142,6 @@ export default function ReportDrawer({
    * ----------------------------------------
    * TODAY'S RECEIVED PURCHASES
    * ----------------------------------------
-   *
-   * ONLY:
-   *
-   * 1. status = received
-   * 2. received_date = report business date
-   *
-   * Nothing else is included.
    */
 
   const receivedTodayPurchases =
@@ -185,11 +170,6 @@ export default function ReportDrawer({
       }
     );
 
-
-  /*
-   * Total amount of ONLY the bills
-   * received on this report's date.
-   */
 
   const totalPurchasesReceivedToday =
     receivedTodayPurchases.reduce(
@@ -301,10 +281,18 @@ export default function ReportDrawer({
     );
 
 
+  /*
+   * ========================================
+   * RENDER
+   * ========================================
+   */
+
   return (
     <>
 
-      {/* Overlay */}
+      {/* =====================================================
+          OVERLAY
+      ===================================================== */}
 
       <div
         onClick={onClose}
@@ -312,9 +300,11 @@ export default function ReportDrawer({
       />
 
 
-      {/* Drawer */}
+      {/* =====================================================
+          DESKTOP DRAWER
+      ===================================================== */}
 
-      <div className="fixed right-0 top-0 z-50 h-screen w-full overflow-y-auto bg-white shadow-2xl sm:w-[620px]">
+      <div className="fixed right-0 top-0 z-50 hidden h-screen w-[620px] overflow-y-auto bg-white shadow-2xl lg:block">
 
         {/* Header */}
 
@@ -373,7 +363,6 @@ export default function ReportDrawer({
               value={bills}
             />
 
-
             <SummaryCard
               icon={
                 <Wallet size={18} />
@@ -384,7 +373,6 @@ export default function ReportDrawer({
               )}`}
             />
 
-
             <SummaryCard
               icon={
                 <Package size={18} />
@@ -394,7 +382,6 @@ export default function ReportDrawer({
                 "en-IN"
               )}`}
             />
-
 
             <SummaryCard
               icon={
@@ -504,8 +491,7 @@ export default function ReportDrawer({
               Expenses
             </h3>
 
-            {expenses.length ===
-            0 ? (
+            {expenses.length === 0 ? (
 
               <p className="text-gray-500">
                 No expenses recorded.
@@ -518,9 +504,7 @@ export default function ReportDrawer({
                 <div className="space-y-4">
 
                   {expenses.map(
-                    (
-                      expense
-                    ) => (
+                    (expense) => (
 
                       <Row
                         key={
@@ -615,8 +599,7 @@ export default function ReportDrawer({
             {(
               report.delivery_assignments ||
               []
-            ).length ===
-            0 ? (
+            ).length === 0 ? (
 
               <p className="text-gray-500">
                 No delivery assignments recorded.
@@ -627,9 +610,7 @@ export default function ReportDrawer({
               <div className="space-y-4">
 
                 {report.delivery_assignments.map(
-                  (
-                    delivery
-                  ) => (
+                  (delivery) => (
 
                     <Row
                       key={
@@ -653,20 +634,7 @@ export default function ReportDrawer({
           </div>
 
 
-          {/* Notes */}
-
-          <div className="rounded-2xl border p-5">
-
-            <h3 className="mb-3 font-semibold">
-              Manager Notes
-            </h3>
-
-            <p className="leading-7 text-gray-600">
-              {report.notes ||
-                "No notes added."}
-            </p>
-
-          </div>
+          
 
 
           {/* Status */}
@@ -693,10 +661,401 @@ export default function ReportDrawer({
 
       </div>
 
+
+      {/* =====================================================
+          MOBILE DRAWER
+      ===================================================== */}
+
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden">
+
+        {/* =================================================
+            MOBILE HEADER
+        ================================================= */}
+
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+
+          <div>
+
+            <h2 className="text-xl font-bold leading-tight text-gray-900">
+              Daily Report
+            </h2>
+
+            <p className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+
+              <CalendarDays
+                size={15}
+              />
+
+              {new Date(
+                report.report_date
+              ).toLocaleDateString(
+                "en-GB",
+                {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                }
+              )}
+
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-900 active:bg-gray-100"
+            aria-label="Close report"
+          >
+            <X size={22} />
+          </button>
+
+        </div>
+
+
+        {/* =================================================
+            MOBILE CONTENT
+        ================================================= */}
+
+        <div className="space-y-4 bg-gray-50 px-4 py-5 pb-8">
+
+          {/* =================================================
+              SUMMARY
+          ================================================= */}
+
+          <div className="grid grid-cols-2 gap-3">
+
+            <MobileSummaryCard
+              icon={
+                <Receipt size={17} />
+              }
+              title="Bills"
+              value={bills}
+            />
+
+
+            <MobileSummaryCard
+              icon={
+                <Wallet size={17} />
+              }
+              title="Sales"
+              value={`₹${actualSales.toLocaleString(
+                "en-IN"
+              )}`}
+              valueClass="text-gray-900"
+            />
+
+
+            <MobileSummaryCard
+              icon={
+                <Package size={17} />
+              }
+              title="Purchases"
+              value={`₹${totalPurchasesReceivedToday.toLocaleString(
+                "en-IN"
+              )}`}
+            />
+
+
+            <MobileSummaryCard
+              icon={
+                <Truck size={17} />
+              }
+              title="Deliveries"
+              value={deliveries}
+            />
+
+          </div>
+
+
+          {/* =================================================
+              PAYMENT BREAKDOWN
+          ================================================= */}
+
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+
+            <h3 className="mb-4 text-base font-semibold text-gray-900">
+              Payment Breakdown
+            </h3>
+
+
+            <div className="space-y-3">
+
+              <MobileRow
+                title="Cash"
+                value={`₹${cash.toLocaleString(
+                  "en-IN"
+                )}`}
+              />
+
+              <MobileRow
+                title="UPI"
+                value={`₹${upi.toLocaleString(
+                  "en-IN"
+                )}`}
+              />
+
+              <MobileRow
+                title="Card"
+                value={`₹${card.toLocaleString(
+                  "en-IN"
+                )}`}
+              />
+
+              <MobileRow
+                title="Udhaar"
+                value={`₹${udhaar.toLocaleString(
+                  "en-IN"
+                )}`}
+              />
+
+            </div>
+
+
+            <div className="my-3 border-t border-gray-200" />
+
+
+            <div className="space-y-2.5">
+
+              <MobileRow
+                title="Actual Sales"
+                value={`₹${actualSales.toLocaleString(
+                  "en-IN"
+                )}`}
+                strong
+              />
+
+              <MobileRow
+                title="System Sales"
+                value={`₹${systemSales.toLocaleString(
+                  "en-IN"
+                )}`}
+                strong
+              />
+
+            </div>
+
+
+            <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
+
+              <span className="text-sm font-semibold text-gray-900">
+                Sales Difference
+              </span>
+
+              <span
+                className={`text-sm font-bold ${
+                  salesDifference === 0
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
+              >
+                ₹
+                {Math.abs(
+                  salesDifference
+                ).toLocaleString(
+                  "en-IN"
+                )}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* =================================================
+              EXPENSES
+          ================================================= */}
+
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+
+            <div className="flex items-center justify-between">
+
+              <h3 className="text-base font-semibold text-gray-900">
+                Expenses
+              </h3>
+
+              <span className="text-sm font-bold text-gray-900">
+                ₹
+                {totalExpenses.toLocaleString(
+                  "en-IN"
+                )}
+              </span>
+
+            </div>
+
+
+            {expenses.length > 0 && (
+
+              <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+
+                {expenses.map(
+                  (expense) => (
+
+                    <MobileRow
+                      key={
+                        expense.id
+                      }
+                      title={
+                        expense.expense_type
+                      }
+                      value={`₹${Number(
+                        expense.amount ||
+                          0
+                      ).toLocaleString(
+                        "en-IN"
+                      )}`}
+                    />
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+
+          {/* =================================================
+              PURCHASES
+          ================================================= */}
+
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+
+                <h3 className="text-base font-semibold text-gray-900">
+                  Purchases
+                </h3>
+
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Received on this business date
+                </p>
+
+              </div>
+
+              <Package
+                size={19}
+                className="text-blue-600"
+              />
+
+            </div>
+
+
+            <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+
+              <span className="text-sm text-gray-500">
+                Total received
+              </span>
+
+              <span className="text-lg font-bold text-blue-600">
+                ₹
+                {totalPurchasesReceivedToday.toLocaleString(
+                  "en-IN"
+                )}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* =================================================
+              DELIVERIES
+          ================================================= */}
+
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+
+            <div className="flex items-center justify-between">
+
+              <h3 className="text-base font-semibold text-gray-900">
+                Deliveries
+              </h3>
+
+              <span className="text-lg font-bold text-gray-900">
+                {deliveries}
+              </span>
+
+            </div>
+
+
+            {(
+              report.delivery_assignments ||
+              []
+            ).length > 0 && (
+
+              <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+
+                {report.delivery_assignments.map(
+                  (delivery) => (
+
+                    <MobileRow
+                      key={
+                        delivery.id
+                      }
+                      title={
+                        delivery.delivery_boy_name
+                      }
+                      value={
+                        delivery.deliveries_completed
+                      }
+                    />
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+
+          
+
+
+          {/* =================================================
+              STATUS
+          ================================================= */}
+
+          <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3.5">
+
+            <CheckCircle2
+              size={20}
+              className="shrink-0 text-green-600"
+            />
+
+            <div>
+
+              <p className="text-sm font-semibold text-green-700">
+                Report Submitted
+              </p>
+
+              <p className="mt-0.5 text-xs text-gray-600">
+                This report is locked and cannot be edited.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </>
   );
 }
 
+
+/*
+ * =========================================================
+ * DESKTOP SUMMARY CARD
+ * =========================================================
+ */
 
 function SummaryCard({
   icon,
@@ -725,6 +1084,12 @@ function SummaryCard({
 }
 
 
+/*
+ * =========================================================
+ * DESKTOP ROW
+ * =========================================================
+ */
+
 function Row({
   title,
   value,
@@ -737,6 +1102,81 @@ function Row({
       </span>
 
       <span className="text-right font-medium">
+        {value}
+      </span>
+
+    </div>
+  );
+}
+
+
+/*
+ * =========================================================
+ * MOBILE SUMMARY CARD
+ * =========================================================
+ */
+
+function MobileSummaryCard({
+  icon,
+  title,
+  value,
+  valueClass = "text-gray-900",
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-300 bg-white px-4 py-4">
+
+      <div className="flex items-center gap-2 text-gray-500">
+
+        {icon}
+
+        <span className="text-sm">
+          {title}
+        </span>
+
+      </div>
+
+      <p
+        className={`mt-4 text-[21px] font-bold leading-none ${valueClass}`}
+      >
+        {value}
+      </p>
+
+    </div>
+  );
+}
+
+
+/*
+ * =========================================================
+ * MOBILE ROW
+ * =========================================================
+ */
+
+function MobileRow({
+  title,
+  value,
+  strong = false,
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+
+      <span
+        className={`text-sm ${
+          strong
+            ? "font-medium text-gray-700"
+            : "text-gray-500"
+        }`}
+      >
+        {title}
+      </span>
+
+      <span
+        className={`text-right text-sm ${
+          strong
+            ? "font-semibold text-gray-900"
+            : "font-medium text-gray-900"
+        }`}
+      >
         {value}
       </span>
 

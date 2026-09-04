@@ -78,7 +78,7 @@ export default function RepayModal({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/40"
+      className="fixed inset-0 z-[70] bg-black/40"
       onClick={onClose}
     >
 
@@ -86,9 +86,7 @@ export default function RepayModal({
           DESKTOP
       ===================================================== */}
 
-      <div
-        className="hidden lg:flex h-full items-center justify-center p-4"
-      >
+      <div className="hidden h-full items-center justify-center p-4 lg:flex">
 
         <div
           onClick={(e) =>
@@ -97,17 +95,19 @@ export default function RepayModal({
           className="w-full max-w-md rounded-xl bg-white p-6"
         >
 
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl font-bold text-gray-900">
             Repay Udhaar
           </h2>
+
 
           <p className="mt-4 text-sm text-gray-500">
             Bill Number
           </p>
 
-          <div className="text-lg font-semibold">
+          <div className="text-lg font-semibold text-gray-900">
             {entry.bill_number}
           </div>
+
 
           <p className="mt-5 text-sm text-gray-500">
             Remaining Amount
@@ -116,6 +116,7 @@ export default function RepayModal({
           <div className="text-2xl font-bold text-red-600">
             ₹{remaining.toLocaleString("en-IN")}
           </div>
+
 
           <input
             type="number"
@@ -130,6 +131,7 @@ export default function RepayModal({
             className="mt-5 w-full rounded-lg border p-3 disabled:bg-gray-100"
           />
 
+
           <div className="mt-6 flex justify-end gap-3">
 
             <button
@@ -140,6 +142,7 @@ export default function RepayModal({
             >
               Cancel
             </button>
+
 
             <button
               type="button"
@@ -163,66 +166,110 @@ export default function RepayModal({
           MOBILE — BOTTOM SHEET
       ===================================================== */}
 
-      <div className="lg:hidden flex h-full items-end">
+      <div className="flex h-full items-end lg:hidden">
 
         <div
           onClick={(e) =>
             e.stopPropagation()
           }
-          className="w-full rounded-t-2xl bg-white px-5 pb-5 pt-5"
+          className="w-full rounded-t-2xl bg-white px-5 pb-6 pt-5 shadow-2xl"
         >
 
-          <h2 className="text-xl font-bold text-gray-900">
-            Repay Udhaar
-          </h2>
+          {/* HEADER */}
 
+          <div className="flex items-center justify-between">
 
-          <p className="mt-5 text-sm text-gray-500">
-            Bill Number
-          </p>
+            <h2 className="text-xl font-bold text-gray-900">
+              Repay Udhaar
+            </h2>
 
-          <div className="text-base font-semibold text-gray-900">
-            {entry.bill_number}
           </div>
 
 
-          <p className="mt-5 text-sm text-gray-500">
-            Remaining Amount
-          </p>
+          {/* BILL NUMBER */}
 
-          <div className="text-2xl font-bold text-red-600">
-            ₹{remaining.toLocaleString("en-IN")}
+          <div className="mt-5">
+
+            <p className="text-sm font-medium text-gray-500">
+              Bill Number
+            </p>
+
+            <p className="mt-1 text-base font-semibold text-gray-900">
+              {entry.bill_number}
+            </p>
+
           </div>
 
 
-          <p className="mt-5 text-sm text-gray-700">
-            Amount Paid
-          </p>
+          {/* REMAINING */}
 
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Enter amount"
-            value={amount}
-            disabled={saving}
-            onChange={(e) =>
-              setAmount(e.target.value)
-            }
-            className="mt-2 h-12 w-full rounded-xl border border-gray-200 px-4 text-sm outline-none focus:border-blue-500 disabled:bg-gray-100"
-          />
+          <div className="mt-5">
+
+            <p className="text-sm font-medium text-gray-500">
+              Remaining Amount
+            </p>
+
+            <p className="mt-1 text-2xl font-bold text-red-600">
+              ₹{remaining.toLocaleString("en-IN")}
+            </p>
+
+          </div>
 
 
-          <button
-            type="button"
-            onClick={submit}
-            disabled={saving}
-            className="mt-5 h-11 w-full rounded-xl bg-green-600 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
-          >
-            {saving
-              ? "Submitting..."
-              : "Submit"}
-          </button>
+          {/* AMOUNT */}
+
+          <div className="mt-5">
+
+            <label
+              htmlFor="repay-amount"
+              className="text-sm font-medium text-gray-700"
+            >
+              Amount Paid
+            </label>
+
+            <input
+              id="repay-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Enter amount"
+              value={amount}
+              disabled={saving}
+              onChange={(e) =>
+                setAmount(e.target.value)
+              }
+              className="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-500 disabled:bg-gray-100"
+            />
+
+          </div>
+
+
+          {/* ACTIONS */}
+
+          <div className="mt-5 flex gap-3">
+
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="h-12 flex-1 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 transition hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Cancel
+            </button>
+
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={saving}
+              className="h-12 flex-1 rounded-xl bg-green-600 text-sm font-semibold text-white transition hover:bg-green-700 active:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              {saving
+                ? "Submitting..."
+                : "Submit"}
+            </button>
+
+          </div>
 
         </div>
 
