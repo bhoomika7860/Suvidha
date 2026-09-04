@@ -19,13 +19,16 @@ export default function PreviousReports() {
 
   const reportsPerPage = 10;
 
+
   useEffect(() => {
     loadReports();
   }, []);
 
+
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
+
 
   async function loadReports() {
     try {
@@ -42,6 +45,7 @@ export default function PreviousReports() {
       );
     }
   }
+
 
   async function openReport(report) {
     try {
@@ -65,6 +69,7 @@ export default function PreviousReports() {
         expenses,
         purchases,
       });
+
     } catch (err) {
       console.error(
         "Failed to load report details:",
@@ -73,21 +78,27 @@ export default function PreviousReports() {
     }
   }
 
+
   const filteredReports =
     reports.filter((report) =>
       report.date
         .toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(
+          search.toLowerCase()
+        )
     );
+
 
   const totalPages = Math.ceil(
     filteredReports.length /
       reportsPerPage
   );
 
+
   const startIndex =
     (currentPage - 1) *
     reportsPerPage;
+
 
   const currentReports =
     filteredReports.slice(
@@ -95,50 +106,123 @@ export default function PreviousReports() {
       startIndex + reportsPerPage
     );
 
+
   return (
-    <div className="space-y-6">
+    <div className="w-full">
 
-      {/* Header */}
+      {/* =====================================================
+          DESKTOP
+      ===================================================== */}
 
-      <div>
-        <h1 className="text-3xl font-bold">
-          Previous Reports
-        </h1>
+      <div className="hidden space-y-6 lg:block">
 
-        <p className="mt-1 text-gray-500">
-          View your store's submitted reports.
-        </p>
+        {/* HEADER */}
+
+        <div>
+          <h1 className="text-3xl font-bold">
+            Previous Reports
+          </h1>
+
+          <p className="mt-1 text-gray-500">
+            View your store's submitted reports.
+          </p>
+        </div>
+
+
+        {/* SEARCH */}
+
+        <ReportsToolbar
+          search={search}
+          setSearch={setSearch}
+        />
+
+
+        {/* REPORTS */}
+
+        <ReportsTable
+          reports={currentReports}
+          onOpen={openReport}
+        />
+
+
+        {/* PAGINATION */}
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
+
       </div>
 
-      {/* Search */}
 
-      <ReportsToolbar
-        search={search}
-        setSearch={setSearch}
-      />
+      {/* =====================================================
+          MOBILE
+      ===================================================== */}
 
-      {/* Reports */}
+      <div className="min-h-screen w-full overflow-x-hidden bg-gray-50 pb-24 lg:hidden">
 
-      <ReportsTable
-        reports={currentReports}
-        onOpen={openReport}
-      />
+        {/* HEADER */}
 
-      {/* Pagination */}
+        <div className="border-b border-gray-200 bg-white px-5 py-4">
 
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+          <h1 className="text-2xl font-bold leading-tight text-gray-900">
+            Previous Reports
+          </h1>
 
-      {/* Detail Drawer */}
+          <p className="mt-1 text-sm text-gray-500">
+            View your store's submitted reports.
+          </p>
+
+        </div>
+
+
+        {/* CONTENT */}
+
+        <div className="space-y-3 px-4 pt-4">
+
+          {/* SEARCH */}
+
+          <ReportsToolbar
+            search={search}
+            setSearch={setSearch}
+          />
+
+
+          {/* REPORT CARDS */}
+
+          <ReportsTable
+            reports={currentReports}
+            onOpen={openReport}
+          />
+
+
+          {/* PAGINATION */}
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          DETAIL DRAWER
+      ===================================================== */}
 
       <ReportDrawer
         report={selectedReport}
-        isOpen={selectedReport !== null}
+        isOpen={
+          selectedReport !== null
+        }
         onClose={() =>
           setSelectedReport(null)
         }

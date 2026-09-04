@@ -1286,84 +1286,96 @@ def get_report(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # --------------------------------------------------
+    # Get report
+    # --------------------------------------------------
 
     report_query = (
-    db.query(DailyReport)
-    .options(
-        joinedload(DailyReport.store),
-        joinedload(DailyReport.submitted_by_user),
-        joinedload(DailyReport.adjustment_requests),
+        db.query(DailyReport)
+        .options(
+            joinedload(DailyReport.store),
+            joinedload(DailyReport.submitted_by_user),
+            joinedload(DailyReport.adjustment_requests),
+        )
+        .filter(
+            DailyReport.id == report_id
+        )
     )
-    .filter(
-        DailyReport.id == report_id
-    )
-)
+
+    # --------------------------------------------------
+    # Store isolation
+    # --------------------------------------------------
 
     if current_user["role"] != "owner":
         report_query = report_query.filter(
-        DailyReport.store_id == current_user["store_id"]
-    )
+            DailyReport.store_id == current_user["store_id"]
+        )
 
     report = report_query.first()
 
     if report is None:
         raise HTTPException(
             status_code=404,
-            detail="Report not found"
+            detail="Report not found",
         )
-    expenses = (
-    db.query(Expense)
-    .filter(
-        Expense.daily_report_id == report.id,
-    )
-    .all()
-)
 
-# --------------------------------------------------
-# Udhaar visible for THIS report date
-# --------------------------------------------------
-#
-# LOCKED REPORT:
-# Use the historical Udhaar snapshot saved when
-# the report was submitted.
-#
-# OPEN REPORT:
-# Calculate the current outstanding Udhaar,
-# including carried-forward Udhaar.
-# --------------------------------------------------
+    # --------------------------------------------------
+    # Expenses
+    # --------------------------------------------------
+
+    expenses = (
+        db.query(Expense)
+        .filter(
+            Expense.daily_report_id == report.id,
+        )
+        .all()
+    )
+
+    # --------------------------------------------------
+    # Udhaar visible for THIS report date
+    #
+    # LOCKED REPORT:
+    # Use the historical snapshot saved when
+    # the report was submitted.
+    #
+    # OPEN REPORT:
+    # Calculate live outstanding Udhaar,
+    # including carried-forward balances.
+    # --------------------------------------------------
 
     if report.is_locked:
 
-    # Locked report = immutable historical snapshot.
+        # Locked report = immutable historical snapshot.
         udhaar_total = float(
-        report.udhaar_sales or 0
-    )
+            report.udhaar_sales or 0
+        )
 
     else:
 
-    # Open report = current outstanding Udhaar,
-    # including previous unsettled balances.
-        report_udhaar_entries = get_udhaar_for_report_date(
-        db=db,
-        store_id=report.store_id,
-        report_date=report.report_date,
-    )
+        # Open report = current outstanding Udhaar,
+        # including previous unsettled balances.
+        report_udhaar_entries = (
+            get_udhaar_for_report_date(
+                db=db,
+                store_id=report.store_id,
+                report_date=report.report_date,
+            )
+        )
 
-    udhaar_total = sum(
-        float(entry.amount or 0)
-        - float(entry.paid_amount or 0)
-        for entry in report_udhaar_entries
-        if entry.status != "settled"
-    )
+        udhaar_total = sum(
+            float(entry.amount or 0)
+            - float(entry.paid_amount or 0)
+            for entry in report_udhaar_entries
+            if entry.status != "settled"
+        )
 
-    udhaar_total = float(
-        udhaar_total or 0
-    )
+        udhaar_total = float(
+            udhaar_total or 0
+        )
 
-    
-       # --------------------------------------------------
-# Purchases visible for this business date
-# --------------------------------------------------
+    # --------------------------------------------------
+    # Purchases visible for this business date
+    # --------------------------------------------------
 
     business_timezone = ZoneInfo("Asia/Kolkata")
 
@@ -1372,42 +1384,50 @@ def get_report(
         datetime.min.time(),
     ).replace(
         tzinfo=business_timezone
-)
+    )
 
     next_date_start = (
-        selected_date_start + timedelta(days=1)
-)
+        selected_date_start
+        + timedelta(days=1)
+    )
 
     purchases = (
         db.query(Purchase)
-    .filter(
-        Purchase.store_id == report.store_id,
-        Purchase.received_date >= selected_date_start,
-        Purchase.received_date < next_date_start,
+        .filter(
+            Purchase.store_id == report.store_id,
+            Purchase.received_date >= selected_date_start,
+            Purchase.received_date < next_date_start,
+        )
+        .order_by(
+            Purchase.received_date.desc(),
+            Purchase.id.desc(),
+        )
+        .all()
     )
-    .order_by(
-        Purchase.received_date.desc(),
-        Purchase.id.desc(),
-    )
-    .all()
-)
 
-    
+    # --------------------------------------------------
+    # Delivery assignments
+    # --------------------------------------------------
 
     delivery_assignments = (
-    db.query(
-        DeliveryAssignment,
-        User.full_name.label("delivery_boy_name"),
+        db.query(
+            DeliveryAssignment,
+            User.full_name.label("delivery_boy_name"),
+        )
+        .join(
+            User,
+            DeliveryAssignment.delivery_boy_id == User.id,
+        )
+        .filter(
+            DeliveryAssignment.daily_report_id == report.id,
+        )
+        .all()
     )
-    .join(
-        User,
-        DeliveryAssignment.delivery_boy_id == User.id,
-    )
-    .filter(
-        DeliveryAssignment.daily_report_id == report.id,
-    )
-    .all()
-)
+
+    # --------------------------------------------------
+    # Return report
+    # --------------------------------------------------
+
     return {
         "id": report.id,
 
@@ -1424,45 +1444,62 @@ def get_report(
 
         "report_date": report.report_date,
 
-        "status": "LOCKED" if report.is_locked else "OPEN",
+        "status": (
+            "LOCKED"
+            if report.is_locked
+            else "OPEN"
+        ),
 
         "summary": {
             "sales": (
-    float(report.cash_sales or 0)
-    + float(report.upi_sales or 0)
-    + float(report.card_sales or 0)
-    + float(udhaar_total or 0)
-    + sum(
-        float(expense.amount or 0)
-        for expense in expenses
-    )
-),
+                float(report.cash_sales or 0)
+                + float(report.upi_sales or 0)
+                + float(report.card_sales or 0)
+                + float(udhaar_total or 0)
+                + sum(
+                    float(expense.amount or 0)
+                    for expense in expenses
+                )
+            ),
+
             "bills": report.total_bills,
+
             "deliveries": report.deliveries,
+
             "purchases": sum(
-    float(purchase.purchase_amount or 0)
-    for purchase in purchases
-),
+                float(
+                    purchase.purchase_amount or 0
+                )
+                for purchase in purchases
+            ),
+
             "expenses": sum(
-    expense.amount
-    for expense in expenses
-),
+                float(expense.amount or 0)
+                for expense in expenses
+            ),
         },
 
+        # --------------------------------------------------
+        # Purchases
+        # --------------------------------------------------
 
-       "completed_purchases": [
-    {
-        "id": purchase.id,
-        "supplier_name": purchase.supplier_name,
-        "bill_number": purchase.bill_number,
-        "purchase_amount": purchase.purchase_amount,
-        "received_by": purchase.received_by,
-        "checked_by": purchase.checked_by,
-        "entered_by": purchase.entered_by,
-        "status": purchase.status,
-    }
-    for purchase in purchases
-],
+        "completed_purchases": [
+            {
+                "id": purchase.id,
+                "supplier_name": purchase.supplier_name,
+                "bill_number": purchase.bill_number,
+                "purchase_amount": purchase.purchase_amount,
+                "received_by": purchase.received_by,
+                "checked_by": purchase.checked_by,
+                "entered_by": purchase.entered_by,
+                "status": purchase.status,
+            }
+            for purchase in purchases
+        ],
+
+        # --------------------------------------------------
+        # Payments
+        # --------------------------------------------------
 
         "payments": {
             "cash": report.cash_sales,
@@ -1472,26 +1509,37 @@ def get_report(
             "system_sales": report.system_sales,
         },
 
-       "expenses": [
-    {
-        "id": expense.id,
-        "expense_type": expense.expense_type,
-        "amount": expense.amount,
-        "remarks": expense.remarks,
-    }
-    for expense in expenses
-],
+        # --------------------------------------------------
+        # Expenses
+        # --------------------------------------------------
+
+        "expenses": [
+            {
+                "id": expense.id,
+                "expense_type": expense.expense_type,
+                "amount": expense.amount,
+                "remarks": expense.remarks,
+            }
+            for expense in expenses
+        ],
+
+        # --------------------------------------------------
+        # Delivery assignments
+        # --------------------------------------------------
 
         "delivery_assignments": [
-    {
-        "id": assignment.id,
-        "delivery_boy_name": delivery_boy_name,
-        "deliveries_completed": assignment.deliveries_completed,
-    }
-    for assignment, delivery_boy_name in delivery_assignments
-],
+            {
+                "id": assignment.id,
+                "delivery_boy_name": delivery_boy_name,
+                "deliveries_completed": assignment.deliveries_completed,
+            }
+            for assignment, delivery_boy_name
+            in delivery_assignments
+        ],
 
-        
+        # --------------------------------------------------
+        # Adjustment requests
+        # --------------------------------------------------
 
         "adjustments": [
             {
@@ -1502,9 +1550,9 @@ def get_report(
                 "reason": adjustment.reason,
                 "status": adjustment.status,
             }
-            for adjustment in report.adjustment_requests
+            for adjustment
+            in report.adjustment_requests
         ],
 
         "notes": report.notes,
     }
-

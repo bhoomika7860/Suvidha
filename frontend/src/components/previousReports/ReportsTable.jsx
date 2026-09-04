@@ -5,6 +5,7 @@ import {
 
 import {
   CalendarDays,
+  ChevronRight,
 } from "lucide-react";
 
 import dailyReportsService from "../../services/dailyReportsService";
@@ -152,9 +153,7 @@ function getDeliveriesTotal(report) {
  * ---------------------------------------------------------
  */
 
-function calculateExpenses(
-  expenses
-) {
+function calculateExpenses(expenses) {
   if (
     !Array.isArray(expenses)
   ) {
@@ -179,15 +178,6 @@ function calculateExpenses(
  * ---------------------------------------------------------
  * PURCHASES
  * ---------------------------------------------------------
- *
- * IMPORTANT:
- *
- * Only purchases that:
- *
- * 1. have status "received"
- * 2. were received on the report's business date
- *
- * are counted.
  */
 
 function calculateTodaysReceivedPurchases(
@@ -266,20 +256,6 @@ export default function ReportsTable({
   reports,
   onOpen,
 }) {
-  /*
-   * Details loaded separately for every
-   * previous report.
-   *
-   * Structure:
-   *
-   * {
-   *   [reportId]: {
-   *     expenses: number,
-   *     purchases: number
-   *   }
-   * }
-   */
-
   const [
     reportDetails,
     setReportDetails,
@@ -294,14 +270,8 @@ export default function ReportsTable({
 
   /*
    * -------------------------------------------------------
-   * LOAD ACTUAL REPORT DETAILS
+   * LOAD REPORT DETAILS
    * -------------------------------------------------------
-   *
-   * The previous-report list does not contain
-   * the actual expense/purchase records.
-   *
-   * Therefore we load them using the existing
-   * frontend services.
    */
 
   useEffect(() => {
@@ -316,9 +286,7 @@ export default function ReportsTable({
         return;
       }
 
-      setLoadingDetails(
-        true
-      );
+      setLoadingDetails(true);
 
       try {
         const results =
@@ -327,11 +295,13 @@ export default function ReportsTable({
               async (report) => {
 
                 try {
-                  /*
-                   * Get the complete report.
-                   */
                   let fullReport =
                     report;
+
+
+                  /*
+                   * Get complete report.
+                   */
 
                   try {
                     const detailedReport =
@@ -347,6 +317,7 @@ export default function ReportsTable({
                       fullReport =
                         detailedReport;
                     }
+
                   } catch (err) {
                     console.warn(
                       "Could not load detailed report:",
@@ -357,8 +328,9 @@ export default function ReportsTable({
 
 
                   /*
-                   * Load expenses.
+                   * Expenses.
                    */
+
                   let expenses =
                     Array.isArray(
                       fullReport.expenses
@@ -387,6 +359,7 @@ export default function ReportsTable({
                         expenses =
                           expenseData;
                       }
+
                     } catch (err) {
                       console.warn(
                         "Could not load expenses:",
@@ -398,8 +371,9 @@ export default function ReportsTable({
 
 
                   /*
-                   * Load purchases.
+                   * Purchases.
                    */
+
                   let purchases =
                     Array.isArray(
                       fullReport.purchases
@@ -428,6 +402,7 @@ export default function ReportsTable({
                         purchases =
                           purchaseData;
                       }
+
                     } catch (err) {
                       console.warn(
                         "Could not load purchases:",
@@ -482,8 +457,7 @@ export default function ReportsTable({
         }
 
 
-        const mapped =
-          {};
+        const mapped = {};
 
         results.forEach(
           (result) => {
@@ -542,268 +516,442 @@ export default function ReportsTable({
 
   /*
    * -------------------------------------------------------
-   * TABLE
+   * DESKTOP TABLE + MOBILE CARDS
    * -------------------------------------------------------
    */
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <>
+      {/* ===================================================
+          DESKTOP
+      =================================================== */}
 
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:block">
 
-        <table className="w-full min-w-[900px]">
+        <div className="overflow-x-auto">
 
-          <thead className="bg-gray-50">
+          <table className="w-full min-w-[900px]">
 
-            <tr>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Date
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Store
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Bills
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Sales
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Expenses
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Purchases
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Deliveries
-              </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Status
-              </th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            {reports.length ===
-            0 ? (
+            <thead className="bg-gray-50">
 
               <tr>
 
-                <td
-                  colSpan={8}
-                  className="px-6 py-16 text-center text-gray-500"
-                >
-                  No previous reports found.
-                </td>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Date
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Store
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Bills
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Sales
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Expenses
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Purchases
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Deliveries
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Status
+                </th>
 
               </tr>
 
-            ) : (
-
-              reports.map(
-                (
-                  report
-                ) => {
-
-                  const sales =
-                    getSalesTotal(
-                      report
-                    );
+            </thead>
 
 
-                  const bills =
-                    getBillsTotal(
-                      report
-                    );
+            <tbody>
 
+              {reports.length ===
+              0 ? (
 
-                  const deliveries =
-                    getDeliveriesTotal(
-                      report
-                    );
+                <tr>
 
+                  <td
+                    colSpan={8}
+                    className="px-6 py-16 text-center text-gray-500"
+                  >
+                    No previous reports found.
+                  </td>
 
-                  const details =
-                    reportDetails[
-                      report.id
-                    ];
+                </tr>
 
+              ) : (
 
-                  /*
-                   * While the actual details
-                   * are loading, keep the table
-                   * visually stable.
-                   */
-                  const expenses =
-                    details
-                      ? Number(
-                          details.expenses ||
-                            0
-                        )
-                      : 0;
+                reports.map(
+                  (report) => {
 
+                    const sales =
+                      getSalesTotal(
+                        report
+                      );
 
-                  const purchases =
-                    details
-                      ? Number(
-                          details.purchases ||
-                            0
-                        )
-                      : 0;
+                    const bills =
+                      getBillsTotal(
+                        report
+                      );
 
+                    const deliveries =
+                      getDeliveriesTotal(
+                        report
+                      );
 
-                  return (
-
-                    <tr
-                      key={
+                    const details =
+                      reportDetails[
                         report.id
-                      }
-                      onClick={() =>
-                        onOpen(
-                          report
-                        )
-                      }
-                      className="cursor-pointer border-t border-gray-200 transition hover:bg-blue-50"
-                    >
+                      ];
 
-                      {/* DATE */}
+                    const expenses =
+                      details
+                        ? Number(
+                            details.expenses ||
+                              0
+                          )
+                        : 0;
 
-                      <td className="px-6 py-4">
+                    const purchases =
+                      details
+                        ? Number(
+                            details.purchases ||
+                              0
+                          )
+                        : 0;
 
-                        <div className="flex items-center gap-2">
 
-                          <CalendarDays
-                            size={17}
-                            className="text-gray-400"
-                          />
+                    return (
+                      <tr
+                        key={
+                          report.id
+                        }
+                        onClick={() =>
+                          onOpen(
+                            report
+                          )
+                        }
+                        className="cursor-pointer border-t border-gray-200 transition hover:bg-blue-50"
+                      >
 
-                          <span>
+                        <td className="px-6 py-4">
+
+                          <div className="flex items-center gap-2">
+
+                            <CalendarDays
+                              size={17}
+                              className="text-gray-400"
+                            />
+
+                            <span>
+                              {
+                                report.date
+                              }
+                            </span>
+
+                          </div>
+
+                        </td>
+
+
+                        <td className="px-6 py-4 font-medium text-gray-700">
+                          {
+                            report.store
+                          }
+                        </td>
+
+
+                        <td className="px-6 py-4 font-medium">
+                          {
+                            bills
+                          }
+                        </td>
+
+
+                        <td className="px-6 py-4 font-semibold text-blue-600">
+                          ₹
+                          {sales.toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
+
+
+                        <td className="px-6 py-4">
+                          ₹
+                          {expenses.toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
+
+
+                        <td className="px-6 py-4">
+                          ₹
+                          {purchases.toLocaleString(
+                            "en-IN"
+                          )}
+                        </td>
+
+
+                        <td className="px-6 py-4">
+                          {
+                            deliveries
+                          }
+                        </td>
+
+
+                        <td className="px-6 py-4">
+
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                              report.status ===
+                              "Locked"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
                             {
-                              report.date
+                              report.status
                             }
                           </span>
 
-                        </div>
+                        </td>
 
-                      </td>
+                      </tr>
+                    );
+                  }
+                )
 
+              )}
 
-                      {/* STORE */}
+            </tbody>
 
-                      <td className="px-6 py-4 font-medium text-gray-700">
+          </table>
 
-                        {
-                          report.store
-                        }
+        </div>
 
-                      </td>
-
-
-                      {/* BILLS */}
-
-                      <td className="px-6 py-4 font-medium">
-
-                        {
-                          bills
-                        }
-
-                      </td>
+      </div>
 
 
-                      {/* SALES */}
+      {/* ===================================================
+          MOBILE
+      =================================================== */}
 
-                      <td className="px-6 py-4 font-semibold text-blue-600">
+      <div className="space-y-2.5 lg:hidden">
 
+        {reports.length ===
+        0 ? (
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+            No previous reports found.
+          </div>
+
+        ) : (
+
+          reports.map(
+            (report) => {
+
+              const sales =
+                getSalesTotal(
+                  report
+                );
+
+              const bills =
+                getBillsTotal(
+                  report
+                );
+
+              const deliveries =
+                getDeliveriesTotal(
+                  report
+                );
+
+              const details =
+                reportDetails[
+                  report.id
+                ];
+
+              const expenses =
+                details
+                  ? Number(
+                      details.expenses ||
+                        0
+                    )
+                  : 0;
+
+              const purchases =
+                details
+                  ? Number(
+                      details.purchases ||
+                        0
+                    )
+                  : 0;
+
+
+              return (
+                <button
+                  key={
+                    report.id
+                  }
+                  type="button"
+                  onClick={() =>
+                    onOpen(
+                      report
+                    )
+                  }
+                  className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.995]"
+                >
+
+                  {/* TOP ROW */}
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div className="min-w-0">
+
+                      <div className="flex items-center gap-2">
+
+                        <CalendarDays
+                          size={16}
+                          className="shrink-0 text-gray-400"
+                        />
+
+                        <p className="text-sm font-semibold text-gray-900">
+                          {report.date}
+                        </p>
+
+                      </div>
+
+                      <p className="mt-1 truncate pl-6 text-xs text-gray-500">
+                        {report.store}
+                      </p>
+
+                    </div>
+
+
+                    <div className="flex shrink-0 items-center gap-2">
+
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          report.status ===
+                          "Locked"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {report.status}
+                      </span>
+
+                      <ChevronRight
+                        size={17}
+                        className="text-gray-400"
+                      />
+
+                    </div>
+
+                  </div>
+
+
+                  {/* MAIN NUMBERS */}
+
+                  <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-gray-100 pt-3">
+
+                    <div>
+
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                        Sales
+                      </p>
+
+                      <p className="mt-0.5 text-base font-bold text-blue-600">
                         ₹
                         {sales.toLocaleString(
                           "en-IN"
                         )}
+                      </p>
 
-                      </td>
-
-
-                      {/* EXPENSES */}
-
-                      <td className="px-6 py-4">
-
-                        ₹
-                        {expenses.toLocaleString(
-                          "en-IN"
-                        )}
-
-                      </td>
+                    </div>
 
 
-                      {/* PURCHASES */}
+                    <div>
 
-                      <td className="px-6 py-4">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                        Bills
+                      </p>
 
+                      <p className="mt-0.5 text-base font-bold text-gray-900">
+                        {bills}
+                      </p>
+
+                    </div>
+
+
+                    <div>
+
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                        Purchases
+                      </p>
+
+                      <p className="mt-0.5 text-sm font-semibold text-gray-900">
                         ₹
                         {purchases.toLocaleString(
                           "en-IN"
                         )}
+                      </p>
 
-                      </td>
-
-
-                      {/* DELIVERIES */}
-
-                      <td className="px-6 py-4">
-
-                        {
-                          deliveries
-                        }
-
-                      </td>
+                    </div>
 
 
-                      {/* STATUS */}
+                    <div>
 
-                      <td className="px-6 py-4">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                        Expenses
+                      </p>
 
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                            report.status ===
-                            "Locked"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
+                      <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                        ₹
+                        {expenses.toLocaleString(
+                          "en-IN"
+                        )}
+                      </p>
 
-                          {
-                            report.status
-                          }
+                    </div>
 
-                        </span>
+                  </div>
 
-                      </td>
 
-                    </tr>
+                  {/* BOTTOM */}
 
-                  );
-                }
-              )
+                  <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
 
-            )}
+                    <p className="text-xs text-gray-500">
+                      Deliveries:{" "}
+                      <span className="font-semibold text-gray-900">
+                        {deliveries}
+                      </span>
+                    </p>
 
-          </tbody>
+                    <p className="text-[11px] font-medium text-blue-600">
+                      View report
+                    </p>
 
-        </table>
+                  </div>
+
+                </button>
+              );
+            }
+          )
+
+        )}
 
       </div>
-
-    </div>
+    </>
   );
 }
