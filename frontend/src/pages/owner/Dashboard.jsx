@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Store,
   Package,
@@ -28,9 +29,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 function formatINR(value) {
   const number = Number(value || 0);
@@ -47,9 +48,24 @@ function formatINR(value) {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Good Morning";
+  }
+
+  if (hour < 17) {
+    return "Good Afternoon";
+  }
+
+  return "Good Evening";
+}
+
+
+// ─────────────────────────────────────────────────────────────
 // DESKTOP KPI CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 function KpiCard({
   label,
@@ -93,9 +109,9 @@ function KpiCard({
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // DESKTOP STORE TABLE
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 function StoreTable({
   storeSummary,
@@ -119,11 +135,12 @@ function StoreTable({
 
         <button
           type="button"
-          onClick={() => navigate("/stores")}
+          onClick={() =>
+            navigate("/stores")
+          }
           className="flex items-center gap-1 text-sm font-semibold text-[#2563eb] transition hover:text-[#1d4ed8]"
         >
           View all
-
           <ChevronRight size={14} />
         </button>
 
@@ -232,9 +249,9 @@ function StoreTable({
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MOBILE KPI CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 function MobileKpiCard({
   label,
@@ -261,7 +278,7 @@ function MobileKpiCard({
       </p>
 
 
-      <p className="mt-1 text-[19px] font-bold leading-none tracking-tight text-[#0F172A]">
+      <p className="mt-1 text-[18px] font-semibold leading-none tracking-tight text-[#0F172A]">
         {value}
       </p>
 
@@ -270,21 +287,23 @@ function MobileKpiCard({
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MOBILE STORE CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
-function MobileStoreCard({ store }) {
+function MobileStoreCard({
+  store,
+}) {
   const navigate = useNavigate();
 
   return (
     <button
       type="button"
-      onClick={() => navigate("/daily-reports")}
+      onClick={() =>
+        navigate("/daily-reports")
+      }
       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition active:scale-[0.99]"
     >
-
-      {/* Store heading */}
 
       <div className="flex items-center gap-3">
 
@@ -300,7 +319,7 @@ function MobileStoreCard({ store }) {
 
         <div className="min-w-0 flex-1">
 
-          <p className="truncate text-[15px] font-semibold text-[#0F172A]">
+          <p className="truncate text-[15px] font-semibold leading-5 text-[#0F172A]">
             {store.store_name}
           </p>
 
@@ -319,17 +338,15 @@ function MobileStoreCard({ store }) {
       </div>
 
 
-      {/* Store metrics */}
-
       <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3.5">
 
-        <div className="min-w-0">
+        <div>
 
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#64748B]">
             Total Sales
           </p>
 
-          <p className="mt-1.5 text-[17px] font-bold leading-none text-[#0F172A]">
+          <p className="mt-1.5 text-[17px] font-semibold leading-none text-[#0F172A]">
             ₹{(
               store.total_sales || 0
             ).toLocaleString("en-IN")}
@@ -338,13 +355,13 @@ function MobileStoreCard({ store }) {
         </div>
 
 
-        <div className="min-w-0">
+        <div>
 
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#64748B]">
             Total Bills
           </p>
 
-          <p className="mt-1.5 text-[17px] font-bold leading-none text-[#0F172A]">
+          <p className="mt-1.5 text-[17px] font-semibold leading-none text-[#0F172A]">
             {store.total_bills || 0}
           </p>
 
@@ -357,9 +374,9 @@ function MobileStoreCard({ store }) {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MOBILE STORE PERFORMANCE
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 function MobileStorePerformance({
   storeSummary,
@@ -374,8 +391,6 @@ function MobileStorePerformance({
 
   return (
     <section>
-
-      {/* Section heading */}
 
       <div className="mb-3 flex items-end justify-between gap-3">
 
@@ -394,29 +409,30 @@ function MobileStorePerformance({
 
         <button
           type="button"
-          onClick={() => navigate("/stores")}
+          onClick={() =>
+            navigate("/stores")
+          }
           className="flex shrink-0 items-center gap-0.5 text-[12px] font-medium text-blue-600"
         >
           View all
-
           <ChevronRight size={14} />
         </button>
 
       </div>
 
 
-      {/* Store cards */}
-
       <div className="space-y-3">
 
         {storeSummary.length > 0 ? (
 
-          storeSummary.map((store) => (
-            <MobileStoreCard
-              key={store.store_id}
-              store={store}
-            />
-          ))
+          storeSummary.map(
+            (store) => (
+              <MobileStoreCard
+                key={store.store_id}
+                store={store}
+              />
+            )
+          )
 
         ) : (
 
@@ -432,8 +448,6 @@ function MobileStorePerformance({
 
       </div>
 
-
-      {/* Pending submissions */}
 
       {pendingStores > 0 && (
 
@@ -456,12 +470,14 @@ function MobileStorePerformance({
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // DASHBOARD
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [salesData, setSalesData] = useState([]);
+  const [salesData, setSalesData] =
+    useState([]);
+
   const [comparisonData, setComparisonData] =
     useState([]);
 
@@ -474,65 +490,69 @@ export default function Dashboard() {
   const [loading, setLoading] =
     useState(true);
 
-  const [dashboardSummary, setDashboardSummary] =
-    useState({
-      total_sales: 0,
-      total_purchases: 0,
-      total_bills: 0,
-      total_expenses: 0,
-      total_deliveries: 0,
-      purchase_bills_completed: 0,
-      submitted_reports: 0,
-    });
+  const [
+    dashboardSummary,
+    setDashboardSummary,
+  ] = useState({
+    total_sales: 0,
+    total_purchases: 0,
+    total_bills: 0,
+    total_expenses: 0,
+    total_deliveries: 0,
+    purchase_bills_completed: 0,
+    submitted_reports: 0,
+  });
 
   const { user } = useAuth();
 
 
   useEffect(() => {
 
-    const loadDashboard = async () => {
+    const loadDashboard =
+      async () => {
 
-      try {
+        try {
 
-        setLoading(true);
+          setLoading(true);
 
-        const data =
-          await dashboardService.getDashboardData();
+          const data =
+            await dashboardService.getDashboardData();
 
-        setDashboardSummary(
-          data.summary || {}
-        );
+          setDashboardSummary(
+            data.summary || {}
+          );
 
-        setTotalStores(
-          data.totalStores || 0
-        );
+          setTotalStores(
+            data.totalStores || 0
+          );
 
-        setStoreSummary(
-          data.storeSummary || []
-        );
+          setStoreSummary(
+            data.storeSummary || []
+          );
 
-        setSalesData(
-          data.salesData || []
-        );
+          setSalesData(
+            data.salesData || []
+          );
 
-        setComparisonData(
-          data.comparisonData || []
-        );
+          setComparisonData(
+            data.comparisonData || []
+          );
 
-      } catch (error) {
+        } catch (error) {
 
-        console.error(
-          "Failed to load owner dashboard:",
-          error
-        );
+          console.error(
+            "Failed to load owner dashboard:",
+            error
+          );
 
-      } finally {
+        } finally {
 
-        setLoading(false);
+          setLoading(false);
 
-      }
+        }
 
-    };
+      };
+
 
     loadDashboard();
 
@@ -561,12 +581,21 @@ export default function Dashboard() {
   }
 
 
+  const displayName =
+    user?.full_name ||
+    user?.username ||
+    "User";
+
+  const greeting =
+    getGreeting();
+
+
   return (
     <>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           DESKTOP
-      ═══════════════════════════════════════════════════════════════════════ */}
+      ═══════════════════════════════════════════════════════ */}
 
       <main
         className="hidden flex-1 space-y-10 overflow-x-hidden bg-[#F8FAFC] px-6 py-8 lg:block lg:px-8"
@@ -579,7 +608,7 @@ export default function Dashboard() {
         }}
       >
 
-        {/* Hero */}
+        {/* Desktop Hero */}
 
         <Card className="flex flex-col gap-5 px-8 py-3 sm:flex-row sm:items-center sm:justify-between">
 
@@ -590,7 +619,7 @@ export default function Dashboard() {
             </p>
 
             <h1 className="mt-2 text-2xl font-bold leading-tight text-[#0F172A]">
-              {user?.full_name || "User"}
+              {greeting}, {displayName}
             </h1>
 
             <p className="mt-2 text-base text-[#64748B]">
@@ -605,7 +634,7 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2">
 
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
 
               <span className="text-sm font-semibold text-emerald-700">
                 {totalStores} Stores Active
@@ -618,7 +647,7 @@ export default function Dashboard() {
         </Card>
 
 
-        {/* KPI cards */}
+        {/* Desktop KPIs */}
 
         <div className="grid grid-cols-1 gap-6 transition-all md:grid-cols-2 xl:grid-cols-4">
 
@@ -639,7 +668,8 @@ export default function Dashboard() {
           <KpiCard
             label="Sales Bills"
             value={
-              dashboardSummary.total_bills || 0
+              dashboardSummary.total_bills ||
+              0
             }
             sub="Across all stores"
             color="border-violet-500"
@@ -711,11 +741,9 @@ export default function Dashboard() {
         </div>
 
 
-        {/* Charts — DESKTOP ONLY */}
+        {/* Desktop Charts */}
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-
-          {/* Sales Distribution */}
 
           <Card className="overflow-hidden">
 
@@ -748,7 +776,10 @@ export default function Dashboard() {
                   >
 
                     {salesData.map(
-                      (entry, index) => (
+                      (
+                        entry,
+                        index
+                      ) => (
                         <Cell
                           key={`desktop-sales-${index}`}
                           fill={
@@ -768,16 +799,21 @@ export default function Dashboard() {
 
 
                   <Tooltip
-                    formatter={(value) => [
+                    formatter={(
+                      value
+                    ) => [
                       `₹${value}`,
                       "Sales",
                     ]}
                     contentStyle={{
-                      backgroundColor: "#111827",
+                      backgroundColor:
+                        "#111827",
                       border: "none",
-                      borderRadius: "12px",
+                      borderRadius:
+                        "12px",
                       color: "#fff",
-                      padding: "8px 12px",
+                      padding:
+                        "8px 12px",
                     }}
                   />
 
@@ -787,9 +823,12 @@ export default function Dashboard() {
                     align="center"
                     iconType="circle"
                     wrapperStyle={{
-                      paddingTop: "20px",
+                      paddingTop:
+                        "20px",
                     }}
-                    formatter={(value) => (
+                    formatter={(
+                      value
+                    ) => (
                       <span className="font-medium text-[#0F172A]">
                         {value}
                       </span>
@@ -804,8 +843,6 @@ export default function Dashboard() {
 
           </Card>
 
-
-          {/* Sales vs Purchases */}
 
           <Card className="overflow-hidden">
 
@@ -826,7 +863,9 @@ export default function Dashboard() {
               >
 
                 <BarChart
-                  data={comparisonData}
+                  data={
+                    comparisonData
+                  }
                   barGap={8}
                   barCategoryGap="20%"
                 >
@@ -849,7 +888,9 @@ export default function Dashboard() {
                     tick={{
                       fontSize: 12,
                     }}
-                    tickFormatter={(value) =>
+                    tickFormatter={(
+                      value
+                    ) =>
                       `${value / 1000}k`
                     }
                   />
@@ -863,11 +904,14 @@ export default function Dashboard() {
                       name,
                     ]}
                     contentStyle={{
-                      backgroundColor: "#111827",
+                      backgroundColor:
+                        "#111827",
                       border: "none",
-                      borderRadius: "12px",
+                      borderRadius:
+                        "12px",
                       color: "#fff",
-                      padding: "8px 12px",
+                      padding:
+                        "8px 12px",
                     }}
                   />
 
@@ -875,9 +919,12 @@ export default function Dashboard() {
                     verticalAlign="bottom"
                     align="center"
                     wrapperStyle={{
-                      paddingTop: "20px",
+                      paddingTop:
+                        "20px",
                     }}
-                    formatter={(value) => (
+                    formatter={(
+                      value
+                    ) => (
                       <span className="font-medium text-[#0F172A]">
                         {value}
                       </span>
@@ -888,14 +935,24 @@ export default function Dashboard() {
                     dataKey="sales"
                     name="Sales"
                     fill="#2563eb"
-                    radius={[8, 8, 0, 0]}
+                    radius={[
+                      8,
+                      8,
+                      0,
+                      0,
+                    ]}
                   />
 
                   <Bar
                     dataKey="purchases"
                     name="Purchases"
                     fill="#8b5cf6"
-                    radius={[8, 8, 0, 0]}
+                    radius={[
+                      8,
+                      8,
+                      0,
+                      0,
+                    ]}
                   />
 
                 </BarChart>
@@ -909,27 +966,25 @@ export default function Dashboard() {
         </div>
 
 
-        {/* Desktop Store Performance */}
-
         <StoreTable
-          storeSummary={storeSummary}
-          totalStores={totalStores}
+          storeSummary={
+            storeSummary
+          }
+          totalStores={
+            totalStores
+          }
         />
-
-        <div className="h-4" />
 
       </main>
 
 
-      {/* ═══════════════════════════════════════════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           MOBILE
-      ═══════════════════════════════════════════════════════════════════════ */}
+      ═══════════════════════════════════════════════════════ */}
 
       <main className="min-h-screen overflow-x-hidden bg-[#F8FAFC] px-5 pb-24 lg:hidden">
 
-        {/* ───────────────────────────────────────────────────────────────────
-            PAGE HEADER
-        ─────────────────────────────────────────────────────────────────── */}
+        {/* Page Header */}
 
         <div className="-mx-5 mb-5 border-b border-gray-200 bg-white px-5 pb-4 pt-5">
 
@@ -965,9 +1020,38 @@ export default function Dashboard() {
         </div>
 
 
-        {/* ───────────────────────────────────────────────────────────────────
-            TODAY'S OVERVIEW
-        ─────────────────────────────────────────────────────────────────── */}
+        {/* Greeting */}
+
+        <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+
+          <p className="text-[12px] font-medium text-[#64748B]">
+            {greeting},
+          </p>
+
+          <div className="mt-1 flex items-center justify-between gap-3">
+
+            <h2 className="truncate text-[20px] font-bold leading-tight tracking-tight text-[#0F172A]">
+              {displayName}
+            </h2>
+
+            <div className="shrink-0 text-right">
+
+              <p className="text-[10px] font-medium text-[#64748B]">
+                Stores Active
+              </p>
+
+              <p className="mt-0.5 text-[16px] font-semibold leading-none text-emerald-600">
+                {totalStores}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* Today's Overview */}
 
         <section className="mb-5">
 
@@ -1010,7 +1094,7 @@ export default function Dashboard() {
               label="Deliveries"
               value={
                 dashboardSummary.total_deliveries ||
-                  0
+                0
               }
               Icon={Package}
               iconBackground="bg-emerald-50"
@@ -1034,18 +1118,16 @@ export default function Dashboard() {
         </section>
 
 
-        {/* ───────────────────────────────────────────────────────────────────
-            STORE PERFORMANCE
-        ─────────────────────────────────────────────────────────────────── */}
+        {/* Store Performance */}
 
-        <section className="mb-5">
-
-          <MobileStorePerformance
-            storeSummary={storeSummary}
-            totalStores={totalStores}
-          />
-
-        </section>
+        <MobileStorePerformance
+          storeSummary={
+            storeSummary
+          }
+          totalStores={
+            totalStores
+          }
+        />
 
       </main>
 

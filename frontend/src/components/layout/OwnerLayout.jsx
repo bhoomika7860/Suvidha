@@ -1,5 +1,9 @@
-import { useState, useEffect } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Outlet,
+  NavLink,
+  useLocation,
+} from "react-router-dom";
 
 import {
   Home,
@@ -18,12 +22,11 @@ import {
 
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import MobileBusinessDate from "../manager/MobileBusinessDate";
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MOBILE PRIMARY NAVIGATION
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 const mobileNavItems = [
   {
@@ -49,9 +52,9 @@ const mobileNavItems = [
 ];
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MOBILE MORE MENU
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 const moreItems = [
   {
@@ -87,33 +90,34 @@ const moreItems = [
 ];
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // OWNER LAYOUT
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 export default function OwnerLayout() {
-  const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] =
+    useState(false);
 
-  const location = useLocation();
+  const location =
+    useLocation();
+
 
   useEffect(() => {
     setShowMore(false);
   }, [location]);
 
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
 
-      {/* ═══════════════════════════════════════════════════════════════════════
+
+      {/* ═══════════════════════════════════════════════════════
           DESKTOP
-      ═══════════════════════════════════════════════════════════════════════ */}
+      ═══════════════════════════════════════════════════════ */}
 
       <div className="hidden h-screen lg:flex">
 
-        {/* Desktop Sidebar */}
-
         <Sidebar />
-
-        {/* Desktop Content */}
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
@@ -128,38 +132,35 @@ export default function OwnerLayout() {
       </div>
 
 
-      {/* ═══════════════════════════════════════════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           MOBILE
-      ═══════════════════════════════════════════════════════════════════════ */}
+      ═══════════════════════════════════════════════════════ */}
 
       <div className="min-h-screen lg:hidden">
-
-        {/* Business Date */}
-
-        <MobileBusinessDate />
-
-
-        {/* Page Content */}
 
         <main className="pb-20">
           <Outlet />
         </main>
 
 
-        {/* More Bottom Sheet */}
+        {/* More Sheet */}
 
         {showMore && (
           <>
+
             {/* Backdrop */}
 
             <button
               type="button"
               aria-label="Close menu"
-              onClick={() => setShowMore(false)}
+              onClick={() =>
+                setShowMore(false)
+              }
               className="fixed inset-0 z-40 bg-black/30"
             />
 
-            {/* Sheet */}
+
+            {/* Bottom Sheet */}
 
             <div className="fixed bottom-16 left-0 right-0 z-50 rounded-t-2xl border-t border-gray-200 bg-white px-4 pb-4 pt-3 shadow-2xl">
 
@@ -169,9 +170,12 @@ export default function OwnerLayout() {
                   More
                 </p>
 
+
                 <button
                   type="button"
-                  onClick={() => setShowMore(false)}
+                  onClick={() =>
+                    setShowMore(false)
+                  }
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500"
                 >
                   <X size={17} />
@@ -182,32 +186,55 @@ export default function OwnerLayout() {
 
               <div className="space-y-1">
 
-                {moreItems.map((item) => {
-                  const Icon = item.icon;
+                {moreItems.map(
+                  (item) => {
 
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setShowMore(false)}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                          isActive
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`
-                      }
-                    >
-                      <Icon size={19} />
+                    const Icon =
+                      item.icon;
 
-                      <span>{item.label}</span>
-                    </NavLink>
-                  );
-                })}
+                    return (
+                      <NavLink
+                        key={
+                          item.path
+                        }
+                        to={
+                          item.path
+                        }
+                        onClick={() =>
+                          setShowMore(
+                            false
+                          )
+                        }
+                        className={({
+                          isActive,
+                        }) =>
+                          `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                            isActive
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`
+                        }
+                      >
+
+                        <Icon
+                          size={19}
+                        />
+
+                        <span>
+                          {
+                            item.label
+                          }
+                        </span>
+
+                      </NavLink>
+                    );
+                  }
+                )}
 
               </div>
 
             </div>
+
           </>
         )}
 
@@ -218,29 +245,45 @@ export default function OwnerLayout() {
 
           <div className="grid h-full grid-cols-5">
 
-            {mobileNavItems.map((item) => {
-              const Icon = item.icon;
+            {mobileNavItems.map(
+              (item) => {
 
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex flex-col items-center justify-center transition ${
-                      isActive
-                        ? "text-blue-600"
-                        : "text-gray-500"
-                    }`
-                  }
-                >
-                  <Icon size={20} />
+                const Icon =
+                  item.icon;
 
-                  <span className="mt-1 text-[11px] font-medium">
-                    {item.label}
-                  </span>
-                </NavLink>
-              );
-            })}
+                return (
+                  <NavLink
+                    key={
+                      item.path
+                    }
+                    to={
+                      item.path
+                    }
+                    className={({
+                      isActive,
+                    }) =>
+                      `flex flex-col items-center justify-center transition ${
+                        isActive
+                          ? "text-blue-600"
+                          : "text-gray-500"
+                      }`
+                    }
+                  >
+
+                    <Icon
+                      size={20}
+                    />
+
+                    <span className="mt-1 text-[11px] font-medium">
+                      {
+                        item.label
+                      }
+                    </span>
+
+                  </NavLink>
+                );
+              }
+            )}
 
 
             {/* More */}
@@ -248,7 +291,10 @@ export default function OwnerLayout() {
             <button
               type="button"
               onClick={() =>
-                setShowMore((previous) => !previous)
+                setShowMore(
+                  (previous) =>
+                    !previous
+                )
               }
               className={`flex flex-col items-center justify-center transition ${
                 showMore
@@ -256,11 +302,15 @@ export default function OwnerLayout() {
                   : "text-gray-500"
               }`}
             >
-              <MoreHorizontal size={20} />
+
+              <MoreHorizontal
+                size={20}
+              />
 
               <span className="mt-1 text-[11px] font-medium">
                 More
               </span>
+
             </button>
 
           </div>

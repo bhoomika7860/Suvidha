@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Outlet,
   NavLink,
+  useNavigate,
 } from "react-router-dom";
 
 import {
@@ -13,6 +14,7 @@ import {
   MoreHorizontal,
   History,
   ClipboardCheck,
+  LogOut,
   X,
 } from "lucide-react";
 
@@ -62,8 +64,16 @@ const moreItems = [
 ];
 
 export default function ManagerLayout() {
-  const [showMore, setShowMore] =
-    useState(false);
+  const [showMore, setShowMore] = useState(false);
+
+  const navigate = useNavigate();
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    navigate("/");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -189,6 +199,23 @@ export default function ManagerLayout() {
                     );
                   }
                 )}
+
+
+                {/* LOGOUT */}
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+
+                  <LogOut size={19} />
+
+                  <span>
+                    Logout
+                  </span>
+
+                </button>
 
               </div>
 
