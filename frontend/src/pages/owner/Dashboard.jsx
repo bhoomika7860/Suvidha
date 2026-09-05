@@ -1022,34 +1022,19 @@ export default function Dashboard() {
 
         {/* Greeting */}
 
-        <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+       <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
 
-          <p className="text-[12px] font-medium text-[#64748B]">
-            {greeting},
-          </p>
+  <div className="flex min-w-0 items-center gap-1.5">
+    <p className="shrink-0 text-[14px] font-medium leading-tight text-[#64748B]">
+      {greeting},
+    </p>
 
-          <div className="mt-1 flex items-center justify-between gap-3">
+    <h2 className="min-w-0 truncate text-[18px] font-semibold leading-tight tracking-tight text-[#0F172A]">
+      {displayName}
+    </h2>
+  </div>
 
-            <h2 className="truncate text-[20px] font-bold leading-tight tracking-tight text-[#0F172A]">
-              {displayName}
-            </h2>
-
-            <div className="shrink-0 text-right">
-
-              <p className="text-[10px] font-medium text-[#64748B]">
-                Stores Active
-              </p>
-
-              <p className="mt-0.5 text-[16px] font-semibold leading-none text-emerald-600">
-                {totalStores}
-              </p>
-
-            </div>
-
-          </div>
-
-        </section>
-
+</section>
 
         {/* Today's Overview */}
 
