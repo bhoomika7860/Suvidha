@@ -26,78 +26,200 @@ export default function ReportFilters({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 mb-5 flex items-center gap-3 flex-wrap">
+    <div className="mb-5 rounded-2xl border border-gray-200 bg-white px-4 py-3">
+      
+      {/* Mobile layout */}
+      <div className="space-y-3 sm:hidden">
 
-      {/* Search */}
-      <div className="relative flex-1 min-w-[180px] max-w-xs">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        />
+        {/* Search */}
 
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search store or report..."
-          className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 placeholder:text-gray-400"
-        />
-      </div>
+        <div className="relative w-full">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
 
-      {/* Store Filter */}
-      <div className="relative">
-        <select
-          value={storeFilter}
-          onChange={(e) => setStoreFilter(e.target.value)}
-          className="appearance-none pl-3 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-gray-700 cursor-pointer"
-        >
-          <option value="All Stores">
-            All Stores
-          </option>
+          <input
+            value={searchQuery}
+            onChange={(e) =>
+              setSearchQuery(e.target.value)
+            }
+            placeholder="Search store or report..."
+            className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
 
-          {stores.map((store) => (
-            <option
-              key={store.id}
-              value={store.id}
+
+        {/* Filters — SAME ROW */}
+
+        <div className="grid grid-cols-2 gap-3">
+
+          {/* Store Filter */}
+
+          <div className="relative min-w-0">
+
+            <select
+              value={storeFilter}
+              onChange={(e) =>
+                setStoreFilter(e.target.value)
+              }
+              className="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 px-3 pr-8 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
             >
-              {store.name}
-            </option>
-          ))}
-        </select>
+              <option value="All Stores">
+                All Stores
+              </option>
 
-        <ChevronDown
-          size={13}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-        />
+              {stores.map((store) => (
+                <option
+                  key={store.id}
+                  value={store.id}
+                >
+                  {store.name}
+                </option>
+              ))}
+            </select>
+
+            <ChevronDown
+              size={13}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+          </div>
+
+
+          {/* Status Filter */}
+
+          <div className="relative min-w-0">
+
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value)
+              }
+              className="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 px-3 pr-8 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="All Status">
+                All Status
+              </option>
+
+              <option value="Locked">
+                Locked
+              </option>
+
+              <option value="Pending">
+                Pending
+              </option>
+
+              <option value="Adjustment Requested">
+                Adjustment Requested
+              </option>
+            </select>
+
+            <ChevronDown
+              size={13}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Status Filter */}
-      <div className="relative">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="appearance-none pl-3 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-gray-700 cursor-pointer"
-        >
-          <option value="All Status">
-            All Status
-          </option>
 
-          <option value="Locked">
-            Locked
-          </option>
+      {/* Desktop layout — unchanged */}
 
-          <option value="Pending">
-            Pending
-          </option>
+      <div className="hidden items-center gap-3 sm:flex">
 
-          <option value="Adjustment Requested">
-            Adjustment Requested
-          </option>
-        </select>
+        {/* Search */}
 
-        <ChevronDown
-          size={13}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-        />
+        <div className="relative min-w-[180px] max-w-xs flex-1">
+
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+          <input
+            value={searchQuery}
+            onChange={(e) =>
+              setSearchQuery(e.target.value)
+            }
+            placeholder="Search store or report..."
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          />
+
+        </div>
+
+
+        {/* Store Filter */}
+
+        <div className="relative shrink-0">
+
+          <select
+            value={storeFilter}
+            onChange={(e) =>
+              setStoreFilter(e.target.value)
+            }
+            className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-3 pr-8 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="All Stores">
+              All Stores
+            </option>
+
+            {stores.map((store) => (
+              <option
+                key={store.id}
+                value={store.id}
+              >
+                {store.name}
+              </option>
+            ))}
+          </select>
+
+          <ChevronDown
+            size={13}
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+        </div>
+
+
+        {/* Status Filter */}
+
+        <div className="relative shrink-0">
+
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value)
+            }
+            className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-3 pr-8 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="All Status">
+              All Status
+            </option>
+
+            <option value="Locked">
+              Locked
+            </option>
+
+            <option value="Pending">
+              Pending
+            </option>
+
+            <option value="Adjustment Requested">
+              Adjustment Requested
+            </option>
+          </select>
+
+          <ChevronDown
+            size={13}
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+        </div>
+
       </div>
 
     </div>
