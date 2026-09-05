@@ -6,13 +6,14 @@ import {
   Users,
   Building2,
   History,
-  X,
   Wallet,
   LogOut,
   Truck,
 } from "lucide-react";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+
 
 const navItems = [
   {
@@ -57,8 +58,8 @@ const navItems = [
   },
   {
     label: "Udhaar",
-    path: "/owner/udhaar",
     icon: Wallet,
+    path: "/owner/udhaar",
   },
   {
     label: "Analytics",
@@ -67,23 +68,32 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ open, onClose }) {
+
+export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     navigate("/");
   }
 
+
   const token = localStorage.getItem("token");
 
-  const user = token ? jwtDecode(token) : null;
+  const user = token
+    ? jwtDecode(token)
+    : null;
+
 
   const displayName =
     user?.full_name ||
     user?.username ||
     "";
+
 
   const initials = displayName
     ? displayName
@@ -93,6 +103,7 @@ export default function Sidebar({ open, onClose }) {
         .toUpperCase()
     : "?";
 
+
   const roleMap = {
     owner: "Owner",
     store_manager: "Store Manager",
@@ -100,142 +111,114 @@ export default function Sidebar({ open, onClose }) {
     delivery: "Delivery Boy",
   };
 
+
   return (
-    <>
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+    <aside className="flex h-screen w-64 flex-shrink-0 flex-col border-r border-[#E2E8F0] bg-white">
 
-      <aside
-        className={`
-          fixed top-0 left-0 z-50 h-screen w-64
-          flex flex-col bg-white border-r border-[#E2E8F0]
-          transform transition-transform duration-300
-          ${
-            open
-              ? "translate-x-0"
-              : "-translate-x-full"
+      {/* Logo */}
+
+      <div className="flex items-center gap-3 border-b border-[#E2E8F0] px-6 py-6">
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] font-bold text-white">
+          H
+        </div>
+
+
+        <div>
+
+          <h1 className="text-lg font-bold text-[#0F172A]">
+            Suvidha
+          </h1>
+
+          <p className="text-[11px] font-semibold uppercase text-[#1E3A8A]">
+            Owner Portal
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* Navigation */}
+
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
+
+        {navItems.map(
+          ({
+            label,
+            icon: Icon,
+            path,
+          }) => {
+
+            const active =
+              location.pathname.startsWith(path);
+
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => navigate(path)}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[16px] font-medium transition ${
+                  active
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+
+                <Icon size={20} />
+
+                <span>{label}</span>
+
+              </button>
+            );
           }
-          lg:translate-x-0
-        `}
-      >
+        )}
 
-        {/* Logo */}
+      </nav>
 
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-[#E2E8F0]">
 
-          <div className="w-10 h-10 rounded-lg bg-[#2563EB] flex items-center justify-center text-white font-bold">
-            H
+      {/* Footer */}
+
+      <div className="border-t border-gray-200 p-4">
+
+        <div className="mb-4 flex items-center gap-3">
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
+            {initials}
           </div>
 
-          <div>
 
-            <h1 className="text-lg font-bold text-[#0F172A]">
-              Suvidha
-            </h1>
+          <div className="min-w-0">
 
-            <p className="text-[11px] font-semibold uppercase text-[#1E3A8A]">
-              Owner Portal
+            <p className="truncate font-semibold text-gray-900">
+              {user?.full_name ||
+                user?.username ||
+                "User"}
+            </p>
+
+            <p className="text-sm text-gray-500">
+              {roleMap[user?.role] || ""}
             </p>
 
           </div>
 
-          <button
-            className="ml-auto lg:hidden"
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
-
         </div>
 
-        {/* Navigation */}
 
-        <nav className="flex-1 px-3 py-5 space-y-1">
+        <button
+          type="button"
+          onClick={logout}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 text-red-600 transition hover:bg-red-50"
+        >
 
-          {navItems.map(
-            ({
-              label,
-              icon: Icon,
-              path,
-            }) => {
+          <LogOut size={18} />
 
-              const active =
-                location.pathname.startsWith(
-                  path
-                );
+          Logout
 
-              return (
-                <button
-                  key={label}
-                  onClick={() =>
-                    navigate(path)
-                  }
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium text-[16px]
-                    ${
-                      active
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }
-                  `}
-                >
+        </button>
 
-                  <Icon size={20} />
+      </div>
 
-                  <span>{label}</span>
-
-                </button>
-              );
-
-            }
-          )}
-
-        </nav>
-
-        {/* Footer */}
-
-        <div className="border-t border-gray-200 p-4">
-
-          <div className="flex items-center gap-3 mb-4">
-
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
-              {initials}
-            </div>
-
-            <div>
-
-              <p className="font-semibold">
-                {user?.full_name ||
-                  user?.username ||
-                  "User"}
-              </p>
-
-              <p className="text-sm text-gray-500">
-                {roleMap[user?.role] || ""}
-              </p>
-
-            </div>
-
-          </div>
-
-          <button
-            onClick={logout}
-            className="w-full h-11 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
-          >
-
-            <LogOut size={18} />
-
-            Logout
-
-          </button>
-
-        </div>
-
-      </aside>
-
-    </>
+    </aside>
   );
 }

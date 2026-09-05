@@ -4,22 +4,12 @@ import {
 } from "react";
 
 import {
-  LayoutDashboard,
-  Store,
   FileText,
-  Users,
-  Target,
-  Package,
-  BarChart2,
-  ClipboardList,
-  Settings,
+  Bell,
   Search,
   Download,
-  Bell,
-  ChevronDown,
   CalendarDays,
   Receipt,
-  Wallet,
   CreditCard,
   Smartphone,
   Banknote,
@@ -30,7 +20,7 @@ import {
   CheckCircle2,
   Lock,
   StickyNote,
-  CircleDollarSign,
+  Wallet,
 } from "lucide-react";
 
 import ReportFilters from "../../components/reports/ReportFilters";
@@ -45,51 +35,6 @@ import { useParams } from "react-router-dom";
 
 
 // ─────────────────────────────────────────────────────────────
-// NAV ITEMS
-// ─────────────────────────────────────────────────────────────
-
-const navItems = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Stores",
-    icon: Store,
-  },
-  {
-    label: "Daily Reports",
-    icon: FileText,
-    active: true,
-  },
-  {
-    label: "Staff",
-    icon: Users,
-  },
-  {
-    label: "Targets",
-    icon: Target,
-  },
-  {
-    label: "Inventory",
-    icon: Package,
-  },
-  {
-    label: "Analytics",
-    icon: BarChart2,
-  },
-  {
-    label: "Audit Logs",
-    icon: ClipboardList,
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-  },
-];
-
-
-// ─────────────────────────────────────────────────────────────
 // TOP BAR
 // ─────────────────────────────────────────────────────────────
 
@@ -98,7 +43,9 @@ function TopBar({
   onSearchChange,
 }) {
   return (
-    <header className="flex h-[62px] shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-6">
+    <header className="flex h-[62px] shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:gap-4 sm:px-6">
+
+      {/* Search */}
 
       <div className="relative max-w-md flex-1">
 
@@ -114,47 +61,25 @@ function TopBar({
               e.target.value
             )
           }
-          placeholder="Search stores, reports..."
+          placeholder="Search stores..."
           className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
 
       </div>
 
 
-      <div className="ml-auto flex items-center gap-3">
+      {/* Notifications */}
 
-        <button
-          type="button"
-          className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
-        >
-          <Bell size={16} />
+      <button
+        type="button"
+        className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+      >
 
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+        <Bell size={16} />
 
-        </button>
+        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
 
-
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 hover:bg-gray-50"
-        >
-
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1D4ED8] text-xs font-bold text-white">
-            RA
-          </div>
-
-          <span className="text-sm font-medium text-gray-700">
-            Rajesh
-          </span>
-
-          <ChevronDown
-            size={13}
-            className="text-gray-400"
-          />
-
-        </button>
-
-      </div>
+      </button>
 
     </header>
   );
@@ -209,7 +134,6 @@ function getIndiaDate(value) {
 
 // ─────────────────────────────────────────────────────────────
 // PURCHASE TOTAL
-// ONLY RECEIVED PURCHASES FOR THAT REPORT DATE
 // ─────────────────────────────────────────────────────────────
 
 function getTodaysReceivedPurchases(
@@ -320,20 +244,21 @@ function OwnerReportDrawer({
     let cancelled = false;
 
     async function loadReportDetails() {
+
       try {
+
         setLoading(
           true
         );
 
 
-        // ─────────────────────────────
         // COMPLETE REPORT
-        // ─────────────────────────────
 
         let detailed =
           report;
 
         try {
+
           const data =
             await dailyReportsService.getReport(
               Number(
@@ -345,11 +270,14 @@ function OwnerReportDrawer({
             detailed =
               data;
           }
+
         } catch (err) {
+
           console.error(
             "Failed to load detailed report:",
             err
           );
+
         }
 
 
@@ -364,11 +292,10 @@ function OwnerReportDrawer({
         );
 
 
-        // ─────────────────────────────
         // EXPENSES
-        // ─────────────────────────────
 
         try {
+
           const expenseData =
             await dailyReportsService.getExpenses(
               Number(
@@ -385,19 +312,21 @@ function OwnerReportDrawer({
               expenseData
             );
           }
+
         } catch (err) {
+
           console.error(
             "Failed to load expenses:",
             err
           );
+
         }
 
 
-        // ─────────────────────────────
         // PURCHASES
-        // ─────────────────────────────
 
         try {
+
           const purchaseData =
             await dailyReportsService.getPurchases(
               Number(
@@ -414,19 +343,21 @@ function OwnerReportDrawer({
               purchaseData
             );
           }
+
         } catch (err) {
+
           console.error(
             "Failed to load purchases:",
             err
           );
+
         }
 
 
-        // ─────────────────────────────
         // PAYMENT MACHINES
-        // ─────────────────────────────
 
         try {
+
           const machineList =
             await paymentMachineService.getMachines();
 
@@ -463,6 +394,7 @@ function OwnerReportDrawer({
                         existing?.amount ??
                         0,
                     };
+
                   }
                 )
               : [];
@@ -474,14 +406,18 @@ function OwnerReportDrawer({
               merged
             );
           }
+
         } catch (err) {
+
           console.error(
             "Failed to load payment machines:",
             err
           );
+
         }
 
       } finally {
+
         if (
           !cancelled
         ) {
@@ -489,7 +425,9 @@ function OwnerReportDrawer({
             false
           );
         }
+
       }
+
     }
 
 
@@ -508,9 +446,7 @@ function OwnerReportDrawer({
   }
 
 
-  // ─────────────────────────────────────
   // SALES
-  // ─────────────────────────────────────
 
   const cashSales =
     numberValue(
@@ -533,11 +469,6 @@ function OwnerReportDrawer({
     );
 
 
-  /*
-   * Udhaar is already part of
-   * Total Cash Sales according to
-   * the current manager workflow.
-   */
   const totalCashSales =
     cashSales +
     udhaarSales;
@@ -561,9 +492,7 @@ function OwnerReportDrawer({
     );
 
 
-  // ─────────────────────────────────────
   // EXPENSES
-  // ─────────────────────────────────────
 
   const totalExpenses =
     expenses.reduce(
@@ -579,9 +508,7 @@ function OwnerReportDrawer({
     );
 
 
-  // ─────────────────────────────────────
   // PURCHASES
-  // ─────────────────────────────────────
 
   const todaysPurchases =
     getTodaysReceivedPurchases(
@@ -590,9 +517,7 @@ function OwnerReportDrawer({
     );
 
 
-  // ─────────────────────────────────────
   // DIGITAL COLLECTION
-  // ─────────────────────────────────────
 
   const digitalTotal =
     machines.reduce(
@@ -608,9 +533,7 @@ function OwnerReportDrawer({
     );
 
 
-  // ─────────────────────────────────────
   // CASH DENOMINATIONS
-  // ─────────────────────────────────────
 
   const denominations = [
     500,
@@ -654,14 +577,13 @@ function OwnerReportDrawer({
           denomination *
             quantity
         );
+
       },
       0
     );
 
 
-  // ─────────────────────────────────────
   // BOUNCED PRODUCTS
-  // ─────────────────────────────────────
 
   const bouncedProducts =
     Array.isArray(
@@ -671,9 +593,7 @@ function OwnerReportDrawer({
       : [];
 
 
-  // ─────────────────────────────────────
   // NOTES
-  // ─────────────────────────────────────
 
   const notes =
     fullReport.notes ||
@@ -699,19 +619,19 @@ function OwnerReportDrawer({
 
         {/* Header */}
 
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-7 py-5">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 sm:px-7 sm:py-5">
 
-          <div>
+          <div className="min-w-0">
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
 
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
                 Daily Report
               </h2>
 
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-medium text-green-700 sm:px-3 sm:text-xs">
 
-                <Lock size={12} />
+                <Lock size={11} />
 
                 Locked
 
@@ -719,10 +639,11 @@ function OwnerReportDrawer({
 
             </div>
 
-            <p className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+
+            <p className="mt-1 flex items-center gap-2 text-xs text-gray-500 sm:text-sm">
 
               <CalendarDays
-                size={15}
+                size={14}
               />
 
               {fullReport.report_date ||
@@ -730,8 +651,9 @@ function OwnerReportDrawer({
 
             </p>
 
+
             {fullReport.store_name && (
-              <p className="mt-1 text-sm font-medium text-blue-600">
+              <p className="mt-1 truncate text-xs font-medium text-blue-600 sm:text-sm">
                 {fullReport.store_name}
               </p>
             )}
@@ -744,9 +666,9 @@ function OwnerReportDrawer({
             onClick={
               onClose
             }
-            className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            className="ml-3 shrink-0 rounded-xl p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
           >
-            <X size={22} />
+            <X size={21} />
           </button>
 
         </div>
@@ -768,23 +690,21 @@ function OwnerReportDrawer({
 
           ) : (
 
-            <div className="space-y-8 p-7">
+            <div className="space-y-7 p-5 sm:space-y-8 sm:p-7">
 
-              {/* ─────────────────────────────
-                  SALES
-              ───────────────────────────── */}
+              {/* SALES */}
 
               <ReportSection
                 number="01"
                 title="Sales"
                 icon={
                   <Receipt
-                    size={19}
+                    size={18}
                   />
                 }
               >
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 
                   <Metric
                     label="Total Bills"
@@ -817,7 +737,7 @@ function OwnerReportDrawer({
                 </div>
 
 
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
 
                   <Metric
                     label="Udhaar Included in Cash Sales"
@@ -840,21 +760,19 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  CASH VERIFICATION
-              ───────────────────────────── */}
+              {/* CASH VERIFICATION */}
 
               <ReportSection
                 number="02"
                 title="Cash Verification"
                 icon={
                   <Banknote
-                    size={19}
+                    size={18}
                   />
                 }
               >
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
                   <Metric
                     label="Opening Cash"
@@ -890,7 +808,7 @@ function OwnerReportDrawer({
                   </p>
 
 
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
 
                     {denominations.map(
                       (
@@ -901,7 +819,7 @@ function OwnerReportDrawer({
                           key={
                             denomination
                           }
-                          className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+                          className="flex items-center justify-between rounded-xl bg-gray-50 px-3.5 py-3"
                         >
 
                           <span className="font-medium text-gray-700">
@@ -937,16 +855,14 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  DELIVERIES
-              ───────────────────────────── */}
+              {/* DELIVERIES */}
 
               <ReportSection
                 number="03"
                 title="Deliveries"
                 icon={
                   <Truck
-                    size={19}
+                    size={18}
                   />
                 }
               >
@@ -961,16 +877,14 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  EXPENSES
-              ───────────────────────────── */}
+              {/* EXPENSES */}
 
               <ReportSection
                 number="04"
                 title="Expenses"
                 icon={
                   <Wallet
-                    size={19}
+                    size={18}
                   />
                 }
                 optional
@@ -985,7 +899,7 @@ function OwnerReportDrawer({
 
                   <>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
 
                       {expenses.map(
                         (
@@ -996,12 +910,12 @@ function OwnerReportDrawer({
                             key={
                               expense.id
                             }
-                            className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3"
+                            className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-3"
                           >
 
-                            <div>
+                            <div className="min-w-0">
 
-                              <p className="font-medium text-gray-800">
+                              <p className="truncate font-medium text-gray-800">
                                 {
                                   expense.expense_type ||
                                   "Expense"
@@ -1018,7 +932,7 @@ function OwnerReportDrawer({
 
                             </div>
 
-                            <p className="font-semibold text-gray-900">
+                            <p className="shrink-0 font-semibold text-gray-900">
                               {money(
                                 expense.amount
                               )}
@@ -1053,34 +967,32 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  PURCHASES
-              ───────────────────────────── */}
+              {/* PURCHASES */}
 
               <ReportSection
                 number="05"
                 title="Purchases"
                 icon={
                   <ShoppingCart
-                    size={19}
+                    size={18}
                   />
                 }
                 optional
               >
 
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 sm:p-6">
 
                   <p className="text-sm font-medium text-blue-700">
                     Purchases Received Today
                   </p>
 
-                  <p className="mt-2 text-3xl font-bold text-blue-700">
+                  <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
                     {money(
                       todaysPurchases
                     )}
                   </p>
 
-                  <p className="mt-2 text-sm text-blue-700/70">
+                  <p className="mt-2 text-xs leading-5 text-blue-700/70 sm:text-sm">
                     Only purchase bills received on this business date are included.
                   </p>
 
@@ -1089,16 +1001,14 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  UPI / CARD MACHINES
-              ───────────────────────────── */}
+              {/* UPI / CARD MACHINES */}
 
               <ReportSection
                 number="06"
                 title="UPI / Card Payments"
                 icon={
                   <CreditCard
-                    size={19}
+                    size={18}
                   />
                 }
               >
@@ -1112,7 +1022,7 @@ function OwnerReportDrawer({
 
                   <>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
 
                       {machines.map(
                         (
@@ -1123,12 +1033,12 @@ function OwnerReportDrawer({
                             key={
                               machine.id
                             }
-                            className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-4"
+                            className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-3.5"
                           >
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
 
-                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
 
                                 <Smartphone
                                   size={17}
@@ -1137,7 +1047,7 @@ function OwnerReportDrawer({
 
                               </div>
 
-                              <span className="font-medium text-gray-800">
+                              <span className="truncate font-medium text-gray-800">
                                 {
                                   machine.machine_name
                                 }
@@ -1145,7 +1055,7 @@ function OwnerReportDrawer({
 
                             </div>
 
-                            <span className="font-semibold text-gray-900">
+                            <span className="shrink-0 font-semibold text-gray-900">
                               {money(
                                 machine.amount
                               )}
@@ -1180,16 +1090,14 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  BOUNCED PRODUCTS
-              ───────────────────────────── */}
+              {/* BOUNCED PRODUCTS */}
 
               <ReportSection
                 number="07"
                 title="Bounced Products"
                 icon={
                   <PackageCheck
-                    size={19}
+                    size={18}
                   />
                 }
               >
@@ -1201,7 +1109,7 @@ function OwnerReportDrawer({
 
                 ) : (
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
 
                     {bouncedProducts.map(
                       (
@@ -1214,10 +1122,10 @@ function OwnerReportDrawer({
                             product.id ??
                             index
                           }
-                          className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3"
+                          className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-3"
                         >
 
-                          <span className="font-medium text-gray-800">
+                          <span className="min-w-0 truncate font-medium text-gray-800">
                             {
                               product.product_name ||
                               product.name ||
@@ -1225,7 +1133,7 @@ function OwnerReportDrawer({
                             }
                           </span>
 
-                          <span className="text-sm font-semibold text-gray-600">
+                          <span className="shrink-0 text-sm font-semibold text-gray-600">
                             Qty:{" "}
                             {
                               product.quantity ??
@@ -1245,23 +1153,21 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  NOTES
-              ───────────────────────────── */}
+              {/* NOTES */}
 
               <ReportSection
                 number="08"
                 title="Notes"
                 icon={
                   <StickyNote
-                    size={19}
+                    size={18}
                   />
                 }
               >
 
                 {notes ? (
 
-                  <div className="rounded-xl bg-gray-50 p-5 leading-7 text-gray-700">
+                  <div className="rounded-xl bg-gray-50 p-4 leading-7 text-gray-700">
                     {notes}
                   </div>
 
@@ -1274,16 +1180,14 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* ─────────────────────────────
-                  SUBMISSION STATUS
-              ───────────────────────────── */}
+              {/* SUBMISSION STATUS */}
 
-              <div className="flex items-start gap-4 rounded-2xl border border-green-200 bg-green-50 p-5">
+              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 sm:gap-4 sm:p-5">
 
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-100">
 
                   <CheckCircle2
-                    size={20}
+                    size={19}
                     className="text-green-600"
                   />
 
@@ -1330,13 +1234,13 @@ function ReportSection({
   return (
     <section>
 
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-3 flex items-center gap-3 sm:mb-4">
 
-        <span className="text-sm font-semibold tracking-wider text-blue-600">
+        <span className="text-xs font-semibold tracking-wider text-blue-600 sm:text-sm">
           {number}
         </span>
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 sm:h-9 sm:w-9">
           {icon}
         </div>
 
@@ -1344,12 +1248,12 @@ function ReportSection({
 
           <div className="flex items-center gap-2">
 
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
               {title}
             </h3>
 
             {optional && (
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 sm:px-2.5 sm:py-1 sm:text-xs">
                 Optional
               </span>
             )}
@@ -1361,7 +1265,7 @@ function ReportSection({
       </div>
 
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
         {children}
 
@@ -1384,7 +1288,7 @@ function Metric({
 }) {
   return (
     <div
-      className={`rounded-xl border p-4 ${
+      className={`rounded-xl border p-3.5 sm:p-4 ${
         highlighted
           ? "border-blue-200 bg-blue-50"
           : "border-gray-200 bg-gray-50"
@@ -1392,7 +1296,7 @@ function Metric({
     >
 
       <p
-        className={`text-sm ${
+        className={`text-xs sm:text-sm ${
           muted
             ? "text-gray-400"
             : "text-gray-500"
@@ -1402,7 +1306,7 @@ function Metric({
       </p>
 
       <p
-        className={`mt-2 text-2xl font-bold ${
+        className={`mt-1.5 text-xl font-bold sm:mt-2 sm:text-2xl ${
           highlighted
             ? "text-blue-700"
             : "text-gray-900"
@@ -1424,7 +1328,7 @@ function EmptyState({
   text,
 }) {
   return (
-    <div className="rounded-xl bg-gray-50 px-5 py-6 text-center text-sm text-gray-500">
+    <div className="rounded-xl bg-gray-50 px-4 py-5 text-center text-sm text-gray-500">
       {text}
     </div>
   );
@@ -1432,7 +1336,7 @@ function EmptyState({
 
 
 // ─────────────────────────────────────────────────────────────
-// MAIN APP
+// MAIN REPORTS PAGE
 // ─────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1500,6 +1404,7 @@ export default function App() {
   // ─────────────────────────────────────
 
   useEffect(() => {
+
     const fetchReports =
       async () => {
 
@@ -1624,6 +1529,7 @@ export default function App() {
           matchStore &&
           matchStatus
         );
+
       }
     );
 
@@ -1633,9 +1539,18 @@ export default function App() {
   // ─────────────────────────────────────
 
   if (loading) {
+
     return (
-      <div className="flex h-full items-center justify-center">
-        Loading reports...
+      <div className="flex min-h-[60vh] items-center justify-center">
+
+        <div className="text-center">
+
+          <p className="text-sm font-semibold text-gray-700">
+            Loading reports...
+          </p>
+
+        </div>
+
       </div>
     );
   }
@@ -1646,8 +1561,9 @@ export default function App() {
   // ─────────────────────────────────────
 
   if (error) {
+
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center px-5">
 
         <div className="text-center">
 
@@ -1660,7 +1576,7 @@ export default function App() {
             onClick={() =>
               window.location.reload()
             }
-            className="mt-4 rounded bg-blue-600 px-4 py-2 text-white"
+            className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white"
           >
             Retry
           </button>
@@ -1674,7 +1590,7 @@ export default function App() {
 
   return (
     <div
-      className="flex h-screen w-full overflow-hidden bg-[#f1f5f9]"
+      className="flex min-h-screen w-full overflow-hidden bg-[#f1f5f9]"
       style={{
         fontFamily:
           "Inter, sans-serif",
@@ -1702,22 +1618,18 @@ export default function App() {
             MAIN
         ───────────────────────────── */}
 
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:px-8">
 
 
-          {/* Header */}
+          {/* PAGE HEADER */}
 
-          <div className="mb-6 flex items-start justify-between">
+          <div className="mb-5 flex items-center justify-between gap-4">
 
             <div>
 
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-[22px] font-bold leading-tight text-gray-900 sm:text-xl">
                 Daily Reports
               </h1>
-
-              <p className="mt-0.5 text-sm text-gray-500">
-                Track and review store-wise daily reports
-              </p>
 
             </div>
 
@@ -1729,21 +1641,27 @@ export default function App() {
                   true
                 )
               }
-              className="flex items-center gap-2 rounded-xl bg-[#1D4ED8] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1e3a6e]"
+              className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-3 text-xs font-medium text-white transition-colors hover:bg-[#1e3a6e] sm:h-auto sm:px-4 sm:py-2.5 sm:text-sm"
             >
 
               <Download
                 size={14}
               />
 
-              Export Reports
+              <span className="hidden sm:inline">
+                Export Reports
+              </span>
+
+              <span className="sm:hidden">
+                Export
+              </span>
 
             </button>
 
           </div>
 
 
-          {/* Filters */}
+          {/* FILTERS */}
 
           <ReportFilters
             searchQuery={
@@ -1770,20 +1688,20 @@ export default function App() {
           />
 
 
-          {/* Reports */}
+          {/* REPORT TABLE */}
 
           {filtered.length ===
           0 ? (
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-20">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-16">
 
-              <FileText className="mb-4 h-12 w-12 text-gray-300" />
+              <FileText className="mb-4 h-10 w-10 text-gray-300" />
 
-              <h3 className="text-lg font-semibold text-gray-700">
+              <h3 className="text-base font-semibold text-gray-700">
                 No reports found
               </h3>
 
-              <p className="mt-2 text-center text-sm text-gray-500">
+              <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
                 Try changing your filters or wait for stores to submit their daily reports.
               </p>
 
@@ -1793,44 +1711,18 @@ export default function App() {
 
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-              <div className="overflow-x-auto">
+              {/* DESKTOP TABLE */}
 
-                <table className="w-full min-w-[1000px]">
+              <div className="hidden sm:block">
+
+                <table className="w-full">
 
                   <thead className="bg-gray-50">
 
                     <tr>
 
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Date
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wide text-gray-700">
                         Store
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Bills
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Sales
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Expenses
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Purchases
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Deliveries
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        Status
                       </th>
 
                     </tr>
@@ -1859,82 +1751,24 @@ export default function App() {
 
                           <td className="px-6 py-4">
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
 
-                              <CalendarDays
-                                size={17}
-                                className="text-gray-400"
-                              />
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50">
 
-                              <span>
+                                <FileText
+                                  size={17}
+                                  className="text-blue-600"
+                                />
+
+                              </div>
+
+                              <span className="text-[15px] font-semibold text-gray-800">
                                 {
-                                  report.date
+                                  report.store
                                 }
                               </span>
 
                             </div>
-
-                          </td>
-
-
-                          <td className="px-6 py-4 font-medium text-gray-700">
-                            {
-                              report.store
-                            }
-                          </td>
-
-
-                          <td className="px-6 py-4 font-medium">
-                            {
-                              report.bills ??
-                              0
-                            }
-                          </td>
-
-
-                          <td className="px-6 py-4 font-semibold text-blue-600">
-                            {money(
-                              report.sales
-                            )}
-                          </td>
-
-
-                          <td className="px-6 py-4">
-                            {money(
-                              report.expenses
-                            )}
-                          </td>
-
-
-                          <td className="px-6 py-4">
-                            {money(
-                              report.purchases
-                            )}
-                          </td>
-
-
-                          <td className="px-6 py-4">
-                            {
-                              report.deliveries ??
-                              0
-                            }
-                          </td>
-
-
-                          <td className="px-6 py-4">
-
-                            <span
-                              className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                                report.status ===
-                                "Locked"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
-                            >
-                              {
-                                report.status
-                              }
-                            </span>
 
                           </td>
 
@@ -1949,12 +1783,94 @@ export default function App() {
 
               </div>
 
+
+              {/* MOBILE TABLE */}
+
+              <div className="sm:hidden">
+
+                {/* Table heading */}
+
+                <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+
+                  <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-gray-600">
+                    Stores
+                  </p>
+
+                </div>
+
+
+                {/* Store rows */}
+
+                <div>
+
+                  {filtered.map(
+                    (
+                      report
+                    ) => (
+
+                      <button
+                        key={
+                          report.id
+                        }
+                        type="button"
+                        onClick={() =>
+                          setSelectedReport(
+                            report
+                          )
+                        }
+                        className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-4 text-left transition active:bg-blue-50"
+                      >
+
+                        {/* Icon */}
+
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+
+                          <FileText
+                            size={18}
+                            className="text-blue-600"
+                          />
+
+                        </div>
+
+
+                        {/* Store info */}
+
+                        <div className="min-w-0 flex-1">
+
+                          <p className="truncate text-[15px] font-semibold leading-5 text-gray-800">
+                            {
+                              report.store
+                            }
+                          </p>
+
+                          <p className="mt-1 text-[11px] font-medium text-gray-500">
+                            Tap to view report
+                          </p>
+
+                        </div>
+
+
+                        {/* Arrow */}
+
+                        <span className="shrink-0 text-[17px] font-medium text-gray-400">
+                          →
+                        </span>
+
+                      </button>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
             </div>
 
           )}
 
 
-          {/* Export */}
+          {/* EXPORT */}
 
           <ExportReportsModal
             open={
@@ -1972,9 +1888,7 @@ export default function App() {
       </div>
 
 
-      {/* ─────────────────────────────
-          REPORT DETAIL
-      ───────────────────────────── */}
+      {/* REPORT DETAIL */}
 
       {selectedReport && (
         <OwnerReportDrawer
