@@ -144,215 +144,151 @@ const SalesSection = forwardRef(
       let cancelled = false;
 
       async function loadSection() {
-        try {
+  try {
+    /*
+     * Load the main report values immediately.
+     * This prevents the UI from appearing empty while
+     * cash denominations and payment-machine data load.
+     */
+    setForm({
+      total_bills:
+        report.total_bills != null
+          ? String(report.total_bills)
+          : "",
 
-          const savedCash =
-            await cashDenominationService.get(
-              report.id
-            );
+      cash_sales:
+        report.cash_sales != null
+          ? String(report.cash_sales)
+          : "",
 
-          if (cancelled) {
-            return;
-          }
+      upi_sales:
+        report.upi_sales != null
+          ? String(report.upi_sales)
+          : "",
 
-          setForm({
-            total_bills:
-              Number(
-                report.total_bills || 0
-              ) > 0
-                ? String(
-                    report.total_bills
-                  )
-                : "",
+      card_sales:
+        report.card_sales != null
+          ? String(report.card_sales)
+          : "",
 
-            cash_sales:
-              report.cash_sales !=
-              null
-                ? String(
-                    report.cash_sales
-                  )
-                : "",
+      total_expenses:
+        report.total_expenses != null
+          ? String(report.total_expenses)
+          : "",
 
-            upi_sales:
-              report.upi_sales !=
-              null
-                ? String(
-                    report.upi_sales
-                  )
-                : "",
+      system_sales:
+        report.system_sales != null
+          ? String(report.system_sales)
+          : "",
+    });
 
-            card_sales:
-              report.card_sales !=
-              null
-                ? String(
-                    report.card_sales
-                  )
-                : "",
+    const deliveryValue =
+      Number(report.deliveries || 0);
 
-            total_expenses:
-              report.total_expenses !=
-              null
-                ? String(
-                    report.total_expenses
-                  )
-                : "",
+    setDeliveries(
+      deliveryValue > 0
+        ? String(deliveryValue)
+        : ""
+    );
 
-            system_sales:
-              report.system_sales !=
-              null
-                ? String(
-                    report.system_sales
-                  )
-                : "",
-          });
+    /*
+     * Load saved cash denominations.
+     */
+    const savedCash =
+      await cashDenominationService.get(
+        report.id
+      );
 
-          const deliveryValue =
-            Number(
-              report.deliveries || 0
-            );
+    if (cancelled) {
+      return;
+    }
 
-          setDeliveries(
-            deliveryValue > 0
-              ? String(
-                  deliveryValue
-                )
-              : ""
-          );
+    if (savedCash) {
+      setCash({
+        note_500:
+          Number(savedCash.note_500 || 0) > 0
+            ? String(savedCash.note_500)
+            : "",
 
-          if (savedCash) {
+        note_200:
+          Number(savedCash.note_200 || 0) > 0
+            ? String(savedCash.note_200)
+            : "",
 
-            setCash({
-              note_500:
-                Number(
-                  savedCash.note_500 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_500
-                    )
-                  : "",
+        note_100:
+          Number(savedCash.note_100 || 0) > 0
+            ? String(savedCash.note_100)
+            : "",
 
-              note_200:
-                Number(
-                  savedCash.note_200 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_200
-                    )
-                  : "",
+        note_50:
+          Number(savedCash.note_50 || 0) > 0
+            ? String(savedCash.note_50)
+            : "",
 
-              note_100:
-                Number(
-                  savedCash.note_100 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_100
-                    )
-                  : "",
+        note_20:
+          Number(savedCash.note_20 || 0) > 0
+            ? String(savedCash.note_20)
+            : "",
 
-              note_50:
-                Number(
-                  savedCash.note_50 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_50
-                    )
-                  : "",
+        note_10:
+          Number(savedCash.note_10 || 0) > 0
+            ? String(savedCash.note_10)
+            : "",
 
-              note_20:
-                Number(
-                  savedCash.note_20 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_20
-                    )
-                  : "",
+        coin_5:
+          Number(savedCash.coin_5 || 0) > 0
+            ? String(savedCash.coin_5)
+            : "",
 
-              note_10:
-                Number(
-                  savedCash.note_10 || 0
-                ) > 0
-                  ? String(
-                      savedCash.note_10
-                    )
-                  : "",
+        coin_2:
+          Number(savedCash.coin_2 || 0) > 0
+            ? String(savedCash.coin_2)
+            : "",
 
-              coin_5:
-                Number(
-                  savedCash.coin_5 || 0
-                ) > 0
-                  ? String(
-                      savedCash.coin_5
-                    )
-                  : "",
+        coin_1:
+          Number(savedCash.coin_1 || 0) > 0
+            ? String(savedCash.coin_1)
+            : "",
+      });
+    } else {
+      setCash(EMPTY_CASH);
+    }
 
-              coin_2:
-                Number(
-                  savedCash.coin_2 || 0
-                ) > 0
-                  ? String(
-                      savedCash.coin_2
-                    )
-                  : "",
+    /*
+     * Load saved payment-machine entries.
+     */
+    const machineData =
+      await paymentMachineEntryService.get(
+        report.id
+      );
 
-              coin_1:
-                Number(
-                  savedCash.coin_1 || 0
-                ) > 0
-                  ? String(
-                      savedCash.coin_1
-                    )
-                  : "",
-            });
+    if (cancelled) {
+      return;
+    }
 
-          } else {
+    setMachineEntries(
+      Array.isArray(machineData)
+        ? machineData.map((machine) => ({
+            machine_id:
+              machine.machine_id,
 
-            setCash(
-              EMPTY_CASH
-            );
+            amount:
+              machine.amount != null
+                ? Number(machine.amount)
+                : 0,
+          }))
+        : []
+    );
 
-          }
-
-          const machineData =
-            await paymentMachineEntryService.get(
-              report.id
-            );
-
-          if (cancelled) {
-            return;
-          }
-
-          setMachineEntries(
-            Array.isArray(
-              machineData
-            )
-              ? machineData.map(
-                  (machine) => ({
-                    machine_id:
-                      machine.machine_id,
-
-                    amount:
-                      machine.amount !=
-                        null
-                        ? Number(
-                            machine.amount
-                          )
-                        : 0,
-                  })
-                )
-              : []
-          );
-
-        } catch (err) {
-
-          if (!cancelled) {
-            console.error(
-              "Failed to load sales section:",
-              err
-            );
-          }
-
-        }
-      }
+  } catch (err) {
+    if (!cancelled) {
+      console.error(
+        "Failed to load sales section:",
+        err
+      );
+    }
+  }
+}
 
       loadSection();
 
