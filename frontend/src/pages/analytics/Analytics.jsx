@@ -75,8 +75,13 @@ const fmtCurrency = (value) =>
 const fmtShort = (value) => {
   const amount = Number(value || 0);
 
-  if (amount >= 1000000) {
-    return `₹${(amount / 1000000).toFixed(2)}L`;
+  // Indian number system: 1 Lakh = 1,00,000 and 1 Crore = 1,00,00,000.
+  if (amount >= 10000000) {
+    return `₹${(amount / 10000000).toFixed(2)}Cr`;
+  }
+
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(2)}L`;
   }
 
   if (amount >= 1000) {
@@ -305,27 +310,36 @@ function UdhaarRow({ entry }) {
   );
 }
 
-function PurchaseStoreList({ stores }) {
+function PurchaseStoreList({ stores, total }) {
   if (!stores.length) {
     return <EmptyState text="No purchase data available." />;
   }
 
   return (
-    <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
-      {stores.map((store, index) => (
-        <div
-          key={store.store_id ?? `${store.store_name}-${index}`}
-          className="flex min-w-0 items-center justify-between gap-4 px-4 py-3.5"
-        >
-          <p className="min-w-0 truncate text-sm font-semibold text-slate-900">
-            {store.store_name}
-          </p>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="divide-y divide-slate-100">
+        {stores.map((store, index) => (
+          <div
+            key={store.store_id ?? `${store.store_name}-${index}`}
+            className="flex min-w-0 items-center justify-between gap-4 px-4 py-3.5"
+          >
+            <p className="min-w-0 truncate text-sm font-semibold text-slate-900">
+              {store.store_name}
+            </p>
 
-          <p className="shrink-0 text-sm font-bold text-slate-900">
-            {fmtCurrency(store.total_purchases)}
-          </p>
-        </div>
-      ))}
+            <p className="shrink-0 text-sm font-bold text-slate-900">
+              {fmtCurrency(store.total_purchases)}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3.5">
+        <p className="text-sm font-bold text-slate-900">Total</p>
+        <p className="text-sm font-bold text-slate-900">
+          {fmtCurrency(total)}
+        </p>
+      </div>
     </div>
   );
 }
@@ -551,16 +565,35 @@ export default function Analytics() {
     [stores]
   );
 
-  const totalPayments = paymentBreakdown.reduce(
-    (sum, item) =>
-      sum + Number(item.value || 0),
-    0
+  // Use the backend dashboard totals as the source of truth for the
+  // summary rows. The category lists are still rendered from their own
+  // backend breakdown endpoints, but the displayed totals must match the
+  // main KPI calculations exactly.
+  const totalPayments = Number(
+    dashboard?.total_sales ??
+      paymentBreakdown.reduce(
+        (sum, item) =>
+          sum + Number(item.value || 0),
+        0
+      )
   );
 
-  const totalExpenses = expenseDistribution.reduce(
-    (sum, item) =>
-      sum + Number(item.amount || 0),
-    0
+  const totalExpenses = Number(
+    dashboard?.total_expenses ??
+      expenseDistribution.reduce(
+        (sum, item) =>
+          sum + Number(item.amount || 0),
+        0
+      )
+  );
+
+  const totalPurchases = Number(
+    dashboard?.total_purchases ??
+      stores.reduce(
+        (sum, store) =>
+          sum + Number(store.total_purchases || 0),
+        0
+      )
   );
 
   return (
@@ -856,35 +889,6 @@ export default function Analytics() {
                             fmtCurrency(value)
                           }
                         />
-
-                        <text
-                          x="50%"
-                          y="47%"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          style={{
-                            fontSize: 10,
-                            fill: MUTED,
-                          }}
-                        >
-                          Total
-                        </text>
-
-                        <text
-                          x="50%"
-                          y="57%"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            fill: TEXT,
-                          }}
-                        >
-                          {fmtShort(
-                            totalPayments
-                          )}
-                        </text>
                       </PieChart>
                     </div>
 
@@ -919,6 +923,15 @@ export default function Analytics() {
                           </div>
                         )
                       )}
+
+                      <div className="mt-2 flex items-center justify-between border-t border-slate-200 px-3 pt-3">
+                        <span className="text-sm font-bold text-slate-900">
+                          Total
+                        </span>
+                        <span className="text-sm font-bold text-slate-900">
+                          {fmtCurrency(totalPayments)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -983,35 +996,6 @@ export default function Analytics() {
                             fmtCurrency(value)
                           }
                         />
-
-                        <text
-                          x="50%"
-                          y="47%"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          style={{
-                            fontSize: 10,
-                            fill: MUTED,
-                          }}
-                        >
-                          Total
-                        </text>
-
-                        <text
-                          x="50%"
-                          y="57%"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            fill: TEXT,
-                          }}
-                        >
-                          {fmtShort(
-                            totalExpenses
-                          )}
-                        </text>
                       </PieChart>
                     </div>
 
@@ -1047,6 +1031,15 @@ export default function Analytics() {
                           </div>
                         )
                       )}
+
+                      <div className="mt-2 flex items-center justify-between border-t border-slate-200 px-3 pt-3">
+                        <span className="text-sm font-bold text-slate-900">
+                          Total
+                        </span>
+                        <span className="text-sm font-bold text-slate-900">
+                          {fmtCurrency(totalExpenses)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1159,6 +1152,7 @@ export default function Analytics() {
                 {stores.length > 0 ? (
                   <PurchaseStoreList
                     stores={stores}
+                    total={totalPurchases}
                   />
                 ) : (
                   <EmptyState text="No purchase data available." />

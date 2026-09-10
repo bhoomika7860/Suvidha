@@ -1040,13 +1040,36 @@ def delivery_performance(
         current_user["role"],
     )
 
+    # Store managers can only see their own store.
+    if current_user["role"] == "store_manager":
+        store_id = str(current_user["store_id"])
+
+    # Always load the stores first.
+    # This guarantees that stores with no report/data for the
+    # selected period are still returned with 0 deliveries.
+    stores_query = db.query(Store)
+
+    if store_id != "all":
+        stores_query = stores_query.filter(
+            Store.id == int(store_id)
+        )
+
+    all_stores = (
+        stores_query
+        .order_by(Store.id)
+        .all()
+    )
+
+    # Initialize every store with zero deliveries.
+    delivery_totals = {
+        store.id: 0
+        for store in all_stores
+    }
+
+    # Load DailyReport records for the selected period.
     query = db.query(DailyReport)
 
-    if current_user["role"] == "store_manager":
-        query = query.filter(
-            DailyReport.store_id == current_user["store_id"]
-        )
-    elif store_id != "all":
+    if store_id != "all":
         query = query.filter(
             DailyReport.store_id == int(store_id)
         )
@@ -1065,32 +1088,29 @@ def delivery_performance(
 
     reports = query.all()
 
-    stores = {}
-
+    # Aggregate real delivery values by store.
     for report in reports:
-        store = db.query(Store).filter(
-            Store.id == report.store_id
-        ).first()
-
-        if not store:
+        if report.store_id not in delivery_totals:
             continue
 
-        if store.name not in stores:
-            stores[store.name] = 0
+        delivery_totals[report.store_id] += (
+            report.deliveries or 0
+        )
 
-        stores[store.name] += report.deliveries or 0
+    # Return every store in the selected scope, even when its
+    # delivery count is zero for the selected period.
+    return [
+        {
+            "store_id": store.id,
+            "store": store.name,
+            "deliveries": delivery_totals.get(
+                store.id,
+                0,
+            ),
+        }
+        for store in all_stores
+    ]
 
-    return sorted(
-        [
-            {
-                "store": name,
-                "deliveries": deliveries,
-            }
-            for name, deliveries in stores.items()
-        ],
-        key=lambda x: x["deliveries"],
-        reverse=True,
-    )
 
 @router.get("/overview")
 def overview(
