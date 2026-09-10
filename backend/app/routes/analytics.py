@@ -105,11 +105,25 @@ def _get_purchases(
     period=None,
     store_id="all",
 ):
-    """Load real purchase rows and apply the analytics period/store scope."""
+    """
+    Load the same purchase records used by the Purchases page analytics.
+
+    IMPORTANT:
+    The Purchases page filters purchases by received_date when a date
+    is selected. Analytics must use the same business date; using
+    purchase_date here can produce a different total because purchase_date
+    may be a separate/user-entered timestamp.
+
+    This function includes every purchase status (received, pending,
+    completed, and any unclassified status) so total_purchases always
+    represents the complete purchase value for the selected period.
+    """
     query = db.query(Purchase)
 
     if store_id != "all":
-        query = query.filter(Purchase.store_id == int(store_id))
+        query = query.filter(
+            Purchase.store_id == int(store_id)
+        )
 
     start_date, end_date = _get_period_bounds(period)
     purchases = query.all()
@@ -118,7 +132,11 @@ def _get_purchases(
         purchases = [
             purchase
             for purchase in purchases
-            if _in_period(purchase.purchase_date, start_date, end_date)
+            if _in_period(
+                purchase.received_date,
+                start_date,
+                end_date,
+            )
         ]
 
     return purchases
