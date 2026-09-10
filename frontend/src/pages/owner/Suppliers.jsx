@@ -1,26 +1,17 @@
 import { useEffect, useState } from "react";
-import {
-  Plus,
-  Pencil,
-  Power,
-  Truck,
-} from "lucide-react";
-
+import { Plus, Truck } from "lucide-react";
 import supplierService from "../../services/supplierService";
+import SupplierTable from "../../components/suppliers/SupplierTable";
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [showAdd, setShowAdd] =
-    useState(false);
-
-  const [editingSupplier, setEditingSupplier] =
-    useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(null);
 
   const [name, setName] = useState("");
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadSuppliers();
@@ -30,19 +21,11 @@ export default function Suppliers() {
     try {
       setLoading(true);
 
-      const data =
-        await supplierService.getAllSuppliers();
+      const data = await supplierService.getAllSuppliers();
 
-      setSuppliers(
-        Array.isArray(data)
-          ? data
-          : []
-      );
+      setSuppliers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(
-        "Failed to load suppliers:",
-        error
-      );
+      console.error("Failed to load suppliers:", error);
 
       alert(
         error?.response?.data?.detail ||
@@ -74,13 +57,10 @@ export default function Suppliers() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const trimmedName =
-      name.trim();
+    const trimmedName = name.trim();
 
     if (!trimmedName) {
-      alert(
-        "Supplier name cannot be empty."
-      );
+      alert("Supplier name cannot be empty.");
       return;
     }
 
@@ -101,13 +81,9 @@ export default function Suppliers() {
       }
 
       await loadSuppliers();
-
       closeForm();
     } catch (error) {
-      console.error(
-        "Failed to save supplier:",
-        error
-      );
+      console.error("Failed to save supplier:", error);
 
       alert(
         error?.response?.data?.detail ||
@@ -119,15 +95,13 @@ export default function Suppliers() {
   }
 
   async function toggleSupplier(supplier) {
-    const action =
-      supplier.is_active
-        ? "deactivate"
-        : "activate";
+    const action = supplier.is_active
+      ? "deactivate"
+      : "activate";
 
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to ${action} "${supplier.name}"?`
-      );
+    const confirmed = window.confirm(
+      `Are you sure you want to ${action} "${supplier.name}"?`
+    );
 
     if (!confirmed) {
       return;
@@ -137,8 +111,7 @@ export default function Suppliers() {
       await supplierService.updateSupplier(
         supplier.id,
         {
-          is_active:
-            !supplier.is_active,
+          is_active: !supplier.is_active,
         }
       );
 
@@ -157,27 +130,19 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="space-y-6">
-
-      {/* Header */}
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-        <div>
-
+    <div className="w-full">
+      {/* Desktop */}
+      <div className="hidden space-y-6 lg:block">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100">
-
               <Truck
                 size={22}
                 className="text-blue-600"
               />
-
             </div>
 
             <div>
-
               <h1 className="text-3xl font-bold text-slate-900">
                 Suppliers
               </h1>
@@ -185,146 +150,115 @@ export default function Suppliers() {
               <p className="mt-1 text-slate-500">
                 Manage suppliers available for purchase bills.
               </p>
+            </div>
+          </div>
 
+          <button
+            type="button"
+            onClick={openAdd}
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700"
+          >
+            <Plus size={18} />
+            Add Supplier
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+            <h2 className="font-semibold text-slate-900">
+              Supplier List
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Active suppliers appear in purchase forms.
+            </p>
+          </div>
+
+          <SupplierTable
+            suppliers={suppliers}
+            loading={loading}
+            onEdit={openEdit}
+            onToggle={toggleSupplier}
+          />
+        </div>
+      </div>
+
+      {/* Mobile */}
+      <div className="min-h-screen w-full overflow-x-hidden bg-gray-50 pb-24 lg:hidden">
+        {/* Same header system as the Purchases mobile page */}
+        <div className="w-full border-b bg-white px-5 pt-6 pb-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100">
+              <Truck
+                size={21}
+                className="text-blue-600"
+              />
             </div>
 
-          </div>
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Suppliers
+              </h1>
 
+              <p className="mt-1 text-gray-500">
+                Manage suppliers available for purchase bills.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={openAdd}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 font-semibold text-white transition hover:bg-blue-700"
-        >
-          <Plus size={18} />
-          Add Supplier
-        </button>
+        <div className="space-y-4 px-4 pt-5">
+          <button
+            type="button"
+            onClick={openAdd}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99]"
+          >
+            <Plus size={17} />
+            Add Supplier
+          </button>
 
-      </div>
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-white px-5 py-4">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Supplier List
+              </h2>
 
+              <p className="mt-1 text-xs text-gray-500">
+                Active suppliers appear in purchase forms.
+              </p>
+            </div>
 
-      {/* Supplier List */}
-
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-
-          <h2 className="font-semibold text-slate-900">
-            Supplier List
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Active suppliers appear in purchase forms.
-          </p>
-
+            <SupplierTable
+              suppliers={suppliers}
+              loading={loading}
+              onEdit={openEdit}
+              onToggle={toggleSupplier}
+            />
+          </div>
         </div>
-
-        {loading ? (
-
-          <div className="p-12 text-center text-slate-500">
-            Loading suppliers...
-          </div>
-
-        ) : suppliers.length === 0 ? (
-
-          <div className="p-12 text-center text-slate-500">
-            No suppliers found.
-          </div>
-
-        ) : (
-
-          <div className="divide-y divide-slate-100">
-
-            {suppliers.map(
-              (supplier) => (
-
-                <div
-                  key={supplier.id}
-                  className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-
-                  <div>
-
-                    <p className="font-semibold text-slate-900">
-                      {supplier.name}
-                    </p>
-
-                    <div className="mt-1">
-
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          supplier.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {supplier.is_active
-                          ? "Active"
-                          : "Inactive"}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <div className="flex gap-2">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openEdit(supplier)
-                      }
-                      className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      <Pencil size={16} />
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        toggleSupplier(
-                          supplier
-                        )
-                      }
-                      className={`flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium ${
-                        supplier.is_active
-                          ? "border border-red-200 text-red-600 hover:bg-red-50"
-                          : "border border-green-200 text-green-600 hover:bg-green-50"
-                      }`}
-                    >
-                      <Power size={16} />
-
-                      {supplier.is_active
-                        ? "Deactivate"
-                        : "Activate"}
-                    </button>
-
-                  </div>
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        )}
-
       </div>
-
 
       {/* Add / Edit Modal */}
-
       {showAdd && (
-
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-
-            <div className="border-b border-slate-200 px-6 py-5">
-
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeForm();
+            }
+          }}
+          onTouchStart={(event) => {
+            if (event.target === event.currentTarget) {
+              closeForm();
+            }
+          }}
+        >
+          <div
+            className="w-full max-h-[90vh] overflow-y-auto rounded-t-[24px] bg-white shadow-2xl sm:max-w-md sm:rounded-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+          >
+            <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
               <h2 className="text-xl font-bold text-slate-900">
                 {editingSupplier
                   ? "Edit Supplier"
@@ -336,16 +270,13 @@ export default function Suppliers() {
                   ? "Update the supplier name."
                   : "Add a supplier to the purchase dropdown."}
               </p>
-
             </div>
 
             <form
               onSubmit={handleSubmit}
-              className="space-y-5 p-6"
+              className="space-y-5 p-5 sm:p-6"
             >
-
               <div>
-
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Supplier Name
                 </label>
@@ -354,31 +285,19 @@ export default function Suppliers() {
                   type="text"
                   value={name}
                   onChange={(event) =>
-                    setName(
-                      event.target.value
-                    )
+                    setName(event.target.value)
                   }
                   autoFocus
                   placeholder="Enter supplier name"
-                  className="h-11 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-blue-500"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
                 />
-
               </div>
 
-              <div className="flex gap-3">
-
-                <button
-                  type="button"
-                  onClick={closeForm}
-                  className="h-11 flex-1 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-
+              <div>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="h-11 flex-1 rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  className="h-11 w-full rounded-xl bg-blue-600 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                 >
                   {isSubmitting
                     ? "Saving..."
@@ -386,17 +305,11 @@ export default function Suppliers() {
                       ? "Save Changes"
                       : "Add Supplier"}
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
