@@ -3,65 +3,29 @@ import { Package } from "lucide-react";
 const STATUS_STYLES = {
   received: {
     label: "Received",
-    className: "bg-blue-100 text-blue-700",
+    className: "bg-emerald-50 text-emerald-700",
   },
-
   checking: {
     label: "Waiting Check",
-    className: "bg-orange-100 text-orange-700",
+    className: "bg-amber-50 text-amber-700",
   },
-
   entered: {
     label: "Waiting Entry",
-    className: "bg-purple-100 text-purple-700",
+    className: "bg-purple-50 text-purple-700",
   },
-
   completed: {
     label: "Completed",
-    className: "bg-green-100 text-green-700",
+    className: "bg-blue-50 text-blue-700",
   },
 };
 
-/*
- * Show the date of the CURRENT workflow stage.
- *
- * received  -> received_date
- * checking  -> received_date
- * entered   -> sent_for_entry_at
- * completed -> completed_at
- */
-function getWorkflowDate(purchase) {
-  let value = null;
-
-  if (
-    purchase.status === "entered" &&
-    purchase.sent_for_entry_at
-  ) {
-    value = purchase.sent_for_entry_at;
-  } else if (
-    purchase.status === "completed" &&
-    purchase.completed_at
-  ) {
-    value = purchase.completed_at;
-  } else if (
-    purchase.received_date
-  ) {
-    value = purchase.received_date;
-  } else {
-    value = purchase.purchase_date;
-  }
-
-  if (!value) {
-    return "-";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "-";
-  }
-
-  return date.toLocaleDateString("en-IN");
+function getStatus(status) {
+  return (
+    STATUS_STYLES[status] || {
+      label: status || "Unknown",
+      className: "bg-gray-100 text-gray-700",
+    }
+  );
 }
 
 export default function PurchaseTable({
@@ -79,22 +43,20 @@ export default function PurchaseTable({
 
   if (!purchases.length) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-16">
-        <div className="flex flex-col items-center">
-
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 sm:p-16">
+        <div className="flex flex-col items-center text-center">
           <Package
-            size={60}
-            className="text-slate-300"
+            size={52}
+            className="text-slate-300 sm:h-[60px] sm:w-[60px]"
           />
 
-          <h2 className="mt-5 text-xl font-bold">
+          <h2 className="mt-4 text-lg font-bold sm:mt-5 sm:text-xl">
             No Purchases Found
           </h2>
 
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-sm text-slate-500 sm:text-base">
             Purchase bills will appear here.
           </p>
-
         </div>
       </div>
     );
@@ -102,115 +64,67 @@ export default function PurchaseTable({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Desktop Table */}
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="min-w-full">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Store
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Supplier
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Bill No.
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
+      {/* Desktop: one row containing only purchase name and status */}
+      <div className="hidden lg:block">
+        <table className="w-full">
           <tbody>
-            {purchases.map((purchase) => (
-              <tr
-                key={purchase.id}
-                onClick={() =>
-                  onRowClick?.(purchase)
-                }
-                className="cursor-pointer border-t transition-all duration-200 hover:bg-blue-50"
-              >
-                <td className="px-6 py-4">
-                  {getWorkflowDate(purchase)}
-                </td>
-                <td className="px-6 py-4 font-medium">
-                  {purchase.store_name || "-"}
-                </td>
-                <td className="px-6 py-4">
-                  {purchase.supplier_name || "-"}
-                </td>
-                <td className="px-6 py-4">
-                  {purchase.bill_number || "-"}
-                </td>
-                <td className="px-6 py-4 font-semibold">
-                  ₹
-                  {Number(
-                    purchase.purchase_amount || 0
-                  ).toLocaleString("en-IN")}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      STATUS_STYLES[
-                        purchase.status
-                      ]?.className ||
-                      "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {
-                      STATUS_STYLES[
-                        purchase.status
-                      ]?.label ||
-                      purchase.status
-                    }
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {purchases.map((purchase) => {
+              const status = getStatus(purchase.status);
+
+              return (
+                <tr
+                  key={purchase.id}
+                  onClick={() => onRowClick?.(purchase)}
+                  className="cursor-pointer border-b border-slate-100 transition-colors last:border-b-0 hover:bg-blue-50"
+                >
+                  <td className="px-6 py-4">
+                    <p className="truncate font-semibold text-slate-900">
+                      {purchase.supplier_name ||
+                        purchase.product_name ||
+                        "Unknown Purchase"}
+                    </p>
+                  </td>
+
+                  <td className="w-40 px-6 py-4 text-right">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.className}`}
+                    >
+                      {status.label}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="grid gap-4 p-4 lg:hidden">
-        {purchases.map((purchase) => (
-          <div
-            key={purchase.id}
-            onClick={() => onRowClick?.(purchase)}
-            className="cursor-pointer rounded-xl border border-slate-200 p-4 transition-all active:bg-blue-50"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500">
-                {getWorkflowDate(purchase)}
-              </span>
+      {/* Mobile: one line containing only purchase name and status */}
+      <div className="divide-y divide-slate-100 lg:hidden">
+        {purchases.map((purchase) => {
+          const status = getStatus(purchase.status);
+
+          return (
+            <button
+              key={purchase.id}
+              type="button"
+              onClick={() => onRowClick?.(purchase)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition active:bg-blue-50"
+            >
+              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">
+                {purchase.supplier_name ||
+                  purchase.product_name ||
+                  "Unknown Purchase"}
+              </p>
+
               <span
-                className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                  STATUS_STYLES[purchase.status]?.className || "bg-gray-100 text-gray-700"
-                }`}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.className}`}
               >
-                {STATUS_STYLES[purchase.status]?.label || purchase.status}
+                {status.label}
               </span>
-            </div>
-            <div className="grid grid-cols-2 gap-y-2 text-sm">
-              <div className="text-slate-500">Supplier</div>
-              <div className="text-right font-medium text-slate-900">{purchase.supplier_name || "-"}</div>
-              <div className="text-slate-500">Store</div>
-              <div className="text-right font-medium text-slate-900">{purchase.store_name || "-"}</div>
-              <div className="text-slate-500">Bill No.</div>
-              <div className="text-right font-medium text-slate-900">{purchase.bill_number || "-"}</div>
-              <div className="text-slate-500">Amount</div>
-              <div className="text-right font-bold text-blue-600">
-                ₹{Number(purchase.purchase_amount || 0).toLocaleString("en-IN")}
-              </div>
-            </div>
-          </div>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
