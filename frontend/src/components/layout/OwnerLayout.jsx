@@ -3,21 +3,23 @@ import {
   Outlet,
   NavLink,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import {
   Home,
   FileText,
-  Building2,
+  Target,
   BarChart3,
   MoreHorizontal,
-  History,
-  Users,
-  Target,
   ShoppingCart,
   Truck,
   Wallet,
+  Users,
+  Building2,
+  History,
   X,
+  LogOut,
 } from "lucide-react";
 
 import Sidebar from "./Sidebar";
@@ -40,9 +42,9 @@ const mobileNavItems = [
     icon: FileText,
   },
   {
-    label: "Stores",
-    path: "/stores",
-    icon: Building2,
+    label: "Tasks",
+    path: "/tasks",
+    icon: Target,
   },
   {
     label: "Analytics",
@@ -58,9 +60,14 @@ const mobileNavItems = [
 
 const moreItems = [
   {
-    label: "Previous Reports",
-    path: "/previous-reports",
-    icon: History,
+    label: "Purchases",
+    path: "/owner-purchases",
+    icon: ShoppingCart,
+  },
+  {
+    label: "Udhaar",
+    path: "/owner/udhaar",
+    icon: Wallet,
   },
   {
     label: "Staff",
@@ -68,14 +75,9 @@ const moreItems = [
     icon: Users,
   },
   {
-    label: "Tasks",
-    path: "/tasks",
-    icon: Target,
-  },
-  {
-    label: "Purchases",
-    path: "/owner-purchases",
-    icon: ShoppingCart,
+    label: "Stores",
+    path: "/stores",
+    icon: Building2,
   },
   {
     label: "Suppliers",
@@ -83,9 +85,9 @@ const moreItems = [
     icon: Truck,
   },
   {
-    label: "Udhaar",
-    path: "/owner/udhaar",
-    icon: Wallet,
+    label: "Previous Reports",
+    path: "/previous-reports",
+    icon: History,
   },
 ];
 
@@ -95,16 +97,29 @@ const moreItems = [
 // ─────────────────────────────────────────────────────────────
 
 export default function OwnerLayout() {
-  const [showMore, setShowMore] =
-    useState(false);
+  const [showMore, setShowMore] = useState(false);
 
-  const location =
-    useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
 
 
   useEffect(() => {
     setShowMore(false);
   }, [location]);
+
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    setShowMore(false);
+    navigate("/");
+  }
+
+
+  const moreMenuActive = moreItems.some((item) =>
+    location.pathname.startsWith(item.path)
+  );
 
 
   return (
@@ -139,8 +154,8 @@ export default function OwnerLayout() {
       <div className="min-h-screen w-full min-w-0 overflow-x-hidden lg:hidden">
 
         <main className="w-full min-w-0 overflow-x-hidden pb-20">
-  <Outlet />
-</main>
+          <Outlet />
+        </main>
 
 
         {/* More Sheet */}
@@ -153,16 +168,14 @@ export default function OwnerLayout() {
             <button
               type="button"
               aria-label="Close menu"
-              onClick={() =>
-                setShowMore(false)
-              }
+              onClick={() => setShowMore(false)}
               className="fixed inset-0 z-40 bg-black/30"
             />
 
 
             {/* Bottom Sheet */}
 
-            <div className="fixed bottom-16 left-0 right-0 z-50 rounded-t-2xl border-t border-gray-200 bg-white px-4 pb-4 pt-3 shadow-2xl">
+            <div className="fixed bottom-16 left-0 right-0 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto rounded-t-2xl border-t border-gray-200 bg-white px-4 pb-4 pt-3 shadow-2xl">
 
               <div className="mb-3 flex items-center justify-between">
 
@@ -173,9 +186,7 @@ export default function OwnerLayout() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowMore(false)
-                  }
+                  onClick={() => setShowMore(false)}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500"
                 >
                   <X size={17} />
@@ -186,50 +197,50 @@ export default function OwnerLayout() {
 
               <div className="space-y-1">
 
-                {moreItems.map(
-                  (item) => {
+                {moreItems.map((item) => {
 
-                    const Icon =
-                      item.icon;
+                  const Icon = item.icon;
 
-                    return (
-                      <NavLink
-                        key={
-                          item.path
-                        }
-                        to={
-                          item.path
-                        }
-                        onClick={() =>
-                          setShowMore(
-                            false
-                          )
-                        }
-                        className={({
-                          isActive,
-                        }) =>
-                          `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                            isActive
-                              ? "bg-blue-50 text-blue-600"
-                              : "text-gray-600 hover:bg-gray-50"
-                          }`
-                        }
-                      >
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setShowMore(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                          isActive
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-600 hover:bg-gray-50"
+                        }`
+                      }
+                    >
 
-                        <Icon
-                          size={19}
-                        />
+                      <Icon size={19} />
 
-                        <span>
-                          {
-                            item.label
-                          }
-                        </span>
+                      <span>
+                        {item.label}
+                      </span>
 
-                      </NavLink>
-                    );
-                  }
-                )}
+                    </NavLink>
+                  );
+                })}
+
+
+                {/* Logout */}
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="mt-2 flex w-full items-center gap-3 rounded-xl border-t border-gray-200 px-4 py-3 pt-4 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+
+                  <LogOut size={19} />
+
+                  <span>
+                    Logout
+                  </span>
+
+                </button>
 
               </div>
 
@@ -245,67 +256,47 @@ export default function OwnerLayout() {
 
           <div className="grid h-full grid-cols-5">
 
-            {mobileNavItems.map(
-              (item) => {
+            {mobileNavItems.map((item) => {
 
-                const Icon =
-                  item.icon;
+              const Icon = item.icon;
 
-                return (
-                  <NavLink
-                    key={
-                      item.path
-                    }
-                    to={
-                      item.path
-                    }
-                    className={({
-                      isActive,
-                    }) =>
-                      `flex flex-col items-center justify-center transition ${
-                        isActive
-                          ? "text-blue-600"
-                          : "text-gray-500"
-                      }`
-                    }
-                  >
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center transition ${
+                      isActive
+                        ? "text-blue-600"
+                        : "text-gray-500"
+                    }`
+                  }
+                >
 
-                    <Icon
-                      size={20}
-                    />
+                  <Icon size={20} />
 
-                    <span className="mt-1 text-[11px] font-medium">
-                      {
-                        item.label
-                      }
-                    </span>
+                  <span className="mt-1 text-[11px] font-medium">
+                    {item.label}
+                  </span>
 
-                  </NavLink>
-                );
-              }
-            )}
+                </NavLink>
+              );
+            })}
 
 
             {/* More */}
 
             <button
               type="button"
-              onClick={() =>
-                setShowMore(
-                  (previous) =>
-                    !previous
-                )
-              }
+              onClick={() => setShowMore((previous) => !previous)}
               className={`flex flex-col items-center justify-center transition ${
-                showMore
+                showMore || moreMenuActive
                   ? "text-blue-600"
                   : "text-gray-500"
               }`}
             >
 
-              <MoreHorizontal
-                size={20}
-              />
+              <MoreHorizontal size={20} />
 
               <span className="mt-1 text-[11px] font-medium">
                 More
