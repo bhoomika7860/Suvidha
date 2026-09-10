@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+
 import {
   Search,
   Plus,
@@ -6,30 +7,20 @@ import {
   Users,
   ShieldCheck,
   UserCheck,
-  UserX,
-  Store,
-  Eye,
-  Pencil,
-  Ban,
-  X,
-  Check,
-  Phone,
-  Mail,
-  Calendar,
-  Clock,
-  Key,
-  ChevronDown,
-  Info,
   Truck,
+  X,
   RotateCcw,
+  Store,
+  ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import EmployeeDrawer from "../../components/staff/EmployeeDrawer";
 import storesService from "../../services/storeService";
 import { staffService } from "../../services/staffService";
+
 import {
   RoleBadge,
-
   Select,
 } from "../staff_management/components/Badges";
 
@@ -38,8 +29,10 @@ import {
   AVATAR_COLORS,
 } from "../staff_management/utils/helpers";
 
+// ─────────────────────────────────────────────────────────────
+// ADD EMPLOYEE MODAL
+// ─────────────────────────────────────────────────────────────
 
-// ─── Add Employee Modal ───────────────────────────────────────────────────────
 function Field({
   label,
   name,
@@ -51,380 +44,459 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-[#111827]">
+      <label
+        htmlFor={name}
+        className="text-sm font-medium text-[#111827]"
+      >
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && (
+          <span className="ml-0.5 text-red-500">*</span>
+        )}
       </label>
 
       <input
+        id={name}
+        name={name}
         type={type}
         placeholder={placeholder || label}
         value={value}
         onChange={onChange}
-        className="border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
+        className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-sm text-[#111827] placeholder-[#9CA3AF] transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
       />
     </div>
   );
 }
+
 function AddEmployeeModal({ onClose, storeOptions }) {
-
-  console.log("Modal storeOptions:", storeOptions);
-
   const [form, setForm] = useState({
-    fullName: "", username: "", password: "", confirmPassword: "",
-    phone: "", email: "", store: "", role: "", status: "Active", notes: "",
+    fullName: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    email: "",
+    store: "",
+    role: "",
+    status: "Active",
+    notes: "",
   });
-const handleCreateEmployee = async () => {
-  try {
-    // Validation
-    if (
-      !form.fullName ||
-      !form.username ||
-      !form.password ||
-      !form.store ||
-      !form.role
-    ) {
-      alert("Please fill all required fields.");
-      return;
+
+  const [saving, setSaving] = useState(false);
+
+  async function handleCreateEmployee() {
+    try {
+      if (
+        !form.fullName ||
+        !form.username ||
+        !form.password ||
+        !form.store ||
+        !form.role
+      ) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      if (form.password !== form.confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      setSaving(true);
+
+      await staffService.createUser({
+        full_name: form.fullName,
+        username: form.username,
+        password: form.password,
+        phone: form.phone,
+        email: form.email,
+        store_id: Number(form.store),
+        role:
+          form.role === "Manager"
+            ? "store_manager"
+            : form.role === "Delivery Boy"
+              ? "delivery"
+              : "staff",
+        is_active: form.status === "Active",
+      });
+
+      alert("Employee created successfully.");
+      onClose();
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error.response?.data?.detail ||
+          error.message ||
+          "Failed to create employee."
+      );
+    } finally {
+      setSaving(false);
     }
-
-    if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match.");
-      return;
-    }
-
-    // Create employee
-    await staffService.createUser({
-      full_name: form.fullName,
-      username: form.username,
-      password: form.password,
-      phone: form.phone,
-      email: form.email,
-      store_id: Number(form.store),
-      role:
-        form.role === "Manager"
-          ? "store_manager"
-          : form.role === "Delivery Boy"
-          ? "delivery"
-          : "staff",
-      is_active: form.status === "Active",
-    });
-
-    alert("Employee created successfully.");
-
-    // Close modal
-    onClose();
-
-    // Refresh page so new employee appears
-    window.location.reload();
-
-  } catch (error) {
-    console.error(error);
-
-    alert(
-      error.response?.data?.detail ||
-      error.message ||
-      "Failed to create employee."
-    );
   }
-};
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-      <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-[700px] max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between p-7 pb-5 border-b border-[#E5E7EB]">
-          <div>
-            <h2 className="text-2xl font-bold">
-  Add Employee
-</h2>
-            <p className="text-sm text-[#6B7280] mt-0.5">Create a new pharmacy staff account</p>
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-[24px] bg-white shadow-2xl sm:max-w-[700px] sm:rounded-[20px]">
+        <div className="flex shrink-0 items-start justify-between border-b border-[#E5E7EB] px-5 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-7">
+          <div className="min-w-0 pr-4">
+            <h2 className="text-xl font-bold tracking-tight text-[#111827] sm:text-2xl">
+              Add Employee
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-[#6B7280]">
+              Create a new pharmacy staff account
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-[#6B7280]">
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#6B7280] hover:bg-gray-100"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Form */}
-        <div className="p-7 space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-7">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-  label="Full Name"
-  name="fullName"
-  value={form.fullName}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      fullName: e.target.value,
-    }))
-  }
-  required
-  placeholder="e.g. Kunal"
-/>
+              label="Full Name"
+              name="fullName"
+              value={form.fullName}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  fullName: e.target.value,
+                }))
+              }
+              required
+              placeholder="e.g. Kunal"
+            />
+
             <Field
-  label="Username"
-  name="username"
-  value={form.username}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      username: e.target.value,
-    }))
-  }
-  required
-  placeholder="e.g. admin1"
-/>
+              label="Username"
+              name="username"
+              value={form.username}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  username: e.target.value,
+                }))
+              }
+              required
+              placeholder="e.g. admin1"
+            />
+
             <Field
-  label="Password"
-  name="password"
-  type="password"
-  value={form.password}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      password: e.target.value,
-    }))
-  }
-  required
-  placeholder="Min 8 characters"
-/>
+              label="Password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  password: e.target.value,
+                }))
+              }
+              required
+              placeholder="Min 8 characters"
+            />
+
             <Field
-  label="Confirm Password"
-  name="confirmPassword"
-  type="password"
-  value={form.confirmPassword}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      confirmPassword: e.target.value,
-    }))
-  }
-  required
-  placeholder="Repeat password"
-/>
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              value={form.confirmPassword}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  confirmPassword: e.target.value,
+                }))
+              }
+              required
+              placeholder="Repeat password"
+            />
+
             <Field
-  label="Phone"
-  name="phone"
-  value={form.phone}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      phone: e.target.value,
-    }))
-  }
-  required
-  placeholder="+91 98765 43210"
-/>
+              label="Phone"
+              name="phone"
+              value={form.phone}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  phone: e.target.value,
+                }))
+              }
+              required
+              placeholder="+91 98765 43210"
+            />
+
             <Field
-  label="Email"
-  name="email"
-  type="email"
-  value={form.email}
-  onChange={(e) =>
-    setForm((f) => ({
-      ...f,
-      email: e.target.value,
-    }))
-  }
-  placeholder="employee@Suvidha.com"
-/>
+              label="Email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  email: e.target.value,
+                }))
+              }
+              placeholder="employee@Suvidha.com"
+            />
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[#111827]">Store <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.store}
-                  onChange={(e) => setForm((f) => ({ ...f, store: e.target.value }))}
-                  className="w-full appearance-none border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
-                >
-                  <option value="">Select Store</option>
-                  {storeOptions.map((s) => (
-    <option
-        key={s.id}
-        value={s.id}
-    >
-        {s.name}
-    </option>
-))}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-              </div>
+              <label className="text-sm font-medium text-[#111827]">
+                Store <span className="text-red-500">*</span>
+              </label>
+
+              <select
+                value={form.store}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    store: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-sm text-[#111827] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Select Store</option>
+                {storeOptions.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[#111827]">Role <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                  className="w-full appearance-none border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
-                >
-                  <option value="">Select Role</option>
-                  <option value="Manager">Manager</option>
-<option value="Staff">Staff</option>
-<option value="Delivery Boy">Delivery Boy</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-              </div>
+              <label className="text-sm font-medium text-[#111827]">
+                Role <span className="text-red-500">*</span>
+              </label>
+
+              <select
+                value={form.role}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    role: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-sm text-[#111827] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Select Role</option>
+                <option value="Manager">Manager</option>
+                <option value="Staff">Staff</option>
+                <option value="Delivery Boy">Delivery Boy</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[#111827]">Status</label>
-              <div className="relative">
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full appearance-none border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-              </div>
+              <label className="text-sm font-medium text-[#111827]">
+                Status
+              </label>
+
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    status: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-sm text-[#111827] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[#111827]">Notes</label>
+          <div className="mt-4">
+            <label className="text-sm font-medium text-[#111827]">
+              Notes
+            </label>
+
             <textarea
               rows={3}
               placeholder="Any additional notes about this employee..."
               value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white resize-none"
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  notes: e.target.value,
+                }))
+              }
+              className="mt-1.5 w-full resize-none rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-sm text-[#111827] placeholder-[#9CA3AF] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
-          </div>
-
-          {/* Info card */}
-          <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-700">Employee credentials can be changed later by the owner at any time from this panel.</p>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-7 py-5 border-t border-[#E5E7EB]">
-          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-xl hover:bg-gray-50 transition-colors">
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E7EB] bg-white px-5 py-4 sm:px-7 sm:py-5">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm font-medium text-[#374151] hover:bg-gray-50 disabled:opacity-50 sm:px-5"
+          >
             Cancel
           </button>
+
           <button
-  onClick={handleCreateEmployee}
-  className="px-5 py-2.5 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
->
-            Create Employee
+            type="button"
+            onClick={handleCreateEmployee}
+            disabled={saving}
+            className="rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
+          >
+            {saving ? "Creating..." : "Create Employee"}
           </button>
         </div>
       </div>
     </div>
-
-);    
+  );
 }
 
+// ─────────────────────────────────────────────────────────────
+// STAFF MANAGEMENT
+// ─────────────────────────────────────────────────────────────
 
-
-// ─── Main App ─────────────────────────────────────────────────────────────────
-
-
-export default function App() {
-
+export default function StaffManagement() {
   const [employees, setEmployees] = useState([]);
   const [stores, setStores] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
-const closeDrawer = () => {
-  setSelectedEmployee(null);
-};
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-const loadUsers = async () => {
-  try {
-    setLoading(true);
-
-    const data = await staffService.getUsers();
-console.log("Users from backend:", data);
-    console.log("Employees:", data);
-
-    setEmployees(data);
-    console.log("Employees state being set:", data);
-  } catch (err) {
-    console.error(err);
-    setError("Failed to load employees.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-const loadStores = async () => {
-  try {
-    const data = await storesService.getStores();
-    setStores(data);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-useEffect(() => {
-  loadUsers();
-  loadStores();
-}, []);
-
-
-const storeOptions = stores.map((store) => ({
-  id: store.id,
-  name: store.name,
-}));
-
-
-console.log("Employees:", employees);
-console.log("Store Options:", storeOptions);
   const [searchQuery, setSearchQuery] = useState("");
   const [storeFilter, setStoreFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const closeDrawer = () => {
+    setSelectedEmployee(null);
+  };
+
+  async function loadUsers() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await staffService.getUsers();
+
+      setEmployees(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load employees.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadStores() {
+    try {
+      const data = await storesService.getStores();
+      setStores(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  useEffect(() => {
+    loadUsers();
+    loadStores();
+  }, []);
+
+  const storeOptions = stores.map((store) => ({
+    id: store.id,
+    name: store.name,
+  }));
 
   const filtered = useMemo(() => {
-    return employees.filter((e) => {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = !q || e.full_name.toLowerCase().includes(q) || e.username.toLowerCase().includes(q) || (e.store_name || "").toLowerCase().includes(q);
+    return employees.filter((employee) => {
+      const q = searchQuery.trim().toLowerCase();
+
+      const matchesSearch =
+        !q ||
+        (employee.full_name || "").toLowerCase().includes(q) ||
+        (employee.username || "").toLowerCase().includes(q) ||
+        (employee.phone || "").toLowerCase().includes(q) ||
+        (employee.store_name || "").toLowerCase().includes(q);
+
       const matchesStore =
-storeFilter === "all" ||
-String(e.store_id) === String(storeFilter);
-      const matchesRole = roleFilter === "all" || e.role === roleFilter;
-     const matchesStatus =
-  statusFilter === "all" ||
-  (statusFilter === "Active" && e.is_active) ||
-  (statusFilter === "Inactive" && !e.is_active);
+        storeFilter === "all" ||
+        String(employee.store_id) === String(storeFilter);
 
-console.log({
-      employee: e.full_name,
-      search: matchesSearch,
-      store: matchesStore,
-      role: matchesRole,
-      status: matchesStatus,
+      const matchesRole =
+        roleFilter === "all" ||
+        employee.role === roleFilter;
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "Active" && employee.is_active) ||
+        (statusFilter === "Inactive" && !employee.is_active) ||
+        (statusFilter === "Suspended" &&
+          employee.status === "Suspended");
+
+      return (
+        matchesSearch &&
+        matchesStore &&
+        matchesRole &&
+        matchesStatus
+      );
     });
-
-
-      return matchesSearch && matchesStore && matchesRole && matchesStatus;
-    });
-  }, [employees, searchQuery, storeFilter, roleFilter, statusFilter]);
-console.log("Filtered:", filtered);
-
+  }, [
+    employees,
+    searchQuery,
+    storeFilter,
+    roleFilter,
+    statusFilter,
+  ]);
 
   const kpis = [
-    { label: "Total Employees", value: employees.length, icon: <Users size={18} className="text-blue-600" />, iconBg: "bg-blue-50" },
-    { label: "Managers", value: employees.filter((e) => e.role === "store_manager").length, icon: <ShieldCheck size={18} className="text-emerald-600" />, iconBg: "bg-emerald-50" },
-    { label: "Store Staff", value: employees.filter((e) => e.role === "staff").length, icon: <UserCheck size={18} className="text-purple-600" />, iconBg: "bg-purple-50" },
-   
-  {
-  label: "Delivery Boys",
-  value: employees.filter(
-    (e) => e.role === "delivery"
-  ).length,
-
-  icon: <Truck size={18} className="text-orange-600" />,
-  iconBg: "bg-orange-50",
-}
+    {
+      label: "Total Employees",
+      value: employees.length,
+      icon: Users,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+    {
+      label: "Managers",
+      value: employees.filter(
+        (employee) => employee.role === "store_manager"
+      ).length,
+      icon: ShieldCheck,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+    },
+    {
+      label: "Store Staff",
+      value: employees.filter(
+        (employee) => employee.role === "staff"
+      ).length,
+      icon: UserCheck,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+    },
+    {
+      label: "Delivery Boys",
+      value: employees.filter(
+        (employee) => employee.role === "delivery"
+      ).length,
+      icon: Truck,
+      iconBg: "bg-orange-50",
+      iconColor: "text-orange-600",
+    },
   ];
 
   function resetFilters() {
@@ -434,293 +506,787 @@ console.log("Filtered:", filtered);
     setStatusFilter("all");
   }
 
-  const exportStaff = () => {
-  const headers = [
-    "Full Name",
-    "Username",
-    "Email",
-    "Phone",
-    "Store",
-    "Role",
-    "Status",
-  ];
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    storeFilter !== "all" ||
+    roleFilter !== "all" ||
+    statusFilter !== "all";
 
-  const rows = filtered.map((emp) => [
-    emp.full_name,
-    emp.username,
-    emp.email || "",
-    emp.phone || "",
-    emp.store_name || "",
-    emp.role,
-    emp.is_active ? "Active" : "Inactive",
-  ]);
+  function exportStaff() {
+    const headers = [
+      "Full Name",
+      "Username",
+      "Email",
+      "Phone",
+      "Store",
+      "Role",
+      "Status",
+    ];
 
-  const csv = [
-    headers.join(","),
-    ...rows.map((row) =>
-      row
-        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-        .join(",")
-    ),
-  ].join("\n");
+    const rows = filtered.map((employee) => [
+      employee.full_name,
+      employee.username,
+      employee.email || "",
+      employee.phone || "",
+      employee.store_name || "",
+      employee.role,
+      employee.is_active ? "Active" : "Inactive",
+    ]);
 
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8;",
-  });
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((value) =>
+            `"${String(value).replace(/"/g, '""')}"`
+          )
+          .join(",")
+      ),
+    ].join("\n");
 
-  const url = window.URL.createObjectURL(blob);
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-  const link = document.createElement("a");
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-  link.href = url;
-  link.download = "staff_list.csv";
+    link.href = url;
+    link.download = "staff_list.csv";
 
-  document.body.appendChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-  link.click();
-
-  document.body.removeChild(link);
-
-  window.URL.revokeObjectURL(url);
-};
+    window.URL.revokeObjectURL(url);
+  }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <div className="max-w-[1400px] mx-auto px-8 py-8">
-
-        {/* ── Page Header ─────────────────────────────────────────── */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-[#111827] tracking-tight">Staff Management</h1>
-            <p className="text-sm text-[#6B7280] mt-1">Manage employees across all pharmacy stores, assign roles and monitor account status.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-  onClick={exportStaff}
-  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] bg-white rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
->
-              <Download size={15} /> Export Staff
-            </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <Plus size={15} /> Add Employee
-            </button>
-          </div>
-        </div>
-
-        {/* ── KPI Cards ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-5 mb-6">
-          {kpis.map((kpi) => (
-            <div
-              key={kpi.label}
-              className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${kpi.iconBg}`}>
-                  {kpi.icon}
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-[#111827] tracking-tight">{kpi.value}</p>
-              <p className="text-sm font-semibold text-[#374151] mt-1">{kpi.label}</p>
-              <p className="text-xs text-[#6B7280] mt-1">{kpi.trend}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Filter Section ───────────────────────────────────────── */}
-        <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-5 mb-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
-              <input
-                type="text"
-                placeholder="Search employee..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white text-[#111827] placeholder-[#9CA3AF]"
-              />
-            </div>
-            <p className="text-xs text-[#9CA3AF]">Search by: Name, Username, Phone, Store</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Select
-              value={storeFilter}
-              onChange={setStoreFilter}
-              options={[
-  { label: "All Stores", value: "all" },
-  ...storeOptions.map((s) => ({
-    label: s.name,
-    value: s.id,
-  })),
-]}
-            />
-            <Select
-              value={roleFilter}
-              onChange={setRoleFilter}
-              options={[
-                { label: "Owner", value: "owner" },
-{ label: "Manager", value: "store_manager" },
-{ label: "Staff", value: "staff" },
-{ label: "Delivery Boy", value: "delivery" },
-              ]}
-            />
-            <Select
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { label: "All Status", value: "all" },
-                { label: "Active", value: "Active" },
-                { label: "Inactive", value: "Inactive" },
-                { label: "Suspended", value: "Suspended" },
-              ]}
-            />
-            <button
-              onClick={resetFilters}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <RotateCcw size={13} /> Reset Filters
-            </button>
-            <div className="ml-auto text-sm text-[#6B7280] font-medium">
-              Showing <span className="text-[#111827] font-semibold">{filtered.length}</span> Employee{filtered.length !== 1 && "s"}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Main Table ───────────────────────────────────────────── */}
-        <div className="bg-white border border-[#E5E7EB] rounded-[20px] shadow-sm overflow-hidden">
-          {/* Table header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-            <div>
-              <h2 className="text-base font-semibold text-[#111827]">Employees</h2>
-              <p className="text-xs text-[#6B7280] mt-0.5">Manage pharmacy workforce</p>
-            </div>
-            <span className="text-sm text-[#6B7280]">
-              Showing <span className="font-semibold text-[#111827]">{filtered.length}</span> Employee{filtered.length !== 1 && "s"}
-            </span>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            {filtered.length === 0 ? (
-              /* Empty state */
-              <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
-                  <Users size={28} className="text-gray-400" />
-                </div>
-                <h3 className="text-base font-semibold text-[#111827] mb-2">No Employees Found</h3>
-                <p className="text-sm text-[#6B7280] max-w-xs mb-6">
-                  {searchQuery || storeFilter !== "all" || roleFilter !== "all" || statusFilter !== "all"
-                    ? "No employees match your current filters. Try adjusting your search."
-                    : "Create your first employee to start managing pharmacy staff."}
-                </p>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#2563EB] rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  <Plus size={15} /> Add Employee
-                </button>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    {["Employee", "Store", "Role", "Performance"].map((col) => (
-                      <th key={col} className="text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wide px-6 py-3.5 whitespace-nowrap">
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((emp) => (
-                    <tr
-    key={emp.id}
-    onClick={
-        emp.role === "owner"
-            ? undefined
-            : () => setSelectedEmployee(emp)
-    }
-    className={
-        emp.role === "owner"
-            ? "border-b border-[#F3F4F6] bg-gray-50"
-            : "cursor-pointer border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
-    }
->
-                      {/* Employee */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ backgroundColor: AVATAR_COLORS[emp.id] }}
-                          >
-                            
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-[#111827]">{emp.full_name}</p>
-                            <p className="text-xs text-[#6B7280]">@{emp.username}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {/* Store */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-[#374151]">
-                          <Store size={13} className="text-[#9CA3AF] flex-shrink-0" />
-                          <span className="whitespace-nowrap">{emp.store_name}</span>
-                        </div>
-                      </td>
-                      {/* Role */}
-<td className="px-6 py-4">
-    <RoleBadge role={emp.role} />
-</td>
-
-{/* Performance */}
-<td className="px-6 py-4">
-  {emp.role === "owner" ? (
-    <span className="text-sm font-medium text-gray-400">-</span>
-  ) : (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-        emp.performance_score >= 80
-          ? "bg-green-100 text-green-700"
-          : emp.performance_score >= 50
-          ? "bg-yellow-100 text-yellow-700"
-          : "bg-red-100 text-red-700"
-      }`}
+    <div
+      className="min-h-screen bg-[#F9FAFB]"
+      style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      {emp.performance_score}%
-    </span>
-  )}
-</td>
+      {/* =========================================================
+          DESKTOP — UNCHANGED WORKFLOW
+      ========================================================= */}
 
-                      
-                      
-                      
-                      
+      <div className="hidden lg:block">
+        <div className="mx-auto max-w-[1400px] px-8 py-8">
+
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+                Staff Management
+              </h1>
+
+              <p className="mt-1 text-sm text-[#6B7280]">
+                Manage employees across all pharmacy stores,
+                assign roles and monitor account status.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={exportStaff}
+                className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-sm font-medium text-[#374151] shadow-sm hover:bg-gray-50"
+              >
+                <Download size={15} />
+                Export Staff
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+              >
+                <Plus size={15} />
+                Add Employee
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-6 grid grid-cols-4 gap-5">
+            {kpis.map((kpi) => {
+              const Icon = kpi.icon;
+
+              return (
+                <div
+                  key={kpi.label}
+                  className="rounded-[20px] border border-[#E5E7EB] bg-white p-5 shadow-sm"
+                >
+                  <div
+                    className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${kpi.iconBg}`}
+                  >
+                    <Icon
+                      size={18}
+                      className={kpi.iconColor}
+                    />
+                  </div>
+
+                  <p className="text-3xl font-bold tracking-tight text-[#111827]">
+                    {kpi.value}
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-[#374151]">
+                    {kpi.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mb-5 rounded-[20px] border border-[#E5E7EB] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="relative max-w-sm flex-1">
+                <Search
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Search employee..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-[#E5E7EB] bg-white py-2.5 pl-9 pr-4 text-sm text-[#111827] placeholder-[#9CA3AF] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <p className="text-xs text-[#9CA3AF]">
+                Search by: Name, Username, Phone, Store
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Select
+                value={storeFilter}
+                onChange={setStoreFilter}
+                options={[
+                  { label: "All Stores", value: "all" },
+                  ...storeOptions.map((store) => ({
+                    label: store.name,
+                    value: store.id,
+                  })),
+                ]}
+              />
+
+              <Select
+                value={roleFilter}
+                onChange={setRoleFilter}
+                options={[
+                  { label: "Owner", value: "owner" },
+                  {
+                    label: "Manager",
+                    value: "store_manager",
+                  },
+                  { label: "Staff", value: "staff" },
+                  {
+                    label: "Delivery Boy",
+                    value: "delivery",
+                  },
+                ]}
+              />
+
+              <Select
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { label: "All Status", value: "all" },
+                  { label: "Active", value: "Active" },
+                  {
+                    label: "Inactive",
+                    value: "Inactive",
+                  },
+                  {
+                    label: "Suspended",
+                    value: "Suspended",
+                  },
+                ]}
+              />
+
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] px-3.5 py-2 text-sm text-[#6B7280] hover:bg-gray-50"
+              >
+                <RotateCcw size={13} />
+                Reset Filters
+              </button>
+
+              <div className="ml-auto text-sm font-medium text-[#6B7280]">
+                Showing{" "}
+                <span className="font-semibold text-[#111827]">
+                  {filtered.length}
+                </span>{" "}
+                Employee
+                {filtered.length !== 1 && "s"}
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[20px] border border-[#E5E7EB] bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-6 py-5">
+              <div>
+                <h2 className="text-base font-semibold text-[#111827]">
+                  Employees
+                </h2>
+
+                <p className="mt-0.5 text-xs text-[#6B7280]">
+                  Manage pharmacy workforce
+                </p>
+              </div>
+
+              <span className="text-sm text-[#6B7280]">
+                Showing{" "}
+                <span className="font-semibold text-[#111827]">
+                  {filtered.length}
+                </span>{" "}
+                Employee
+                {filtered.length !== 1 && "s"}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-24 text-sm text-gray-500">
+                  Loading employees...
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center px-8 py-24 text-center">
+                  <h3 className="text-base font-semibold text-[#111827]">
+                    Unable to load employees
+                  </h3>
+
+                  <p className="mt-2 text-sm text-[#6B7280]">
+                    {error}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={loadUsers}
+                    className="mt-5 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-8 py-24 text-center">
+                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
+                    <Users size={28} className="text-gray-400" />
+                  </div>
+
+                  <h3 className="mb-2 text-base font-semibold text-[#111827]">
+                    No Employees Found
+                  </h3>
+
+                  <p className="mb-6 max-w-xs text-sm text-[#6B7280]">
+                    {hasActiveFilters
+                      ? "No employees match your current filters. Try adjusting your search."
+                      : "Create your first employee to start managing pharmacy staff."}
+                  </p>
+
+                  {!hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(true)}
+                      className="flex items-center gap-2 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      <Plus size={15} />
+                      Add Employee
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                      {[
+                        "Employee",
+                        "Store",
+                        "Role",
+                        "Performance",
+                      ].map((column) => (
+                        <th
+                          key={column}
+                          className="whitespace-nowrap px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-[#6B7280]"
+                        >
+                          {column}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+
+                  <tbody>
+                    {filtered.map((employee) => {
+                      const isOwner =
+                        employee.role === "owner";
+
+                      return (
+                        <tr
+                          key={employee.id}
+                          onClick={
+                            isOwner
+                              ? undefined
+                              : () =>
+                                  setSelectedEmployee(
+                                    employee
+                                  )
+                          }
+                          className={
+                            isOwner
+                              ? "border-b border-[#F3F4F6] bg-gray-50"
+                              : "cursor-pointer border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
+                          }
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                                style={{
+                                  backgroundColor:
+                                    AVATAR_COLORS[
+                                      employee.id
+                                    ],
+                                }}
+                              >
+                                {getInitials(
+                                  employee.full_name
+                                )}
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-semibold text-[#111827]">
+                                  {employee.full_name}
+                                </p>
+
+                                <p className="text-xs text-[#6B7280]">
+                                  @{employee.username}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1.5 text-sm text-[#374151]">
+                              <Store
+                                size={13}
+                                className="shrink-0 text-[#9CA3AF]"
+                              />
+                              <span className="whitespace-nowrap">
+                                {employee.store_name}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <RoleBadge role={employee.role} />
+                          </td>
+
+                          <td className="px-6 py-4">
+                            {isOwner ? (
+                              <span className="text-sm font-medium text-gray-400">
+                                -
+                              </span>
+                            ) : (
+                              <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                  employee.performance_score >=
+                                  80
+                                    ? "bg-green-100 text-green-700"
+                                    : employee.performance_score >=
+                                        50
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {employee.performance_score}%
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Drawer ──────────────────────────────────────────────────── */}
+      {/* =========================================================
+          MOBILE
+      ========================================================= */}
+
+      <div className="lg:hidden w-full min-h-screen bg-[#F9FAFB] pb-24 overflow-x-hidden">
+
+        {/* Header — exact Purchases typography and spacing */}
+        <div className="w-full bg-white border-b px-5 pt-6 pb-5">
+
+          <div className="flex items-center justify-between gap-3">
+
+            <h1 className="text-3xl font-bold text-gray-900">
+              Staff Management
+            </h1>
+
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
+            >
+              <Plus size={16} />
+              Add
+            </button>
+
+          </div>
+
+          <p className="mt-1 text-gray-500">
+            Manage employees across all stores.
+          </p>
+
+        </div>
+
+        {/* Export button stays completely outside the header */}
+        <div className="px-4 pt-5">
+
+          <button
+            type="button"
+            onClick={exportStaff}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
+          >
+            <Download size={15} />
+            Export Staff
+          </button>
+
+        </div>
+
+        <div className="w-full px-4 pt-4">
+
+          {/* Compact KPIs */}
+          <div className="mb-5 grid grid-cols-2 gap-3">
+            {kpis.map((kpi) => {
+              const Icon = kpi.icon;
+
+              return (
+                <div
+                  key={kpi.label}
+                  className="rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-sm"
+                >
+                  <div
+                    className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${kpi.iconBg}`}
+                  >
+                    <Icon
+                      size={17}
+                      className={kpi.iconColor}
+                    />
+                  </div>
+
+                  <p className="text-2xl font-bold leading-7 tracking-tight text-[#111827]">
+                    {kpi.value}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-[#5B6475]">
+                    {kpi.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Search / Filters */}
+          <div className="mb-4 rounded-2xl border border-[#E5E7EB] bg-white p-3 shadow-sm">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+              />
+
+              <input
+                type="text"
+                placeholder="Search employee..."
+                value={searchQuery}
+                onChange={(e) =>
+                  setSearchQuery(e.target.value)
+                }
+                className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] py-3 pl-10 pr-4 text-sm text-[#111827] placeholder-[#9CA3AF] focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+              />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() =>
+                  setShowMobileFilters((value) => !value)
+                }
+                className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium ${
+                  showMobileFilters || hasActiveFilters
+                    ? "border-blue-200 bg-blue-50 text-blue-600"
+                    : "border-[#E5E7EB] bg-white text-[#475569]"
+                }`}
+              >
+                <SlidersHorizontal size={15} />
+                Filters
+
+                {hasActiveFilters && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                    !
+                  </span>
+                )}
+              </button>
+
+              <span className="text-xs font-medium text-[#64748B]">
+                {filtered.length} employee
+                {filtered.length !== 1 && "s"}
+              </span>
+            </div>
+
+            {showMobileFilters && (
+              <div className="mt-3 space-y-2.5 border-t border-[#F1F5F9] pt-3">
+                <Select
+                  value={storeFilter}
+                  onChange={setStoreFilter}
+                  options={[
+                    { label: "All Stores", value: "all" },
+                    ...storeOptions.map((store) => ({
+                      label: store.name,
+                      value: store.id,
+                    })),
+                  ]}
+                />
+
+                <Select
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  options={[
+                    { label: "All Roles", value: "all" },
+                    {
+                      label: "Owner",
+                      value: "owner",
+                    },
+                    {
+                      label: "Manager",
+                      value: "store_manager",
+                    },
+                    {
+                      label: "Staff",
+                      value: "staff",
+                    },
+                    {
+                      label: "Delivery Boy",
+                      value: "delivery",
+                    },
+                  ]}
+                />
+
+                <Select
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { label: "All Status", value: "all" },
+                    {
+                      label: "Active",
+                      value: "Active",
+                    },
+                    {
+                      label: "Inactive",
+                      value: "Inactive",
+                    },
+                    {
+                      label: "Suspended",
+                      value: "Suspended",
+                    },
+                  ]}
+                />
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm font-medium text-[#64748B]"
+                  >
+                    <RotateCcw size={14} />
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile employee list */}
+          {loading ? (
+            <div className="rounded-2xl border border-[#E5E7EB] bg-white px-5 py-14 text-center shadow-sm">
+              <p className="text-sm text-[#64748B]">
+                Loading employees...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-[#E5E7EB] bg-white px-5 py-14 text-center shadow-sm">
+              <p className="text-sm font-medium text-[#111827]">
+                Unable to load employees
+              </p>
+
+              <button
+                type="button"
+                onClick={loadUsers}
+                className="mt-4 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl border border-[#E5E7EB] bg-white px-5 py-14 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+                <Users
+                  size={25}
+                  className="text-gray-400"
+                />
+              </div>
+
+              <h3 className="text-base font-semibold text-[#111827]">
+                No Employees Found
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-5 text-[#6B7280]">
+                {hasActiveFilters
+                  ? "No employees match your current filters."
+                  : "Create your first employee to start managing pharmacy staff."}
+              </p>
+
+              <button
+                type="button"
+                onClick={
+                  hasActiveFilters
+                    ? resetFilters
+                    : () => setShowAddModal(true)
+                }
+                className="mt-5 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white"
+              >
+                {hasActiveFilters
+                  ? "Reset Filters"
+                  : "Add Employee"}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {filtered.map((employee) => {
+                const isOwner =
+                  employee.role === "owner";
+
+                return (
+                  <button
+                    key={employee.id}
+                    type="button"
+                    disabled={isOwner}
+                    onClick={() =>
+                      !isOwner &&
+                      setSelectedEmployee(employee)
+                    }
+                    className={`w-full rounded-2xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-left shadow-sm ${
+                      isOwner
+                        ? "cursor-default bg-gray-50"
+                        : "active:bg-[#F8FAFC]"
+                    }`}
+                  >
+                    {/* Compact single employee row */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                        style={{
+                          backgroundColor:
+                            AVATAR_COLORS[
+                              employee.id
+                            ],
+                        }}
+                      >
+                        {getInitials(
+                          employee.full_name
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold leading-5 text-[#111827]">
+                              {employee.full_name}
+                            </p>
+
+                            <p className="truncate text-[11px] leading-4 text-[#64748B]">
+                              @{employee.username}
+                            </p>
+                          </div>
+
+                          {!isOwner && (
+                            <ChevronRight
+                              size={16}
+                              className="shrink-0 text-[#94A3B8]"
+                            />
+                          )}
+                        </div>
+
+                        <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                          <span className="flex min-w-0 items-center gap-1 text-[11px] font-medium text-[#64748B]">
+                            <Store
+                              size={11}
+                              className="shrink-0 text-[#94A3B8]"
+                            />
+
+                            <span className="truncate">
+                              {employee.store_name ||
+                                "No store"}
+                            </span>
+                          </span>
+
+                          <span className="h-3 w-px shrink-0 bg-[#E2E8F0]" />
+
+                          <span className="shrink-0">
+                            <RoleBadge
+                              role={employee.role}
+                            />
+                          </span>
+                        </div>
+                      </div>
+
+                      {!isOwner && (
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+                            employee.performance_score >=
+                            80
+                              ? "bg-green-100 text-green-700"
+                              : employee.performance_score >=
+                                  50
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {employee.performance_score}%
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Employee drawer */}
       {selectedEmployee && (
-       <EmployeeDrawer
-    employee={selectedEmployee}
-    onClose={closeDrawer}
-    onEmployeeUpdated={loadUsers}
-/>
+        <EmployeeDrawer
+          employee={selectedEmployee}
+          onClose={closeDrawer}
+          onEmployeeUpdated={loadUsers}
+        />
       )}
 
-      {/* ── Add Modal ───────────────────────────────────────────────── */}
-      {showAddModal && <AddEmployeeModal
-  onClose={() => setShowAddModal(false)}
-  storeOptions={storeOptions}
-/>}
+      {/* Add employee */}
+      {showAddModal && (
+        <AddEmployeeModal
+          onClose={() => setShowAddModal(false)}
+          storeOptions={storeOptions}
+        />
+      )}
     </div>
   );
 }

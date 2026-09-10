@@ -19,12 +19,8 @@ export default function EmployeeDrawer({
     useState(false);
 
   const [loading, setLoading] = useState(true);
-
-  const [performance, setPerformance] =
-    useState(null);
-
-  const [statistics, setStatistics] =
-    useState(null);
+  const [performance, setPerformance] = useState(null);
+  const [statistics, setStatistics] = useState(null);
 
   useEffect(() => {
     if (employee?.id) {
@@ -48,6 +44,9 @@ export default function EmployeeDrawer({
         "Failed to load employee performance",
         error
       );
+
+      setPerformance(null);
+      setStatistics(null);
     } finally {
       setLoading(false);
     }
@@ -58,39 +57,54 @@ export default function EmployeeDrawer({
   }
 
   async function handleDelete() {
-  try {
-    await staffService.deleteEmployee(employee.id);
+    try {
+      await staffService.deleteEmployee(employee.id);
 
-    setShowDeleteModal(false);
+      setShowDeleteModal(false);
 
-    if (onEmployeeUpdated) {
-      await onEmployeeUpdated();
+      if (onEmployeeUpdated) {
+        await onEmployeeUpdated();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error(
+        "Failed to delete employee",
+        error
+      );
+
+      alert(
+        error?.response?.data?.detail ||
+          "Failed to delete employee."
+      );
     }
-
-    onClose();
-  } catch (error) {
-    console.error("Failed to delete employee", error);
-
-    alert(
-      error?.response?.data?.detail ||
-      "Failed to delete employee."
-    );
   }
-}
+
   if (loading) {
     return (
       <>
-        <div
-          className="fixed inset-0 z-40 bg-black/30"
+        <button
+          type="button"
+          aria-label="Close employee drawer"
           onClick={onClose}
+          className="fixed inset-0 z-[60] bg-black/35"
         />
 
-        <div className="fixed right-0 top-0 bottom-0 z-50 flex w-[500px] items-center justify-center bg-[#F9FAFB] shadow-2xl">
-
-          <div className="text-gray-500 text-lg">
+        {/* Desktop loading drawer */}
+        <div className="fixed bottom-0 right-0 top-0 z-[70] hidden w-[500px] items-center justify-center bg-[#F9FAFB] shadow-2xl lg:flex">
+          <p className="text-sm text-[#64748B]">
             Loading employee performance...
-          </div>
+          </p>
+        </div>
 
+        {/* Mobile loading drawer */}
+        <div className="fixed inset-0 z-[70] flex flex-col bg-[#F9FAFB] lg:hidden">
+          <div className="h-1 w-full bg-[#2563EB]" />
+          <div className="flex flex-1 items-center justify-center">
+            <p className="text-sm text-[#64748B]">
+              Loading employee performance...
+            </p>
+          </div>
         </div>
       </>
     );
@@ -98,51 +112,107 @@ export default function EmployeeDrawer({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 bg-black/30"
+      <button
+        type="button"
+        aria-label="Close employee drawer"
         onClick={onClose}
+        className="fixed inset-0 z-[60] bg-black/35"
       />
 
-      <div className="fixed right-0 top-0 bottom-0 z-50 flex w-[500px] flex-col bg-[#F9FAFB] shadow-2xl">
+      {/* =========================================================
+          DESKTOP
+      ========================================================= */}
 
-        <PerformanceHeader
-          employee={employee}
-          onClose={onClose}
-        />
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-
-          <PerformanceRing
-            score={performance.overall_score}
-          />
-
-          <PerformanceSummary
-            performance={performance}
-          />
-
-          
-
-          <EmployeeInformation
+      <div className="fixed bottom-0 right-0 top-0 z-[70] hidden w-[500px] flex-col bg-[#F9FAFB] shadow-2xl lg:flex">
+        <div className="shrink-0">
+          <PerformanceHeader
             employee={employee}
+            onClose={onClose}
           />
-
         </div>
 
-        <DrawerActions
-          onEdit={handleEdit}
-          onDelete={() =>
-            setShowDeleteModal(true)
-          }
-        />
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+          {performance && (
+            <>
+              <PerformanceRing
+                score={performance.overall_score}
+              />
 
+              <PerformanceSummary
+                performance={performance}
+              />
+
+              <EmployeeInformation
+                employee={employee}
+              />
+            </>
+          )}
+        </div>
+
+        <div className="shrink-0 border-t border-[#E5E7EB] bg-white">
+          <DrawerActions
+            onEdit={handleEdit}
+            onDelete={() => setShowDeleteModal(true)}
+          />
+        </div>
+      </div>
+
+      {/* =========================================================
+          MOBILE
+          Full-screen drawer so it never sits underneath the
+          bottom navigation or gets clipped.
+      ========================================================= */}
+
+      <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[#F9FAFB] lg:hidden">
+        {/* Small top handle / drawer accent */}
+        <div className="flex h-5 shrink-0 items-center justify-center bg-white">
+          <div className="h-1 w-9 rounded-full bg-[#CBD5E1]" />
+        </div>
+
+        {/* Employee header */}
+        <div className="shrink-0 border-b border-[#E5E7EB] bg-white">
+          <PerformanceHeader
+            employee={employee}
+            onClose={onClose}
+          />
+        </div>
+
+        {/* Scrollable employee details */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          {performance ? (
+            <div className="space-y-4">
+              <PerformanceRing
+                score={performance.overall_score}
+              />
+
+              <PerformanceSummary
+                performance={performance}
+              />
+
+              <EmployeeInformation
+                employee={employee}
+              />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 text-center text-sm text-[#64748B]">
+              Performance information is unavailable.
+            </div>
+          )}
+        </div>
+
+        {/* Fixed actions — always completely visible */}
+        <div className="shrink-0 border-t border-[#E5E7EB] bg-white px-4 pb-4 pt-3">
+          <DrawerActions
+            onEdit={handleEdit}
+            onDelete={() => setShowDeleteModal(true)}
+          />
+        </div>
       </div>
 
       {showDeleteModal && (
         <DeleteEmployeeModal
           employee={employee}
-          onClose={() =>
-            setShowDeleteModal(false)
-          }
+          onClose={() => setShowDeleteModal(false)}
           onDelete={handleDelete}
         />
       )}

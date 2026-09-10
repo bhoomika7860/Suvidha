@@ -606,48 +606,50 @@ export default function Analytics() {
 
       <div className="mx-auto w-full max-w-[1440px] min-w-0 px-4 pb-24 pt-5 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pt-8">
         {/* Header */}
-        <header className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-[28px] font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Analytics
-            </h1>
+        <header className="mb-5 sm:mb-6">
+          <div className="w-full bg-white border-b px-5 pt-6 pb-5 sm:rounded-xl sm:border sm:px-6 sm:pt-6 sm:pb-5 lg:border-0 lg:bg-transparent lg:px-0 lg:pt-0 lg:pb-0">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Analytics
+                </h1>
 
-            <p className="mt-1 text-sm leading-5 text-slate-500">
-              Track business performance and
-              store insights.
-            </p>
-          </div>
+                
+              </div>
 
-          <div className="flex w-full items-center gap-2.5 sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setShowExport(true)}
-              className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:flex-none sm:px-4"
-            >
-              <Download size={16} />
-              <span>Export Analytics</span>
-            </button>
+              <div className="flex w-full items-center gap-2.5 lg:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowExport(true)}
+                  className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 lg:flex-none lg:px-4"
+                >
+                  <Download size={16} />
+                  <span>Export Analytics</span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                size={16}
-                className={
-                  refreshing
-                    ? "animate-spin"
-                    : ""
-                }
-              />
-              <span className="hidden sm:inline">
-                {refreshing
-                  ? "Refreshing..."
-                  : "Refresh"}
-              </span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={
+                      refreshing
+                        ? "animate-spin"
+                        : ""
+                    }
+                  />
+
+                  <span>
+                    {refreshing
+                      ? "Refreshing..."
+                      : "Refresh"}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 
