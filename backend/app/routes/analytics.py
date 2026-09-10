@@ -43,6 +43,138 @@ router = APIRouter(
 def ist_today():
     return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
+
+def _local_date(value):
+    """Return the date represented by a DB date/datetime in India time."""
+    if value is None:
+        return None
+
+    if isinstance(value, datetime):
+        if value.tzinfo is not None:
+            return value.astimezone(ZoneInfo("Asia/Kolkata")).date()
+        # Existing SQLite rows may be naive. Preserve their stored calendar date.
+        return value.date()
+
+    if isinstance(value, date):
+        return value
+
+    return None
+
+
+def _in_period(value, start_date, end_date):
+    local_date = _local_date(value)
+
+    if local_date is None:
+        return False
+
+    if start_date and local_date < start_date:
+        return False
+
+    if end_date and local_date > end_date:
+        return False
+
+    return True
+
+
+def _get_expenses(
+    db: Session,
+    period=None,
+    store_id="all",
+):
+    """Load real expense rows and apply the analytics period/store scope."""
+    query = db.query(Expense)
+
+    if store_id != "all":
+        query = query.filter(Expense.store_id == int(store_id))
+
+    start_date, end_date = _get_period_bounds(period)
+    expenses = query.all()
+
+    if start_date or end_date:
+        expenses = [
+            expense
+            for expense in expenses
+            if _in_period(expense.created_at, start_date, end_date)
+        ]
+
+    return expenses
+
+
+def _get_purchases(
+    db: Session,
+    period=None,
+    store_id="all",
+):
+    """Load real purchase rows and apply the analytics period/store scope."""
+    query = db.query(Purchase)
+
+    if store_id != "all":
+        query = query.filter(Purchase.store_id == int(store_id))
+
+    start_date, end_date = _get_period_bounds(period)
+    purchases = query.all()
+
+    if start_date or end_date:
+        purchases = [
+            purchase
+            for purchase in purchases
+            if _in_period(purchase.purchase_date, start_date, end_date)
+        ]
+
+    return purchases
+
+
+def _purchase_status_bucket(status):
+    """Normalize the three purchase states used by the Purchases module."""
+    normalized = str(status or "").strip().lower()
+    normalized = normalized.replace("-", "_").replace(" ", "_")
+
+    if normalized == "received":
+        return "received"
+
+    if normalized in {"pending", "waiting_entry", "waiting_for_entry"}:
+        return "pending"
+
+    if normalized == "completed":
+        return "completed"
+
+    return "unclassified"
+
+
+def _purchase_summary_by_store(
+    db: Session,
+    period=None,
+    store_id="all",
+):
+    """Return purchase totals from Purchase rows, including every status."""
+    purchases = _get_purchases(db, period, store_id)
+    summary = {}
+
+    for purchase in purchases:
+        sid = purchase.store_id
+        if sid not in summary:
+            summary[sid] = {
+                "received_purchases": 0.0,
+                "pending_purchases": 0.0,
+                "completed_purchases": 0.0,
+                "unclassified_purchases": 0.0,
+                "total_purchases": 0.0,
+            }
+
+        amount = _safe_number(purchase.purchase_amount)
+        bucket = _purchase_status_bucket(
+            getattr(purchase, "status", None)
+        )
+
+        summary[sid]["total_purchases"] += amount
+        summary[sid][f"{bucket}_purchases"] += amount
+
+    for values in summary.values():
+        for key in values:
+            values[key] = round(values[key], 2)
+
+    return summary, purchases
+
 def _safe_number(value):
 
     if value is None:
@@ -224,119 +356,61 @@ def dashboard_summary(
         submitted_only=current_user["role"] == "owner",
     )
 
-    total_sales = 0
-    total_bills = 0
-    total_deliveries = 0
-    total_purchases = 0
-    
-
-    for report in reports:
-        total_sales += (
-    _safe_number(report.cash_sales)
-    + _safe_number(report.upi_sales)
-    + _safe_number(report.card_sales)
-    + _safe_number(report.udhaar_sales)
-)
-
-        total_purchases += _safe_number(
-            report.total_purchases
-        )
-
-        
-
-        total_bills += report.total_bills or 0
-        total_deliveries += report.deliveries or 0
-
-    purchase_bills_completed_query = db.query(Purchase)
-
-    if store_id != "all":
-        purchase_bills_completed_query = purchase_bills_completed_query.filter(
-        Purchase.store_id == int(store_id)
+    total_sales = sum(
+        _safe_number(report.cash_sales)
+        + _safe_number(report.upi_sales)
+        + _safe_number(report.card_sales)
+        + _safe_number(report.udhaar_sales)
+        for report in reports
     )
 
-    start_date, end_date = _get_period_bounds(period)
+    total_bills = sum(report.total_bills or 0 for report in reports)
+    total_deliveries = sum(report.deliveries or 0 for report in reports)
 
-    if start_date:
-        purchase_bills_completed_query = purchase_bills_completed_query.filter(
-        func.date(
-            func.timezone(
-                "Asia/Kolkata",
-                Purchase.purchase_date,
-            )
-        ) >= start_date
+    purchase_summary, purchase_rows = _purchase_summary_by_store(
+        db,
+        period,
+        store_id,
+    )
+    total_purchases = sum(
+        values["total_purchases"]
+        for values in purchase_summary.values()
+    )
+    purchase_bills_completed = sum(
+        1
+        for purchase in purchase_rows
+        if _purchase_status_bucket(
+            getattr(purchase, "status", None)
+        ) == "completed"
     )
 
-    if end_date:
-        purchase_bills_completed_query = purchase_bills_completed_query.filter(
-        func.date(
-            func.timezone(
-                "Asia/Kolkata",
-                Purchase.purchase_date,
-            )
-        ) <= end_date
+    # Expenses are calculated from the Expense table itself, not the cached
+    # daily_reports.total_expenses field. This keeps the KPI and breakdown
+    # mathematically consistent.
+    expense_rows = _get_expenses(db, period, store_id)
+    total_expenses = sum(
+        _safe_number(expense.amount)
+        for expense in expense_rows
     )
 
-    purchase_bills_completed_query = purchase_bills_completed_query.filter(
-        Purchase.status == "completed"
-)
-
-    purchase_bills_completed = purchase_bills_completed_query.count()
-    # ---------------------------
-    # Udhaar
-    # ---------------------------
-
+    # Outstanding udhaar is a current balance, so it is intentionally not
+    # restricted by the selected reporting period.
     udhaar_query = db.query(UdhaarEntry)
-
     if store_id != "all":
         udhaar_query = udhaar_query.filter(
             UdhaarEntry.store_id == int(store_id)
         )
 
-    total_udhaar = 0
-    recovered_udhaar = 0
+    total_udhaar = 0.0
+    recovered_udhaar = 0.0
 
     for entry in udhaar_query.all():
-        total_udhaar += (
-            entry.amount - entry.paid_amount
-        )
-        recovered_udhaar += entry.paid_amount
+        amount = _safe_number(entry.amount)
+        paid_amount = _safe_number(entry.paid_amount)
+        total_udhaar += max(amount - paid_amount, 0)
+        recovered_udhaar += paid_amount
 
-    # ---------------------------
-    # Expenses
-    # ---------------------------
-
-    expense_query = db.query(
-        func.sum(Expense.amount)
-    )
-
-    if store_id != "all":
-        expense_query = expense_query.filter(
-            Expense.store_id == int(store_id)
-        )
-
-    start_date, end_date = _get_period_bounds(period)
-
-    if start_date:
-        expense_query = expense_query.filter(
-        func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) >= start_date
-    )
-
-    if end_date:
-        expense_query = expense_query.filter(
-        func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) <= end_date
-    )
-
-    total_expenses = expense_query.scalar() or 0
-
-    average_bill = (
-        total_sales / total_bills
-        if total_bills
-        else 0
-    )
+    average_bill = total_sales / total_bills if total_bills else 0
 
     return {
         "total_sales": round(total_sales, 2),
@@ -351,17 +425,17 @@ def dashboard_summary(
         "total_udhaar": round(total_udhaar, 2),
         "outstanding_udhaar": round(total_udhaar, 2),
         "recovered_udhaar": round(recovered_udhaar, 2),
-        "growth_rate": 0,
-"submitted_reports": len(reports),
-"sales_difference": round(
-    total_sales
-    - sum(
-        _safe_number(report.system_sales)
-        for report in reports
-    ),
-    2,
-),
+        "submitted_reports": len(reports),
+        "sales_difference": round(
+            total_sales
+            - sum(
+                _safe_number(report.system_sales)
+                for report in reports
+            ),
+            2,
+        ),
     }
+
 
 @router.get("/store-summary")
 def store_summary(
@@ -385,47 +459,132 @@ def store_summary(
         submitted_only=current_user["role"] == "owner",
     )
 
+    purchase_summary, _ = _purchase_summary_by_store(
+        db,
+        period,
+        store_id,
+    )
+    expense_rows = _get_expenses(db, period, store_id)
+
+    stores_query = db.query(Store)
+    if store_id != "all":
+        stores_query = stores_query.filter(Store.id == int(store_id))
+
     stores = {}
+    for store in stores_query.order_by(Store.id).all():
+        stores[store.id] = {
+            "store_id": store.id,
+            "store_name": store.name,
+            "total_sales": 0.0,
+            "total_bills": 0,
+            "total_expenses": 0.0,
+            "total_purchases": 0.0,
+            "received_purchases": 0.0,
+            "pending_purchases": 0.0,
+            "completed_purchases": 0.0,
+            "unclassified_purchases": 0.0,
+        }
 
     for report in reports:
-
         sid = report.store_id
 
         if sid not in stores:
-
-            store = (
-                db.query(Store)
-                .filter(Store.id == sid)
-                .first()
-            )
-
+            store = db.query(Store).filter(Store.id == sid).first()
             stores[sid] = {
                 "store_id": sid,
                 "store_name": store.name if store else f"Store {sid}",
-                "total_sales": 0,
+                "total_sales": 0.0,
                 "total_bills": 0,
-                "total_expenses": 0,
-                "total_purchases": 0,
+                "total_expenses": 0.0,
+                "total_purchases": 0.0,
+                "received_purchases": 0.0,
+                "pending_purchases": 0.0,
+                "completed_purchases": 0.0,
+                "unclassified_purchases": 0.0,
             }
 
         stores[sid]["total_sales"] += (
-    _safe_number(report.cash_sales)
-    + _safe_number(report.upi_sales)
-    + _safe_number(report.card_sales)
-    + _safe_number(report.udhaar_sales)
-)
-
+            _safe_number(report.cash_sales)
+            + _safe_number(report.upi_sales)
+            + _safe_number(report.card_sales)
+            + _safe_number(report.udhaar_sales)
+        )
         stores[sid]["total_bills"] += report.total_bills or 0
-        stores[sid]["total_expenses"] += _safe_number(report.total_expenses)
-        stores[sid]["total_purchases"] += _safe_number(report.total_purchases)
 
-    for sid in stores:
-        stores[sid]["total_sales"] = round(stores[sid]["total_sales"], 2)
-        stores[sid]["total_expenses"] = round(stores[sid]["total_expenses"], 2)
-        stores[sid]["total_purchases"] = round(stores[sid]["total_purchases"], 2)
-        stores[sid]["growth_rate"] = 0
+    for expense in expense_rows:
+        if expense.store_id in stores:
+            stores[expense.store_id]["total_expenses"] += _safe_number(
+                expense.amount
+            )
+
+    for sid, values in purchase_summary.items():
+        if sid not in stores:
+            store = db.query(Store).filter(Store.id == sid).first()
+            stores[sid] = {
+                "store_id": sid,
+                "store_name": store.name if store else f"Store {sid}",
+                "total_sales": 0.0,
+                "total_bills": 0,
+                "total_expenses": 0.0,
+                "total_purchases": 0.0,
+                "received_purchases": 0.0,
+                "pending_purchases": 0.0,
+                "completed_purchases": 0.0,
+                "unclassified_purchases": 0.0,
+            }
+
+        stores[sid].update(values)
+
+    for values in stores.values():
+        values["total_sales"] = round(values["total_sales"], 2)
+        values["total_expenses"] = round(values["total_expenses"], 2)
+        values["total_purchases"] = round(values["total_purchases"], 2)
+        values["received_purchases"] = round(values["received_purchases"], 2)
+        values["pending_purchases"] = round(values["pending_purchases"], 2)
+        values["completed_purchases"] = round(values["completed_purchases"], 2)
+        values["unclassified_purchases"] = round(values["unclassified_purchases"], 2)
 
     return list(stores.values())
+
+
+@router.get("/purchase-summary")
+def purchase_summary(
+    period: str = "today",
+    store_id: str = "all",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Purchase analytics from real Purchase rows, split by every status."""
+    require_role(
+        ["owner", "store_manager"],
+        current_user["role"],
+    )
+
+    if current_user["role"] == "store_manager":
+        store_id = str(current_user["store_id"])
+
+    summary, _ = _purchase_summary_by_store(
+        db,
+        period,
+        store_id,
+    )
+
+    stores_query = db.query(Store)
+    if store_id != "all":
+        stores_query = stores_query.filter(Store.id == int(store_id))
+
+    return [
+        {
+            "store_id": store.id,
+            "store_name": store.name,
+            "received": round(summary.get(store.id, {}).get("received_purchases", 0), 2),
+            "pending": round(summary.get(store.id, {}).get("pending_purchases", 0), 2),
+            "completed": round(summary.get(store.id, {}).get("completed_purchases", 0), 2),
+            "unclassified": round(summary.get(store.id, {}).get("unclassified_purchases", 0), 2),
+            "total": round(summary.get(store.id, {}).get("total_purchases", 0), 2),
+        }
+        for store in stores_query.order_by(Store.id).all()
+    ]
 
 
 @router.get("/payment-breakdown")
@@ -496,68 +655,11 @@ def expense_distribution(
     if current_user["role"] == "store_manager":
         store_id = str(current_user["store_id"])
 
-    query = db.query(Expense)
-
-    # ---------- Store Filter ----------
-    if store_id != "all":
-        query = query.filter(
-            Expense.store_id == int(store_id)
-        )
-
-    # ---------- Period Filter ----------
-    start_date, end_date = _get_period_bounds(period)
-
-    print("Start Date:", start_date)
-    print("End Date:", end_date)
-    print("Store ID:", store_id)
-
-    if start_date:
-        query = query.filter(
-            func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) >= start_date
-    )
-
-    if end_date:
-        query = query.filter(
-            func.date(
-    func.timezone("Asia/Kolkata", Expense.created_at)
-) <= end_date
-    )
-
-    # ---------- Debug: All Expenses ----------
-    all_expenses = db.query(Expense).all()
-
-    print("\n===== ALL EXPENSES =====")
-
-    for expense in all_expenses:
-        print(
-            expense.id,
-            expense.expense_type,
-            expense.amount,
-            expense.created_at,
-        )
-
-    # ---------- Filtered Expenses ----------
-    expenses = query.all()
-
-    print("\n===== FILTERED EXPENSES =====")
-    print("Expenses Found:", len(expenses))
-
-    for expense in expenses:
-        print(
-            expense.id,
-            expense.expense_type,
-            expense.amount,
-            expense.created_at,
-        )
-
+    expenses = _get_expenses(db, period, store_id)
     grouped = defaultdict(float)
 
     for expense in expenses:
-        grouped[expense.expense_type] += _safe_number(
-            expense.amount
-        )
+        grouped[expense.expense_type] += _safe_number(expense.amount)
 
     return [
         {
@@ -566,6 +668,8 @@ def expense_distribution(
         }
         for name, amount in grouped.items()
     ]
+
+
 @router.get("/sales-trend")
 def sales_trend(
     period: str = "today",
@@ -613,12 +717,9 @@ def outstanding_udhaar(
             UdhaarEntry.store_id == int(store_id)
         )
 
-    entries = query.all()
-
     grouped = {}
 
-    for entry in entries:
-
+    for entry in query.all():
         store = (
             db.query(Store)
             .filter(Store.id == entry.store_id)
@@ -629,44 +730,38 @@ def outstanding_udhaar(
 
         if name not in grouped:
             grouped[name] = {
-                "pending": 0,
-                "recovered": 0,
+                "total_credit": 0.0,
+                "recovered": 0.0,
+                "pending": 0.0,
             }
 
-        grouped[name]["pending"] += (
-            entry.amount - entry.paid_amount
-        )
+        amount = _safe_number(entry.amount)
+        paid_amount = _safe_number(entry.paid_amount)
+        outstanding = max(amount - paid_amount, 0)
 
-        grouped[name]["recovered"] += (
-            entry.paid_amount
-        )
+        grouped[name]["total_credit"] += amount
+        grouped[name]["recovered"] += paid_amount
+        grouped[name]["pending"] += outstanding
 
     return [
         {
             "store_name": name,
+            "total_credit": round(values["total_credit"], 2),
             "pending": round(values["pending"], 2),
             "recovered": round(values["recovered"], 2),
             "outstanding": round(values["pending"], 2),
             "recovery_rate": round(
-                (
-                    values["recovered"]
-                    / (
-                        values["pending"]
-                        + values["recovered"]
-                    )
-                    * 100
+                min(
+                    values["recovered"] / values["total_credit"] * 100,
+                    100,
                 )
-                if (
-                    values["pending"]
-                    + values["recovered"]
-                ) > 0
+                if values["total_credit"] > 0
                 else 0,
                 2,
             ),
         }
         for name, values in grouped.items()
     ]
-
 
 
 @router.get("/performance")
@@ -707,8 +802,8 @@ def performance(
     )
 
     expenses = sum(
-        _safe_number(report.total_expenses)
-        for report in reports
+        _safe_number(expense.amount)
+        for expense in _get_expenses(db, period, store_id)
     )
 
     profit = revenue - expenses
@@ -1028,14 +1123,19 @@ def overview(
     for report in reports
 )
     expenses = sum(
-        _safe_number(report.total_expenses)
-        for report in reports
+        _safe_number(expense.amount)
+        for expense in _get_expenses(db, period, store_id)
     )
 
+    purchase_summary_data, _ = _purchase_summary_by_store(
+        db,
+        period,
+        store_id,
+    )
     purchases = sum(
-    _safe_number(report.total_purchases)
-    for report in reports
-)
+        values["total_purchases"]
+        for values in purchase_summary_data.values()
+    )
 
     bills = sum(
         report.total_bills or 0
@@ -1116,7 +1216,17 @@ def export_excel(
             .first()
         )
 
-        purchases = report.total_purchases
+        report_purchases = [
+            purchase
+            for purchase in db.query(Purchase)
+            .filter(Purchase.store_id == report.store_id)
+            .all()
+            if _local_date(purchase.purchase_date) == report.report_date
+        ]
+        purchases = sum(
+            _safe_number(purchase.purchase_amount)
+            for purchase in report_purchases
+        )
 
         sales = (
             _safe_number(report.cash_sales)
@@ -1139,8 +1249,16 @@ def export_excel(
 
         sheet.cell(row=row, column=4).value = sales
 
-        sheet.cell(row=row, column=5).value = (
-            report.total_expenses
+        report_expenses = [
+            expense
+            for expense in db.query(Expense)
+            .filter(Expense.store_id == report.store_id)
+            .all()
+            if _local_date(expense.created_at) == report.report_date
+        ]
+        sheet.cell(row=row, column=5).value = sum(
+            _safe_number(expense.amount)
+            for expense in report_expenses
         )
 
         sheet.cell(row=row, column=6).value = purchases
@@ -1213,17 +1331,16 @@ to_date: str | None = None,
             .first()
         )
 
-        purchases = (
-            db.query(
-                func.sum(
-                    Purchase.purchase_amount
-                )
-            )
-            .filter(
-                Purchase.store_id == report.store_id
-            )
-            .scalar()
-            or 0
+        report_purchases = [
+            purchase
+            for purchase in db.query(Purchase)
+            .filter(Purchase.store_id == report.store_id)
+            .all()
+            if _local_date(purchase.purchase_date) == report.report_date
+        ]
+        purchases = sum(
+            _safe_number(purchase.purchase_amount)
+            for purchase in report_purchases
         )
 
         sales = (
