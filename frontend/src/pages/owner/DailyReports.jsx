@@ -45,8 +45,6 @@ function TopBar({
   return (
     <header className="flex h-[62px] shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:gap-4 sm:px-6">
 
-      {/* Search */}
-
       <div className="relative max-w-md flex-1">
 
         <Search
@@ -66,9 +64,6 @@ function TopBar({
         />
 
       </div>
-
-
-      {/* Notifications */}
 
       <button
         type="button"
@@ -251,9 +246,6 @@ function OwnerReportDrawer({
           true
         );
 
-
-        // COMPLETE REPORT
-
         let detailed =
           report;
 
@@ -280,7 +272,6 @@ function OwnerReportDrawer({
 
         }
 
-
         if (
           cancelled
         ) {
@@ -291,8 +282,6 @@ function OwnerReportDrawer({
           detailed
         );
 
-
-        // EXPENSES
 
         try {
 
@@ -323,8 +312,6 @@ function OwnerReportDrawer({
         }
 
 
-        // PURCHASES
-
         try {
 
           const purchaseData =
@@ -353,8 +340,6 @@ function OwnerReportDrawer({
 
         }
 
-
-        // PAYMENT MACHINES
 
         try {
 
@@ -446,8 +431,6 @@ function OwnerReportDrawer({
   }
 
 
-  // SALES
-
   const cashSales =
     numberValue(
       fullReport.cash_sales
@@ -492,8 +475,6 @@ function OwnerReportDrawer({
     );
 
 
-  // EXPENSES
-
   const totalExpenses =
     expenses.reduce(
       (
@@ -508,16 +489,12 @@ function OwnerReportDrawer({
     );
 
 
-  // PURCHASES
-
   const todaysPurchases =
     getTodaysReceivedPurchases(
       purchases,
       fullReport
     );
 
-
-  // DIGITAL COLLECTION
 
   const digitalTotal =
     machines.reduce(
@@ -532,8 +509,6 @@ function OwnerReportDrawer({
       0
     );
 
-
-  // CASH DENOMINATIONS
 
   const denominations = [
     500,
@@ -583,8 +558,6 @@ function OwnerReportDrawer({
     );
 
 
-  // BOUNCED PRODUCTS
-
   const bouncedProducts =
     Array.isArray(
       fullReport.bounced_products
@@ -592,8 +565,6 @@ function OwnerReportDrawer({
       ? fullReport.bounced_products
       : [];
 
-
-  // NOTES
 
   const notes =
     fullReport.notes ||
@@ -603,8 +574,6 @@ function OwnerReportDrawer({
   return (
     <>
 
-      {/* Overlay */}
-
       <div
         onClick={
           onClose
@@ -613,11 +582,7 @@ function OwnerReportDrawer({
       />
 
 
-      {/* Drawer */}
-
       <aside className="fixed right-0 top-0 z-50 flex h-screen w-full flex-col bg-white shadow-2xl sm:w-[760px]">
-
-        {/* Header */}
 
         <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 sm:px-7 sm:py-5">
 
@@ -674,8 +639,6 @@ function OwnerReportDrawer({
         </div>
 
 
-        {/* Content */}
-
         <div className="flex-1 overflow-y-auto">
 
           {loading ? (
@@ -691,8 +654,6 @@ function OwnerReportDrawer({
           ) : (
 
             <div className="space-y-7 p-5 sm:space-y-8 sm:p-7">
-
-              {/* SALES */}
 
               <ReportSection
                 number="01"
@@ -759,8 +720,6 @@ function OwnerReportDrawer({
 
               </ReportSection>
 
-
-              {/* CASH VERIFICATION */}
 
               <ReportSection
                 number="02"
@@ -855,8 +814,6 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* DELIVERIES */}
-
               <ReportSection
                 number="03"
                 title="Deliveries"
@@ -876,8 +833,6 @@ function OwnerReportDrawer({
 
               </ReportSection>
 
-
-              {/* EXPENSES */}
 
               <ReportSection
                 number="04"
@@ -967,8 +922,6 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* PURCHASES */}
-
               <ReportSection
                 number="05"
                 title="Purchases"
@@ -1000,8 +953,6 @@ function OwnerReportDrawer({
 
               </ReportSection>
 
-
-              {/* UPI / CARD MACHINES */}
 
               <ReportSection
                 number="06"
@@ -1090,8 +1041,6 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* BOUNCED PRODUCTS */}
-
               <ReportSection
                 number="07"
                 title="Bounced Products"
@@ -1153,8 +1102,6 @@ function OwnerReportDrawer({
               </ReportSection>
 
 
-              {/* NOTES */}
-
               <ReportSection
                 number="08"
                 title="Notes"
@@ -1179,8 +1126,6 @@ function OwnerReportDrawer({
 
               </ReportSection>
 
-
-              {/* SUBMISSION STATUS */}
 
               <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 sm:gap-4 sm:p-5">
 
@@ -1399,10 +1344,6 @@ export default function App() {
   ] = useState(null);
 
 
-  // ─────────────────────────────────────
-  // LOAD REPORTS
-  // ─────────────────────────────────────
-
   useEffect(() => {
 
     const fetchReports =
@@ -1474,19 +1415,11 @@ export default function App() {
   }, [storeId]);
 
 
-  // ─────────────────────────────────────
-  // FORMAT REPORTS
-  // ─────────────────────────────────────
-
   const formattedReports =
     dailyReportsService.formatReports(
       reports
     );
 
-
-  // ─────────────────────────────────────
-  // FILTER
-  // ─────────────────────────────────────
 
   const filtered =
     formattedReports.filter(
@@ -1534,10 +1467,6 @@ export default function App() {
     );
 
 
-  // ─────────────────────────────────────
-  // LOADING
-  // ─────────────────────────────────────
-
   if (loading) {
 
     return (
@@ -1555,10 +1484,6 @@ export default function App() {
     );
   }
 
-
-  // ─────────────────────────────────────
-  // ERROR
-  // ─────────────────────────────────────
 
   if (error) {
 
@@ -1589,131 +1514,116 @@ export default function App() {
 
 
   return (
-    <div
-      className="flex min-h-screen w-full overflow-hidden bg-[#f1f5f9]"
-      style={{
-        fontFamily:
-          "Inter, sans-serif",
-      }}
-    >
+    <>
+      {/* =========================================================
+          DESKTOP
+      ========================================================= */}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className="hidden lg:flex min-h-screen w-full overflow-hidden bg-[#f1f5f9]"
+        style={{
+          fontFamily:
+            "Inter, sans-serif",
+        }}
+      >
 
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
-        {/* ─────────────────────────────
-            TOP BAR
-        ───────────────────────────── */}
-
-        <TopBar
-          searchQuery={
-            searchQuery
-          }
-          onSearchChange={
-            setSearchQuery
-          }
-        />
-
-
-        {/* ─────────────────────────────
-            MAIN
-        ───────────────────────────── */}
-
-        <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:px-8">
-
-
-          {/* PAGE HEADER */}
-
-          <div className="mb-5 flex items-center justify-between gap-4">
-
-            <div>
-
-              <h1 className="text-[22px] font-bold leading-tight text-gray-900 sm:text-xl">
-                Daily Reports
-              </h1>
-
-            </div>
-
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowExportModal(
-                  true
-                )
-              }
-              className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-3 text-xs font-medium text-white transition-colors hover:bg-[#1e3a6e] sm:h-auto sm:px-4 sm:py-2.5 sm:text-sm"
-            >
-
-              <Download
-                size={14}
-              />
-
-              <span className="hidden sm:inline">
-                Export Reports
-              </span>
-
-              <span className="sm:hidden">
-                Export
-              </span>
-
-            </button>
-
-          </div>
-
-
-          {/* FILTERS */}
-
-          <ReportFilters
+          <TopBar
             searchQuery={
               searchQuery
             }
-            setSearchQuery={
+            onSearchChange={
               setSearchQuery
-            }
-            storeFilter={
-              storeFilter
-            }
-            setStoreFilter={
-              setStoreFilter
-            }
-            statusFilter={
-              statusFilter
-            }
-            setStatusFilter={
-              setStatusFilter
-            }
-            reports={
-              reports
             }
           />
 
 
-          {/* REPORT TABLE */}
+          <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:px-8">
 
-          {filtered.length ===
-          0 ? (
+            <div className="mb-5 flex items-center justify-between gap-4">
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-16">
+              <div>
 
-              <FileText className="mb-4 h-10 w-10 text-gray-300" />
+                <h1 className="text-[22px] font-bold leading-tight text-gray-900 sm:text-xl">
+                  Daily Reports
+                </h1>
 
-              <h3 className="text-base font-semibold text-gray-700">
-                No reports found
-              </h3>
+              </div>
 
-              <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
-                Try changing your filters or wait for stores to submit their daily reports.
-              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowExportModal(
+                    true
+                  )
+                }
+                className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-3 text-xs font-medium text-white transition-colors hover:bg-[#1e3a6e] sm:h-auto sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+
+                <Download
+                  size={14}
+                />
+
+                <span className="hidden sm:inline">
+                  Export Reports
+                </span>
+
+                <span className="sm:hidden">
+                  Export
+                </span>
+
+              </button>
 
             </div>
 
-          ) : (
 
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <ReportFilters
+              searchQuery={
+                searchQuery
+              }
+              setSearchQuery={
+                setSearchQuery
+              }
+              storeFilter={
+                storeFilter
+              }
+              setStoreFilter={
+                setStoreFilter
+              }
+              statusFilter={
+                statusFilter
+              }
+              setStatusFilter={
+                setStatusFilter
+              }
+              reports={
+                reports
+              }
+            />
 
-              {/* DESKTOP TABLE */}
 
-              <div className="hidden sm:block">
+            {filtered.length ===
+            0 ? (
+
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-16">
+
+                <FileText className="mb-4 h-10 w-10 text-gray-300" />
+
+                <h3 className="text-base font-semibold text-gray-700">
+                  No reports found
+                </h3>
+
+                <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
+                  Try changing your filters or wait for stores to submit their daily reports.
+                </p>
+
+              </div>
+
+            ) : (
+
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
                 <table className="w-full">
 
@@ -1783,85 +1693,235 @@ export default function App() {
 
               </div>
 
-
-              {/* MOBILE TABLE */}
-
-              <div className="sm:hidden">
-
-                {/* Table heading */}
-
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-
-                  <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-gray-600">
-                    Stores
-                  </p>
-
-                </div>
+            )}
 
 
-                {/* Store rows */}
+            <ExportReportsModal
+              open={
+                showExportModal
+              }
+              onClose={() =>
+                setShowExportModal(
+                  false
+                )
+              }
+            />
 
-                <div>
+          </main>
 
-                  {filtered.map(
-                    (
-                      report
-                    ) => (
+        </div>
 
-                      <button
-                        key={
-                          report.id
-                        }
-                        type="button"
-                        onClick={() =>
-                          setSelectedReport(
-                            report
-                          )
-                        }
-                        className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-4 text-left transition active:bg-blue-50"
-                      >
-
-                        {/* Icon */}
-
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-
-                          <FileText
-                            size={18}
-                            className="text-blue-600"
-                          />
-
-                        </div>
+      </div>
 
 
-                        {/* Store info */}
+      {/* =========================================================
+          MOBILE
+      ========================================================= */}
 
-                        <div className="min-w-0 flex-1">
+      <div className="lg:hidden w-full min-h-screen bg-gray-50 pb-24 overflow-x-hidden">
 
-                          <p className="truncate text-[15px] font-semibold leading-5 text-gray-800">
-                            {
-                              report.store
-                            }
-                          </p>
+        {/* Header */}
 
-                          <p className="mt-1 text-[11px] font-medium text-gray-500">
-                            Tap to view report
-                          </p>
+<div className="w-full bg-white border-b px-5 pt-6 pb-5">
 
-                        </div>
+  <div className="flex items-start justify-between gap-3">
+
+    <div className="min-w-0">
+
+      <h1 className="text-3xl font-bold text-gray-900">
+        Daily Reports
+      </h1>
+
+      <p className="mt-1 text-gray-500">
+        View and manage daily reports.
+      </p>
+
+    </div>
+
+    <button
+      type="button"
+      onClick={() =>
+        setShowExportModal(true)
+      }
+      className="
+        flex
+        h-11
+        shrink-0
+        items-center
+        justify-center
+        gap-2
+        rounded-xl
+        bg-blue-600
+        px-4
+        text-sm
+        font-medium
+        text-white
+        transition-colors
+        hover:bg-blue-700
+      "
+    >
+      <Download size={17} />
+
+      <span>
+        Export
+      </span>
+    </button>
+
+  </div>
+
+</div>
 
 
-                        {/* Arrow */}
+        {/* CONTENT — SAME STRUCTURE AS PURCHASES */}
 
-                        <span className="shrink-0 text-[17px] font-medium text-gray-400">
-                          →
-                        </span>
+        <div className="px-4 pt-5 space-y-4">
 
-                      </button>
+          <ReportFilters
+            searchQuery={
+              searchQuery
+            }
+            setSearchQuery={
+              setSearchQuery
+            }
+            storeFilter={
+              storeFilter
+            }
+            setStoreFilter={
+              setStoreFilter
+            }
+            statusFilter={
+              statusFilter
+            }
+            setStatusFilter={
+              setStatusFilter
+            }
+            reports={
+              reports
+            }
+          />
 
-                    )
-                  )}
 
-                </div>
+          {filtered.length ===
+          0 ? (
+
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-16">
+
+              <FileText className="mb-4 h-10 w-10 text-gray-300" />
+
+              <h3 className="text-base font-semibold text-gray-700">
+                No reports found
+              </h3>
+
+              <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
+                Try changing your filters or wait for stores to submit their daily reports.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+              <div className="border-b border-gray-100 px-4 py-3">
+
+                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                  Stores
+                </p>
+
+              </div>
+
+
+              <div>
+
+                {filtered.map(
+                  (
+                    report
+                  ) => (
+
+                    <button
+                      key={
+                        report.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        setSelectedReport(
+                          report
+                        )
+                      }
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        gap-3
+                        border-b
+                        border-gray-100
+                        px-4
+                        py-4
+                        text-left
+                        transition
+                        active:bg-blue-50
+                        last:border-b-0
+                      "
+                    >
+
+                      <div className="
+                        flex
+                        h-10
+                        w-10
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-xl
+                        bg-blue-50
+                      ">
+
+                        <FileText
+                          size={18}
+                          className="text-blue-600"
+                        />
+
+                      </div>
+
+
+                      <div className="min-w-0 flex-1">
+
+                        <p className="
+                          truncate
+                          text-[15px]
+                          font-semibold
+                          leading-5
+                          text-gray-900
+                        ">
+                          {
+                            report.store
+                          }
+                        </p>
+
+                        <p className="
+                          mt-1
+                          text-[11px]
+                          font-medium
+                          text-gray-500
+                        ">
+                          Tap to view report
+                        </p>
+
+                      </div>
+
+
+                      <span className="
+                        shrink-0
+                        text-[18px]
+                        font-medium
+                        text-gray-400
+                      ">
+                        →
+                      </span>
+
+                    </button>
+
+                  )
+                )}
 
               </div>
 
@@ -1869,8 +1929,6 @@ export default function App() {
 
           )}
 
-
-          {/* EXPORT */}
 
           <ExportReportsModal
             open={
@@ -1883,12 +1941,10 @@ export default function App() {
             }
           />
 
-        </main>
+        </div>
 
       </div>
 
-
-      {/* REPORT DETAIL */}
 
       {selectedReport && (
         <OwnerReportDrawer
@@ -1903,6 +1959,6 @@ export default function App() {
         />
       )}
 
-    </div>
+    </>
   );
 }

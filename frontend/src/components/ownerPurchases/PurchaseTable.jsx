@@ -102,104 +102,116 @@ export default function PurchaseTable({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-      <table className="min-w-full">
-
-        <thead className="bg-slate-50">
-
-          <tr>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Date
-            </th>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Store
-            </th>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Supplier
-            </th>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Bill No.
-            </th>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Amount
-            </th>
-
-            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-              Status
-            </th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          {purchases.map((purchase) => (
-
-            <tr
-              key={purchase.id}
-              onClick={() =>
-                onRowClick?.(purchase)
-              }
-              className="cursor-pointer border-t transition-all duration-200 hover:bg-blue-50"
-            >
-
-              <td className="px-6 py-4">
-                {getWorkflowDate(purchase)}
-              </td>
-
-              <td className="px-6 py-4 font-medium">
-                {purchase.store_name || "-"}
-              </td>
-
-              <td className="px-6 py-4">
-                {purchase.supplier_name || "-"}
-              </td>
-
-              <td className="px-6 py-4">
-                {purchase.bill_number || "-"}
-              </td>
-
-              <td className="px-6 py-4 font-semibold">
-                ₹
-                {Number(
-                  purchase.purchase_amount || 0
-                ).toLocaleString("en-IN")}
-              </td>
-
-              <td className="px-6 py-4">
-
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    STATUS_STYLES[
-                      purchase.status
-                    ]?.className ||
-                    "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {
-                    STATUS_STYLES[
-                      purchase.status
-                    ]?.label ||
-                    purchase.status
-                  }
-                </span>
-
-              </td>
-
+      {/* Desktop Table */}
+      <div className="hidden overflow-x-auto lg:block">
+        <table className="min-w-full">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Store
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Supplier
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Bill No.
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                Status
+              </th>
             </tr>
+          </thead>
+          <tbody>
+            {purchases.map((purchase) => (
+              <tr
+                key={purchase.id}
+                onClick={() =>
+                  onRowClick?.(purchase)
+                }
+                className="cursor-pointer border-t transition-all duration-200 hover:bg-blue-50"
+              >
+                <td className="px-6 py-4">
+                  {getWorkflowDate(purchase)}
+                </td>
+                <td className="px-6 py-4 font-medium">
+                  {purchase.store_name || "-"}
+                </td>
+                <td className="px-6 py-4">
+                  {purchase.supplier_name || "-"}
+                </td>
+                <td className="px-6 py-4">
+                  {purchase.bill_number || "-"}
+                </td>
+                <td className="px-6 py-4 font-semibold">
+                  ₹
+                  {Number(
+                    purchase.purchase_amount || 0
+                  ).toLocaleString("en-IN")}
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      STATUS_STYLES[
+                        purchase.status
+                      ]?.className ||
+                      "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {
+                      STATUS_STYLES[
+                        purchase.status
+                      ]?.label ||
+                      purchase.status
+                    }
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          ))}
-
-        </tbody>
-
-      </table>
-
+      {/* Mobile Card View */}
+      <div className="grid gap-4 p-4 lg:hidden">
+        {purchases.map((purchase) => (
+          <div
+            key={purchase.id}
+            onClick={() => onRowClick?.(purchase)}
+            className="cursor-pointer rounded-xl border border-slate-200 p-4 transition-all active:bg-blue-50"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-slate-500">
+                {getWorkflowDate(purchase)}
+              </span>
+              <span
+                className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                  STATUS_STYLES[purchase.status]?.className || "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {STATUS_STYLES[purchase.status]?.label || purchase.status}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-y-2 text-sm">
+              <div className="text-slate-500">Supplier</div>
+              <div className="text-right font-medium text-slate-900">{purchase.supplier_name || "-"}</div>
+              <div className="text-slate-500">Store</div>
+              <div className="text-right font-medium text-slate-900">{purchase.store_name || "-"}</div>
+              <div className="text-slate-500">Bill No.</div>
+              <div className="text-right font-medium text-slate-900">{purchase.bill_number || "-"}</div>
+              <div className="text-slate-500">Amount</div>
+              <div className="text-right font-bold text-blue-600">
+                ₹{Number(purchase.purchase_amount || 0).toLocaleString("en-IN")}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

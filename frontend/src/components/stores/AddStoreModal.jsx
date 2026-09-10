@@ -23,7 +23,8 @@ export default function AddStoreModal({
 
         setStaff(
           users.filter(
-            (user) => user.role === "store_manager"
+            (user) =>
+              user.role === "store_manager"
           )
         );
       } catch (err) {
@@ -75,83 +76,234 @@ export default function AddStoreModal({
     <>
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/40 z-40"
+        className="
+          fixed
+          inset-0
+          z-40
+          bg-black/40
+        "
       />
 
-      <div className="fixed inset-0 flex justify-center items-center z-50">
+      <div
+        className="
+          fixed
+          inset-0
+          z-50
+          flex
+          items-end
+          justify-center
+          p-0
+          lg:items-center
+          lg:p-6
+        "
+      >
 
-        <div className="w-[520px] bg-white rounded-2xl shadow-xl">
+        <div
+          className="
+            flex
+            max-h-[92vh]
+            w-full
+            max-w-full
+            flex-col
+            overflow-hidden
+            rounded-t-2xl
+            bg-white
+            shadow-xl
+            lg:w-[520px]
+            lg:max-h-none
+            lg:rounded-2xl
+          "
+        >
 
           {/* Header */}
 
-          <div className="flex justify-between items-center px-6 py-5 border-b">
+          <div
+            className="
+              flex
+              shrink-0
+              items-center
+              justify-between
+              border-b
+              px-5
+              py-4
+              lg:px-6
+              lg:py-5
+            "
+          >
 
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl font-bold text-gray-900 lg:text-2xl">
               Add Store
             </h2>
 
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                bg-gray-100
+                text-gray-500
+                hover:bg-gray-200
+              "
             >
-              <X size={22} />
+              <X size={19} />
             </button>
 
           </div>
 
+
           {/* Body */}
 
-          <div className="p-6 space-y-5">
+          <div
+            className="
+              flex-1
+              overflow-y-auto
+              p-5
+              lg:p-6
+            "
+          >
 
-            <input
-              name="name"
-              placeholder="Store Name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full h-11 border rounded-xl px-4"
-            />
+            <div className="space-y-4 lg:space-y-5">
 
-            <input
-              name="code"
-              placeholder="Store Code"
-              value={form.code}
-              onChange={handleChange}
-              className="w-full h-11 border rounded-xl px-4"
-            />
+              <input
+                name="name"
+                placeholder="Store Name"
+                value={form.name}
+                onChange={handleChange}
+                className="
+                  h-11
+                  w-full
+                  rounded-xl
+                  border
+                  border-gray-200
+                  px-4
+                  text-sm
+                  outline-none
+                  focus:border-blue-400
+                  focus:ring-2
+                  focus:ring-blue-100
+                "
+              />
 
-            <textarea
-              rows={4}
-              name="address"
-              placeholder="Address"
-              value={form.address}
-              onChange={handleChange}
-              className="w-full border rounded-xl p-3 resize-none"
-            />
+              <input
+                name="code"
+                placeholder="Store Code"
+                value={form.code}
+                onChange={handleChange}
+                className="
+                  h-11
+                  w-full
+                  rounded-xl
+                  border
+                  border-gray-200
+                  px-4
+                  text-sm
+                  outline-none
+                  focus:border-blue-400
+                  focus:ring-2
+                  focus:ring-blue-100
+                "
+              />
 
-            <input
-  name="manager_name"
-  placeholder="Store Manager Name"
-  value={form.manager_name}
-  onChange={handleChange}
-  className="w-full h-11 border rounded-xl px-4"
-/>
+              <textarea
+                rows={4}
+                name="address"
+                placeholder="Address"
+                value={form.address}
+                onChange={handleChange}
+                className="
+                  w-full
+                  resize-none
+                  rounded-xl
+                  border
+                  border-gray-200
+                  p-3
+                  text-sm
+                  outline-none
+                  focus:border-blue-400
+                  focus:ring-2
+                  focus:ring-blue-100
+                "
+              />
+
+              <input
+                name="manager_name"
+                placeholder="Store Manager Name"
+                value={form.manager_name}
+                onChange={handleChange}
+                className="
+                  h-11
+                  w-full
+                  rounded-xl
+                  border
+                  border-gray-200
+                  px-4
+                  text-sm
+                  outline-none
+                  focus:border-blue-400
+                  focus:ring-2
+                  focus:ring-blue-100
+                "
+              />
+
+            </div>
 
           </div>
 
+
           {/* Footer */}
 
-          <div className="border-t p-5 flex justify-end gap-3">
+          <div
+            className="
+              flex
+              shrink-0
+              gap-3
+              border-t
+              p-4
+              lg:justify-end
+              lg:p-5
+            "
+          >
 
             <button
+              type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-xl border hover:bg-gray-50"
+              className="
+                h-11
+                flex-1
+                rounded-xl
+                border
+                border-gray-200
+                text-sm
+                font-medium
+                text-gray-700
+                hover:bg-gray-50
+                lg:flex-none
+                lg:px-5
+              "
             >
               Cancel
             </button>
 
             <button
+              type="button"
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+              className="
+                h-11
+                flex-1
+                rounded-xl
+                bg-blue-600
+                text-sm
+                font-medium
+                text-white
+                hover:bg-blue-700
+                lg:flex-none
+                lg:px-5
+              "
             >
               Save Store
             </button>

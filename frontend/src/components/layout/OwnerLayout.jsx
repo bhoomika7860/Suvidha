@@ -136,11 +136,11 @@ export default function OwnerLayout() {
           MOBILE
       ═══════════════════════════════════════════════════════ */}
 
-      <div className="min-h-screen lg:hidden">
+      <div className="min-h-screen w-full min-w-0 overflow-x-hidden lg:hidden">
 
-        <main className="pb-20">
-          <Outlet />
-        </main>
+        <main className="w-full min-w-0 overflow-x-hidden pb-20">
+  <Outlet />
+</main>
 
 
         {/* More Sheet */}

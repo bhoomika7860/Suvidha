@@ -23,25 +23,63 @@ export default function StoreStats({ stores }) {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div
+      className="
+        grid
+        w-full
+        min-w-0
+        grid-cols-3
+        gap-2.5
+        lg:gap-6
+      "
+    >
 
       {cards.map((card) => (
-
         <div
           key={card.title}
-          className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6"
+          className="
+            min-w-0
+            rounded-2xl
+            border
+            border-gray-200
+            bg-white
+            px-3.5
+            py-5
+            shadow-sm
+            lg:p-6
+          "
         >
 
-          <p className="text-gray-500">
+          <p
+            className="
+              truncate
+              text-[12px]
+              font-medium
+              leading-5
+              text-gray-500
+              lg:text-base
+            "
+          >
             {card.title}
           </p>
 
-          <h2 className="text-4xl font-bold mt-3">
+          <h2
+            className="
+              mt-1.5
+              text-[24px]
+              font-semibold
+              leading-tight
+              tracking-tight
+              text-[#0F172A]
+              lg:mt-3
+              lg:text-4xl
+              lg:font-bold
+            "
+          >
             {card.value}
           </h2>
 
         </div>
-
       ))}
 
     </div>
