@@ -653,7 +653,9 @@ function OwnerReportDrawer({
 
           ) : (
 
-            <div className="space-y-7 p-5 sm:space-y-8 sm:p-7">
+            <>
+
+            <div className="hidden lg:block space-y-7 p-5 sm:space-y-8 sm:p-7">
 
               <ReportSection
                 number="01"
@@ -1154,6 +1156,31 @@ function OwnerReportDrawer({
 
             </div>
 
+            <MobileReportAccordion
+              fullReport={fullReport}
+              totalBills={totalBills}
+              totalCashSales={totalCashSales}
+              cashSales={cashSales}
+              upiSales={upiSales}
+              cardSales={cardSales}
+              udhaarSales={udhaarSales}
+              actualSales={actualSales}
+              cashCounted={cashCounted}
+              openingCash={numberValue(fullReport.opening_cash)}
+              deliveries={deliveries}
+              totalExpenses={totalExpenses}
+              expenses={expenses}
+              todaysPurchases={todaysPurchases}
+              machines={machines}
+              digitalTotal={digitalTotal}
+              bouncedProducts={bouncedProducts}
+              notes={notes}
+              denominationValues={denominationValues}
+              denominations={denominations}
+            />
+
+            </>
+
           )}
 
         </div>
@@ -1168,6 +1195,456 @@ function OwnerReportDrawer({
 // ─────────────────────────────────────────────────────────────
 // REPORT SECTION
 // ─────────────────────────────────────────────────────────────
+
+function MobileReportAccordion({
+  fullReport,
+  totalBills,
+  totalCashSales,
+  cashSales,
+  upiSales,
+  cardSales,
+  udhaarSales,
+  actualSales,
+  cashCounted,
+  openingCash,
+  deliveries,
+  totalExpenses,
+  expenses,
+  todaysPurchases,
+  machines,
+  digitalTotal,
+  bouncedProducts,
+  notes,
+  denominationValues,
+  denominations,
+}) {
+  const [expanded, setExpanded] = useState({});
+
+  const toggle = (key) => {
+    setExpanded((previous) => ({
+      ...previous,
+      [key]: !previous[key],
+    }));
+  };
+
+  const Chevron = ({ open }) => (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-500">
+      {open ? (
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+          <path
+            d="m5 12 5-5 5 5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+          <path
+            d="m5 8 5 5 5-5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </span>
+  );
+
+  const Section = ({
+    number,
+    title,
+    subtitle,
+    value,
+    icon,
+    iconClass,
+    id,
+    children,
+  }) => {
+    const open = Boolean(expanded[id]);
+
+    return (
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <button
+          type="button"
+          onClick={() => toggle(id)}
+          aria-expanded={open}
+          className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-gray-50"
+        >
+          <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+            {number}
+          </span>
+
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
+          >
+            {icon}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-bold text-[#0F172A]">
+              {title}
+            </p>
+
+            <p className="mt-0.5 truncate text-[11px] text-gray-500">
+              {subtitle}
+            </p>
+          </div>
+
+          {value !== undefined && value !== "" && (
+            <p className="shrink-0 text-[13px] font-bold text-[#0F172A]">
+              {value}
+            </p>
+          )}
+
+          <Chevron open={open} />
+        </button>
+
+        {open && (
+          <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+            {children}
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  return (
+    <div className="px-4 pb-8 pt-4 sm:hidden">
+      <div className="mb-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">
+          Report Details
+        </p>
+        <p className="mt-1 text-[12px] text-gray-500">
+          Tap a section to view its details.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <Section
+          id="sales"
+          number="01"
+          title="Sales"
+          subtitle={`${totalBills} bill${totalBills === 1 ? "" : "s"} generated`}
+          value={money(actualSales)}
+          icon={<Receipt size={16} />}
+          iconClass="bg-blue-50 text-blue-600"
+        >
+          <div className="space-y-2">
+            <MobileMetric label="Total Bills" value={totalBills} />
+            <MobileMetric label="Cash Sales" value={money(cashSales)} />
+            <MobileMetric label="UPI Sales" value={money(upiSales)} />
+            <MobileMetric label="Card Sales" value={money(cardSales)} />
+            <MobileMetric
+              label="Udhaar Included in Cash Sales"
+              value={money(udhaarSales)}
+            />
+            <MobileMetric
+              label="Total Sales"
+              value={money(actualSales)}
+              highlighted
+            />
+          </div>
+        </Section>
+
+        <Section
+          id="cash"
+          number="02"
+          title="Cash Verification"
+          subtitle="Cash and denomination reconciliation"
+          value={money(cashCounted)}
+          icon={<Banknote size={16} />}
+          iconClass="bg-emerald-50 text-emerald-600"
+        >
+          <div className="space-y-2">
+            <MobileMetric label="Opening Cash" value={money(openingCash)} />
+            <MobileMetric label="Cash Counted" value={money(cashCounted)} />
+            <MobileMetric
+              label="Physical Cash Sales"
+              value={money(cashCounted - openingCash)}
+            />
+
+            <div className="pt-2">
+              <p className="mb-2 text-[11px] font-semibold text-gray-600">
+                Cash Denominations
+              </p>
+
+              <div className="grid grid-cols-2 gap-2">
+                {denominations.map((denomination) => (
+                  <div
+                    key={denomination}
+                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3 py-2.5"
+                  >
+                    <span className="text-[11px] font-medium text-gray-600">
+                      ₹{denomination}
+                    </span>
+
+                    <span className="text-[13px] font-bold text-[#0F172A]">
+                      {Number(
+                        denominationValues[denomination] ||
+                          denominationValues[`₹${denomination}`] ||
+                          0
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section
+          id="deliveries"
+          number="03"
+          title="Deliveries"
+          subtitle="Completed delivery count"
+          value={deliveries}
+          icon={<Truck size={16} />}
+          iconClass="bg-emerald-50 text-emerald-600"
+        >
+          <MobileMetric
+            label="Total Deliveries Completed"
+            value={deliveries}
+          />
+        </Section>
+
+        <Section
+          id="expenses"
+          number="04"
+          title="Expenses"
+          subtitle={
+            expenses.length === 0
+              ? "No expenses submitted"
+              : `${expenses.length} expense${expenses.length === 1 ? "" : "s"}`
+          }
+          value={money(totalExpenses)}
+          icon={<Wallet size={16} />}
+          iconClass="bg-orange-50 text-orange-600"
+        >
+          {expenses.length === 0 ? (
+            <MobileEmpty text="No expenses were submitted for this report." />
+          ) : (
+            <div className="space-y-2">
+              {expenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[12px] font-semibold text-[#0F172A]">
+                        {expense.expense_type || "Expense"}
+                      </p>
+
+                      {expense.remarks && (
+                        <p className="mt-1 text-[10px] leading-4 text-gray-500">
+                          {expense.remarks}
+                        </p>
+                      )}
+                    </div>
+
+                    <span className="shrink-0 text-[14px] font-bold text-[#0F172A]">
+                      {money(expense.amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between border-t border-gray-200 px-1 pt-3">
+                <span className="text-[12px] font-semibold text-gray-600">
+                  Total Expenses
+                </span>
+                <span className="text-[16px] font-bold text-orange-600">
+                  {money(totalExpenses)}
+                </span>
+              </div>
+            </div>
+          )}
+        </Section>
+
+        <Section
+          id="purchases"
+          number="05"
+          title="Purchases"
+          subtitle="Purchases received on this date"
+          value={money(todaysPurchases)}
+          icon={<ShoppingCart size={16} />}
+          iconClass="bg-purple-50 text-purple-600"
+        >
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4">
+            <p className="text-[11px] font-medium text-blue-700">
+              Purchases Received Today
+            </p>
+            <p className="mt-1.5 text-xl font-bold text-blue-700">
+              {money(todaysPurchases)}
+            </p>
+            <p className="mt-1.5 text-[10px] leading-4 text-blue-700/70">
+              Only purchase bills received on this business date are included.
+            </p>
+          </div>
+        </Section>
+
+        <Section
+          id="payments"
+          number="06"
+          title="UPI / Card Payments"
+          subtitle={
+            machines.length === 0
+              ? "No payment machines recorded"
+              : `${machines.length} payment machine${machines.length === 1 ? "" : "s"}`
+          }
+          value={money(digitalTotal)}
+          icon={<CreditCard size={16} />}
+          iconClass="bg-violet-50 text-violet-600"
+        >
+          {machines.length === 0 ? (
+            <MobileEmpty text="No payment machines were recorded for this report." />
+          ) : (
+            <div className="space-y-2">
+              {machines.map((machine) => (
+                <div
+                  key={machine.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-[#F8FAFC] px-3 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                      <Smartphone size={15} className="text-blue-600" />
+                    </div>
+
+                    <span className="truncate text-[12px] font-medium text-gray-700">
+                      {machine.machine_name}
+                    </span>
+                  </div>
+
+                  <span className="shrink-0 text-[14px] font-bold text-[#0F172A]">
+                    {money(machine.amount)}
+                  </span>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between border-t border-gray-200 px-1 pt-3">
+                <span className="text-[12px] font-semibold text-gray-600">
+                  Total Digital Collection
+                </span>
+                <span className="text-[16px] font-bold text-blue-600">
+                  {money(digitalTotal)}
+                </span>
+              </div>
+            </div>
+          )}
+        </Section>
+
+        <Section
+          id="bounced"
+          number="07"
+          title="Bounced Products"
+          subtitle={
+            bouncedProducts.length === 0
+              ? "No bounced products"
+              : `${bouncedProducts.length} product${bouncedProducts.length === 1 ? "" : "s"}`
+          }
+          value={bouncedProducts.length}
+          icon={<PackageCheck size={16} />}
+          iconClass="bg-amber-50 text-amber-600"
+        >
+          {bouncedProducts.length === 0 ? (
+            <MobileEmpty text="No bounced products were submitted for this report." />
+          ) : (
+            <div className="space-y-2">
+              {bouncedProducts.map((product, index) => (
+                <div
+                  key={product.id ?? index}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3"
+                >
+                  <span className="min-w-0 truncate text-[12px] font-medium text-gray-700">
+                    {product.product_name || product.name || "-"}
+                  </span>
+                  <span className="shrink-0 text-[11px] font-semibold text-gray-600">
+                    Qty: {product.quantity ?? 0}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <Section
+          id="notes"
+          number="08"
+          title="Notes"
+          subtitle={notes ? "Notes were submitted" : "No notes submitted"}
+          icon={<StickyNote size={16} />}
+          iconClass="bg-gray-100 text-gray-600"
+        >
+          {notes ? (
+            <div className="rounded-xl bg-gray-50 p-4 text-[12px] leading-6 text-gray-700">
+              {notes}
+            </div>
+          ) : (
+            <MobileEmpty text="No notes were submitted for this report." />
+          )}
+        </Section>
+
+        <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-100">
+            <CheckCircle2 size={18} className="text-green-600" />
+          </div>
+
+          <div>
+            <p className="text-[13px] font-semibold text-green-700">
+              Report Submitted
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-gray-600">
+              This report was submitted by the store manager and is locked for editing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileMetric({
+  label,
+  value,
+  highlighted = false,
+}) {
+  return (
+    <div
+      className={`rounded-xl border px-3.5 py-3.5 ${
+        highlighted
+          ? "border-blue-200 bg-blue-50"
+          : "border-gray-200 bg-[#F8FAFC]"
+      }`}
+    >
+      <p className="text-[10px] font-medium text-gray-500">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1.5 text-[17px] font-bold ${
+          highlighted ? "text-blue-600" : "text-[#0F172A]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function MobileEmpty({ text }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-6 text-center">
+      <p className="text-[11px] font-medium text-gray-500">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+
 
 function ReportSection({
   number,

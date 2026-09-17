@@ -1,577 +1,908 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  Store,
+  ArrowLeft,
+  Banknote,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  FileText,
   Package,
-  ChevronRight,
-  IndianRupee,
+  RefreshCw,
+  RotateCcw,
   ShoppingCart,
-  Receipt,
+  Smartphone,
+  Truck,
+  Users,
+  Wallet,
+  X,
 } from "lucide-react";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-} from "recharts";
+import dailyReportsService from "../../services/dailyReportsService";
 
-import Card from "../../components/common/Card";
-import dashboardService from "../../services/dashboardService";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import Card from "../../components/reportDetails/shared/Card";
+import StatusBadge from "../../components/reportDetails/shared/StatusBadge";
+import SectionHeader from "../../components/reportDetails/shared/SectionHeader";
+import IconAction from "../../components/reportDetails/shared/IconAction";
+import KPICard from "../../components/reportDetails/shared/KPICard";
+import PaymentBreakdown from "../../components/reportDetails/PaymentBreakdown";
+import ExpenseBreakdown from "../../components/reportDetails/ExpenseBreakdown";
+import CompletedPurchases from "../../components/reportDetails/CompletedPurchases";
+import DeliverySummary from "../../components/reportDetails/DeliverySummary";
 
 
-// ─────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────
-
-function formatINR(value) {
-  const number = Number(value || 0);
-
-  if (number >= 100000) {
-    return `₹${(number / 100000).toFixed(1)}L`;
-  }
-
-  if (number >= 1000) {
-    return `₹${(number / 1000).toFixed(0)}K`;
-  }
-
-  return `₹${number}`;
+function fmt(value) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
 
-function getGreeting() {
-  const hour = new Date().getHours();
-
-  if (hour < 12) {
-    return "Good Morning";
-  }
-
-  if (hour < 17) {
-    return "Good Afternoon";
-  }
-
-  return "Good Evening";
-}
-
-
-// ─────────────────────────────────────────────────────────────
-// DESKTOP KPI CARD
-// ─────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  color = "border-slate-200",
-  bgColor = "bg-slate-100",
-  iconColor = "text-slate-600",
-  Icon,
-}) {
+function Dot() {
   return (
-    <Card
-      className={`border-t-4 ${color} bg-white p-6 transition-all duration-200 hover:shadow-md`}
-    >
-      {Icon && (
-        <div
-          className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl ${bgColor}`}
-        >
-          <Icon
-            size={20}
-            className={iconColor}
-          />
-        </div>
-      )}
-
-      <div className="mb-3">
-        <span className="text-sm font-semibold uppercase tracking-wide text-[#475569]">
-          {label}
-        </span>
-      </div>
-
-      <div className="text-4xl font-bold tracking-tight text-[#0F172A]">
-        {value}
-      </div>
-
-      <div className="mt-3 text-sm font-medium text-[#64748B]">
-        {sub}
-      </div>
-    </Card>
+    <span
+      className="h-1 w-1 shrink-0 rounded-full"
+      style={{ background: "#E5E7EB" }}
+    />
   );
 }
 
 
-// ─────────────────────────────────────────────────────────────
-// DESKTOP STORE TABLE
-// ─────────────────────────────────────────────────────────────
+/* =========================================================
+   MOBILE SECTION
+========================================================= */
 
-function StoreTable({
-  storeSummary,
-  totalStores,
-}) {
-  const navigate = useNavigate();
-
-  const pendingStores = Math.max(
-    0,
-    totalStores - storeSummary.length
-  );
-
-  return (
-    <Card className="overflow-hidden">
-
-      <div className="flex items-center justify-between border-b border-[rgba(74,124,158,0.12)] px-7 py-5">
-
-        <h2 className="text-2xl font-bold uppercase tracking-wide text-[#0F172A]">
-          Store Performance
-        </h2>
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/stores")
-          }
-          className="flex items-center gap-1 text-sm font-semibold text-[#2563eb] transition hover:text-[#1d4ed8]"
-        >
-          View all
-          <ChevronRight size={14} />
-        </button>
-
-      </div>
-
-
-      <div className="overflow-x-auto">
-
-        <table className="w-full table-fixed">
-
-          <thead>
-            <tr className="border-b border-[rgba(74,124,158,0.08)]">
-
-              {[
-                "Store",
-                "Total Sales",
-                "Total Bills",
-              ].map((heading) => (
-                <th
-                  key={heading}
-                  className="px-6 py-4 text-left text-base font-bold uppercase tracking-wide text-[#334155]"
-                >
-                  {heading}
-                </th>
-              ))}
-
-            </tr>
-          </thead>
-
-
-          <tbody>
-
-            {storeSummary.map((store) => (
-              <tr
-                key={store.store_id}
-                onClick={() =>
-                  navigate("/daily-reports")
-                }
-                className="cursor-pointer border-b border-[rgba(74,124,158,0.06)] transition-colors hover:bg-slate-50"
-              >
-
-                <td className="px-5 py-4">
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-[#4a7c9e]/20 bg-[#4a7c9e]/15">
-
-                      <Store
-                        size={14}
-                        className="text-[#4a7c9e]"
-                      />
-
-                    </div>
-
-                    <span className="text-base font-semibold text-[#0F172A]">
-                      {store.store_name}
-                    </span>
-
-                  </div>
-
-                </td>
-
-
-                <td className="px-5 py-4 text-base font-bold text-[#0F172A]">
-                  ₹{(
-                    store.total_sales || 0
-                  ).toLocaleString("en-IN")}
-                </td>
-
-
-                <td className="px-5 py-4 text-base font-semibold text-[#334155]">
-                  {store.total_bills || 0}
-                </td>
-
-              </tr>
-            ))}
-
-          </tbody>
-
-
-          <tfoot>
-
-            <tr>
-
-              <td
-                colSpan="3"
-                className="border-t border-[rgba(74,124,158,0.08)] px-6 py-3 text-base font-semibold text-[#475569]"
-              >
-                {pendingStores}{" "}
-                {pendingStores === 1
-                  ? "store"
-                  : "stores"}{" "}
-                pending today's submission
-              </td>
-
-            </tr>
-
-          </tfoot>
-
-        </table>
-
-      </div>
-
-    </Card>
-  );
-}
-
-
-// ─────────────────────────────────────────────────────────────
-// MOBILE KPI CARD
-// ─────────────────────────────────────────────────────────────
-
-function MobileKpiCard({
-  label,
-  value,
-  Icon,
-  iconBackground,
-  iconColor,
+function MobileSectionHeader({
+  number,
+  icon: Icon,
+  title,
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+    <div className="flex items-center gap-3">
 
-      <div
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBackground}`}
-      >
-        <Icon
-          size={18}
-          className={iconColor}
-        />
+      <span className="w-3.5 shrink-0 text-[11px] font-medium text-blue-600">
+        {number}
+      </span>
+
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <Icon size={15} />
       </div>
 
-
-      <p className="mt-3 text-[10px] font-medium uppercase tracking-wide text-[#64748B]">
-        {label}
-      </p>
-
-
-      <p className="mt-1 text-[18px] font-semibold leading-none tracking-tight text-[#0F172A]">
-        {value}
-      </p>
+      <h2 className="text-[16px] font-bold leading-none tracking-tight text-[#0F172A]">
+        {title}
+      </h2>
 
     </div>
   );
 }
 
 
-// ─────────────────────────────────────────────────────────────
-// MOBILE STORE CARD
-// ─────────────────────────────────────────────────────────────
+/* =========================================================
+   MOBILE VALUE CARD
+========================================================= */
 
-function MobileStoreCard({
-  store,
+function MobileValueCard({
+  label,
+  value,
+  highlight = false,
 }) {
-  const navigate = useNavigate();
-
   return (
-    <button
-      type="button"
-      onClick={() =>
-        navigate("/daily-reports")
-      }
-      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition active:scale-[0.99]"
+    <div
+      className={`flex min-h-[64px] items-center justify-between rounded-xl border px-3.5 py-3 ${
+        highlight
+          ? "border-blue-200 bg-blue-50"
+          : "border-gray-200 bg-[#F8FAFC]"
+      }`}
     >
+      <p
+        className={`min-w-0 pr-3 text-[11px] font-medium leading-tight ${
+          highlight
+            ? "text-blue-600"
+            : "text-gray-500"
+        }`}
+      >
+        {label}
+      </p>
 
-      <div className="flex items-center gap-3">
-
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-
-          <Store
-            size={18}
-            className="text-blue-600"
-          />
-
-        </div>
-
-
-        <div className="min-w-0 flex-1">
-
-          <p className="truncate text-[15px] font-semibold leading-5 text-[#0F172A]">
-            {store.store_name}
-          </p>
-
-          <p className="mt-1 text-[12px] font-medium text-[#64748B]">
-            Today&apos;s performance
-          </p>
-
-        </div>
-
-
-        <ChevronRight
-          size={18}
-          className="shrink-0 text-slate-400"
-        />
-
-      </div>
-
-
-      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3.5">
-
-        <div>
-
-          <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#64748B]">
-            Total Sales
-          </p>
-
-          <p className="mt-1.5 text-[17px] font-semibold leading-none text-[#0F172A]">
-            ₹{(
-              store.total_sales || 0
-            ).toLocaleString("en-IN")}
-          </p>
-
-        </div>
-
-
-        <div>
-
-          <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#64748B]">
-            Total Bills
-          </p>
-
-          <p className="mt-1.5 text-[17px] font-semibold leading-none text-[#0F172A]">
-            {store.total_bills || 0}
-          </p>
-
-        </div>
-
-      </div>
-
-    </button>
+      <p
+        className={`shrink-0 text-[17px] font-semibold leading-none tracking-tight ${
+          highlight
+            ? "text-blue-600"
+            : "text-[#0F172A]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 
 
-// ─────────────────────────────────────────────────────────────
-// MOBILE STORE PERFORMANCE
-// ─────────────────────────────────────────────────────────────
+/* =========================================================
+   MOBILE REPORT VIEW
+========================================================= */
 
-function MobileStorePerformance({
-  storeSummary,
-  totalStores,
+function MobileDailyReport({
+  report,
+  loadReport,
+  navigate,
 }) {
-  const navigate = useNavigate();
-
-  const pendingStores = Math.max(
-    0,
-    totalStores - storeSummary.length
-  );
-
-  return (
-    <section>
-
-      <div className="mb-3 flex items-end justify-between gap-3">
-
-        <div>
-
-          <h2 className="text-[18px] font-semibold leading-tight tracking-tight text-[#0F172A]">
-            Store Performance
-          </h2>
-
-          <p className="mt-1 text-[12px] font-medium text-[#64748B]">
-            Today&apos;s performance by store
-          </p>
-
-        </div>
-
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/stores")
-          }
-          className="flex shrink-0 items-center gap-0.5 text-[12px] font-medium text-blue-600"
-        >
-          View all
-          <ChevronRight size={14} />
-        </button>
-
-      </div>
-
-
-      <div className="space-y-3">
-
-        {storeSummary.length > 0 ? (
-
-          storeSummary.map(
-            (store) => (
-              <MobileStoreCard
-                key={store.store_id}
-                store={store}
-              />
-            )
-          )
-
-        ) : (
-
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center shadow-sm">
-
-            <p className="text-[13px] font-medium text-slate-500">
-              No store data available for today.
-            </p>
-
-          </div>
-
-        )}
-
-      </div>
-
-
-      {pendingStores > 0 && (
-
-        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-
-          <p className="text-[12px] font-medium text-amber-800">
-            {pendingStores}{" "}
-            {pendingStores === 1
-              ? "store is"
-              : "stores are"}{" "}
-            pending today&apos;s submission
-          </p>
-
-        </div>
-
-      )}
-
-    </section>
-  );
-}
-
-
-// ─────────────────────────────────────────────────────────────
-// DASHBOARD
-// ─────────────────────────────────────────────────────────────
-
-export default function Dashboard() {
-  const [salesData, setSalesData] =
-    useState([]);
-
-  const [comparisonData, setComparisonData] =
-    useState([]);
-
-  const [totalStores, setTotalStores] =
-    useState(0);
-
-  const [storeSummary, setStoreSummary] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [
-    dashboardSummary,
-    setDashboardSummary,
-  ] = useState({
-    total_sales: 0,
-    total_purchases: 0,
-    total_bills: 0,
-    total_expenses: 0,
-    total_deliveries: 0,
-    purchase_bills_completed: 0,
-    submitted_reports: 0,
+  // All report sections start collapsed so the user gets a clean
+  // overview first and opens only the information they need.
+  const [expanded, setExpanded] = useState({
+    sales: false,
+    cash: false,
+    payments: false,
+    expenses: false,
+    purchases: false,
+    deliveries: false,
   });
 
-  const { user } = useAuth();
+  const toggleSection = (section) => {
+    setExpanded((previous) => ({
+      ...previous,
+      [section]: !previous[section],
+    }));
+  };
+
+  const payments = report.payments || {};
+
+  const totalSales = Number(report.summary?.sales || 0);
+  const totalBills = Number(report.summary?.bills || 0);
+  const totalDeliveries = Number(
+    report.summary?.deliveries || 0
+  );
+  const totalPurchases = Number(
+    report.summary?.purchases || 0
+  );
+  const totalExpenses = Number(
+    report.summary?.expenses || 0
+  );
+
+  const cashSales = Number(payments.cash || 0);
+  const upiSales = Number(payments.upi || 0);
+  const cardSales = Number(payments.card || 0);
+  const udhaarSales = Number(payments.udhaar || 0);
+
+  const paymentTotal =
+    cashSales +
+    upiSales +
+    cardSales +
+    udhaarSales;
+
+  const completedPurchases = Array.isArray(
+    report.completed_purchases
+  )
+    ? report.completed_purchases
+    : [];
+
+  const deliveryAssignments = Array.isArray(
+    report.delivery_assignments
+  )
+    ? report.delivery_assignments
+    : [];
+
+  const sectionClass =
+    "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm";
+
+  const sectionButtonClass =
+    "flex w-full items-center gap-3 px-4 py-4 text-left transition active:bg-gray-50";
+
+  return (
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#F8FAFC] pb-20">
+      {/* =====================================================
+          MOBILE HEADER
+      ===================================================== */}
+
+      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-5 pb-4 pt-5">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <h1 className="truncate text-3xl font-bold leading-tight tracking-tight text-[#0F172A]">
+                Daily Report
+              </h1>
+
+              <StatusBadge status={report.status} />
+            </div>
+
+            <div className="mt-1.5 flex items-center gap-2">
+              <FileText
+                size={13}
+                className="shrink-0 text-gray-400"
+              />
+
+              <span className="text-[11px] font-medium text-gray-500">
+                {report.report_date}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={loadReport}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
+              aria-label="Refresh report"
+            >
+              <RefreshCw size={17} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/daily-reports")}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 active:bg-gray-100"
+              aria-label="Close report"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* =====================================================
+          REPORT CONTEXT
+      ===================================================== */}
+
+      <div className="px-4 pt-4">
+        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-[16px] font-bold tracking-tight text-[#0F172A]">
+                {report.store?.name || "Store"}
+              </p>
+
+              <div className="mt-1 flex min-w-0 items-center gap-2">
+                <span className="shrink-0 text-[11px] text-gray-500">
+                  {report.store?.code || "-"}
+                </span>
+
+                <Dot />
+
+                <span className="truncate text-[11px] text-gray-500">
+                  Submitted by{" "}
+                  <span className="font-semibold text-gray-700">
+                    {report.submitted_by?.name || "-"}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          REPORT OVERVIEW
+      ===================================================== */}
+
+      <main className="space-y-3 px-4 pt-5">
+        <div className="mb-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">
+            Report Details
+          </p>
+          <p className="mt-1 text-[12px] text-gray-500">
+            Tap a section to view its details.
+          </p>
+        </div>
+
+        {/* ===================================================
+            01 SALES
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("sales")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.sales}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              01
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Wallet size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Sales
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                {totalBills} bills generated
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {fmt(totalSales)}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Total
+              </p>
+            </div>
+
+            {expanded.sales ? (
+              <ChevronUp
+                size={18}
+                className="shrink-0 text-gray-400"
+              />
+            ) : (
+              <ChevronDown
+                size={18}
+                className="shrink-0 text-gray-400"
+              />
+            )}
+          </button>
+
+          {expanded.sales && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2">
+                <MobileValueCard
+                  label="Total Bills"
+                  value={totalBills}
+                />
+
+                <MobileValueCard
+                  label="Cash Sales"
+                  value={fmt(cashSales)}
+                />
+
+                <MobileValueCard
+                  label="UPI Sales"
+                  value={fmt(upiSales)}
+                />
+
+                <MobileValueCard
+                  label="Card Sales"
+                  value={fmt(cardSales)}
+                />
+
+                <MobileValueCard
+                  label="Udhaar Included in Cash Sales"
+                  value={fmt(udhaarSales)}
+                />
+
+                <MobileValueCard
+                  label="Total Sales"
+                  value={fmt(totalSales)}
+                  highlight
+                />
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            02 CASH VERIFICATION
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("cash")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.cash}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              02
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Banknote size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Cash Verification
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                Cash and udhaar reconciliation
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {fmt(cashSales + udhaarSales)}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Verified
+              </p>
+            </div>
+
+            {expanded.cash ? (
+              <ChevronUp size={18} className="shrink-0 text-gray-400" />
+            ) : (
+              <ChevronDown size={18} className="shrink-0 text-gray-400" />
+            )}
+          </button>
+
+          {expanded.cash && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3.5">
+                  <span className="text-[11px] font-medium text-gray-500">
+                    Cash Collected
+                  </span>
+                  <span className="text-[17px] font-bold text-[#0F172A]">
+                    {fmt(cashSales)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3.5">
+                  <span className="text-[11px] font-medium text-gray-500">
+                    Udhaar
+                  </span>
+                  <span className="text-[17px] font-bold text-[#0F172A]">
+                    {fmt(udhaarSales)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2
+                      size={16}
+                      className="text-emerald-600"
+                    />
+                    <span className="text-[11px] font-semibold text-emerald-700">
+                      Cash + Udhaar
+                    </span>
+                  </div>
+
+                  <span className="text-[17px] font-bold text-emerald-700">
+                    {fmt(cashSales + udhaarSales)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            03 PAYMENT BREAKDOWN
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("payments")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.payments}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              03
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <CreditCard size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Payment Breakdown
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                Collection by payment method
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {fmt(paymentTotal)}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Total
+              </p>
+            </div>
+
+            {expanded.payments ? (
+              <ChevronUp size={18} className="shrink-0 text-gray-400" />
+            ) : (
+              <ChevronDown size={18} className="shrink-0 text-gray-400" />
+            )}
+          </button>
+
+          {expanded.payments && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2">
+                {[
+                  {
+                    label: "Cash",
+                    value: cashSales,
+                    icon: Banknote,
+                    iconClass: "bg-green-50 text-green-600",
+                  },
+                  {
+                    label: "UPI",
+                    value: upiSales,
+                    icon: Smartphone,
+                    iconClass: "bg-purple-50 text-purple-600",
+                  },
+                  {
+                    label: "Card",
+                    value: cardSales,
+                    icon: CreditCard,
+                    iconClass: "bg-cyan-50 text-cyan-600",
+                  },
+                  {
+                    label: "Udhaar",
+                    value: udhaarSales,
+                    icon: Users,
+                    iconClass: "bg-orange-50 text-orange-600",
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3 py-3"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${item.iconClass}`}
+                        >
+                          <Icon size={15} />
+                        </div>
+
+                        <span className="text-[12px] font-medium text-gray-700">
+                          {item.label}
+                        </span>
+                      </div>
+
+                      <span className="text-[15px] font-bold text-[#0F172A]">
+                        {fmt(item.value)}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3">
+                  <span className="text-[12px] font-semibold text-blue-600">
+                    Total
+                  </span>
+
+                  <span className="text-[17px] font-bold text-blue-600">
+                    {fmt(paymentTotal)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            04 EXPENSES
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("expenses")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.expenses}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              04
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+              <Wallet size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Expenses
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                Today&apos;s operational costs
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {fmt(totalExpenses)}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Total
+              </p>
+            </div>
+
+            {expanded.expenses ? (
+              <ChevronUp size={18} className="shrink-0 text-gray-400" />
+            ) : (
+              <ChevronDown size={18} className="shrink-0 text-gray-400" />
+            )}
+          </button>
+
+          {expanded.expenses && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              {report.expenses?.length > 0 ? (
+                <div className="space-y-2">
+                  {report.expenses.map((expense, index) => (
+                    <div
+                      key={expense.id || index}
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3"
+                    >
+                      <span className="min-w-0 truncate pr-3 text-[12px] font-medium text-gray-700">
+                        {expense.title ||
+                          expense.expense_type ||
+                          expense.category ||
+                          "Other"}
+                      </span>
+
+                      <span className="shrink-0 text-[15px] font-bold text-[#0F172A]">
+                        {fmt(expense.amount)}
+                      </span>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center justify-between border-t border-gray-200 px-1 pt-3">
+                    <span className="text-[12px] font-semibold text-gray-600">
+                      Total Expenses
+                    </span>
+
+                    <span className="text-[17px] font-bold text-[#0F172A]">
+                      {fmt(totalExpenses)}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-6 text-center">
+                  <p className="text-[12px] font-medium text-gray-500">
+                    No expenses available.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            05 PURCHASES
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("purchases")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.purchases}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              05
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <ShoppingCart size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Completed Purchases
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                {completedPurchases.length} purchase
+                {completedPurchases.length === 1 ? "" : "s"} included
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {fmt(totalPurchases)}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Total
+              </p>
+            </div>
+
+            {expanded.purchases ? (
+              <ChevronUp size={18} className="shrink-0 text-gray-400" />
+            ) : (
+              <ChevronDown size={18} className="shrink-0 text-gray-400" />
+            )}
+          </button>
+
+          {expanded.purchases && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2.5">
+                {completedPurchases.length > 0 ? (
+                  completedPurchases.map((purchase, index) => (
+                    <div
+                      key={purchase.id || index}
+                      className="rounded-xl border border-gray-200 bg-[#F8FAFC] p-3.5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-semibold text-[#0F172A]">
+                            {purchase.supplier_name || "Supplier"}
+                          </p>
+
+                          <p className="mt-1 text-[10px] text-gray-500">
+                            Bill No. {purchase.bill_number || "-"}
+                          </p>
+                        </div>
+
+                        <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-medium text-green-700">
+                          Completed
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
+                        <span className="text-[11px] font-medium text-gray-500">
+                          Amount
+                        </span>
+
+                        <span className="text-[16px] font-bold text-[#0F172A]">
+                          {fmt(purchase.purchase_amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-6 text-center">
+                    <p className="text-[12px] font-medium text-gray-500">
+                      No completed purchases.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t border-gray-200 px-1 pt-3">
+                  <span className="text-[12px] font-semibold text-gray-600">
+                    Total Purchases
+                  </span>
+
+                  <span className="text-[17px] font-bold text-[#0F172A]">
+                    {fmt(totalPurchases)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            06 DELIVERIES
+        =================================================== */}
+
+        <section className={sectionClass}>
+          <button
+            type="button"
+            onClick={() => toggleSection("deliveries")}
+            className={sectionButtonClass}
+            aria-expanded={expanded.deliveries}
+          >
+            <span className="w-5 shrink-0 text-[10px] font-semibold text-blue-600">
+              06
+            </span>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Truck size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold text-[#0F172A]">
+                Today&apos;s Deliveries
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                Completed delivery assignments
+              </p>
+            </div>
+
+            <div className="mr-1 shrink-0 text-right">
+              <p className="text-[13px] font-bold text-[#0F172A]">
+                {totalDeliveries}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-gray-400">
+                Completed
+              </p>
+            </div>
+
+            {expanded.deliveries ? (
+              <ChevronUp size={18} className="shrink-0 text-gray-400" />
+            ) : (
+              <ChevronDown size={18} className="shrink-0 text-gray-400" />
+            )}
+          </button>
+
+          {expanded.deliveries && (
+            <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-3">
+              <div className="space-y-2">
+                {deliveryAssignments.length > 0 ? (
+                  deliveryAssignments.map((delivery, index) => (
+                    <div
+                      key={delivery.id || index}
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F8FAFC] px-3.5 py-3"
+                    >
+                      <span className="min-w-0 truncate pr-3 text-[12px] font-medium text-gray-700">
+                        {delivery.delivery_boy_name ||
+                          "Delivery Boy"}
+                      </span>
+
+                      <span className="shrink-0 text-[16px] font-bold text-[#0F172A]">
+                        {delivery.deliveries_completed || 0}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-gray-200 bg-[#F8FAFC] px-4 py-6 text-center">
+                    <p className="text-[12px] font-medium text-gray-500">
+                      No delivery data available.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t border-gray-200 px-1 pt-3">
+                  <span className="text-[12px] font-semibold text-gray-600">
+                    Total Deliveries
+                  </span>
+
+                  <span className="text-[17px] font-bold text-[#0F172A]">
+                    {totalDeliveries}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+
+export default function DailyReportView() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  const loadReport = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data =
+        await dailyReportsService.getReport(id);
+
+      setReport(data);
+
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        "Failed to load report."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   useEffect(() => {
-
-    const loadDashboard =
-      async () => {
-
-        try {
-
-          setLoading(true);
-
-          const data =
-            await dashboardService.getDashboardData();
-
-          setDashboardSummary(
-            data.summary || {}
-          );
-
-          setTotalStores(
-            data.totalStores || 0
-          );
-
-          setStoreSummary(
-            data.storeSummary || []
-          );
-
-          setSalesData(
-            data.salesData || []
-          );
-
-          setComparisonData(
-            data.comparisonData || []
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Failed to load owner dashboard:",
-            error
-          );
-
-        } finally {
-
-          setLoading(false);
-
-        }
-
-      };
-
-
-    loadDashboard();
-
-  }, []);
+    loadReport();
+  }, [id]);
 
 
   if (loading) {
-
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-5">
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
 
         <div className="text-center">
 
-          <p className="text-base font-semibold text-slate-700">
-            Loading dashboard...
-          </p>
+          <RefreshCw
+            size={22}
+            className="mx-auto animate-spin text-blue-600"
+          />
 
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Fetching today&apos;s store data.
+          <p className="mt-3 text-sm font-medium text-gray-700">
+            Loading report...
           </p>
 
         </div>
@@ -581,541 +912,299 @@ export default function Dashboard() {
   }
 
 
-  const displayName =
-    user?.full_name ||
-    user?.username ||
-    "User";
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-6">
 
-  const greeting =
-    getGreeting();
+        <div className="text-center">
+
+          <h2 className="text-xl font-semibold text-red-600">
+            {error}
+          </h2>
+
+          <button
+            onClick={loadReport}
+            className="mt-5 rounded-lg bg-[#2563EB] px-5 py-2 text-white hover:bg-[#1D4ED8]"
+          >
+            Try Again
+          </button>
+
+        </div>
+
+      </div>
+    );
+  }
+
+
+  if (!report) {
+    return (
+      <div className="p-10">
+        Report not found
+      </div>
+    );
+  }
+
+
+  const paymentRows = [
+    {
+      name: "Cash",
+      value: report.payments?.cash ?? 0,
+      color: "#16A34A",
+      icon: Banknote,
+    },
+    {
+      name: "UPI",
+      value: report.payments?.upi ?? 0,
+      color: "#7C3AED",
+      icon: Smartphone,
+    },
+    {
+      name: "Card",
+      value: report.payments?.card ?? 0,
+      color: "#0891B2",
+      icon: CreditCard,
+    },
+    {
+      name: "Credit (Udhaar)",
+      value: report.payments?.udhaar ?? 0,
+      color: "#D97706",
+      icon: Users,
+    },
+  ];
 
 
   return (
     <>
+      {/* =====================================================
+          DESKTOP — UNCHANGED
+      ===================================================== */}
 
-      {/* ═══════════════════════════════════════════════════════
-          DESKTOP
-      ═══════════════════════════════════════════════════════ */}
-
-      <main
-        className="hidden flex-1 space-y-10 overflow-x-hidden bg-[#F8FAFC] px-6 py-8 lg:block lg:px-8"
+      <div
+        className="hidden min-h-screen lg:block"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(74,124,158,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(74,124,158,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: "48px 48px",
+          background: "#F8FAFC",
+          fontFamily: "'Inter', sans-serif",
         }}
       >
 
-        {/* Desktop Hero */}
+        <div className="mx-auto max-w-[1280px] px-7 py-7">
 
-        <Card className="flex flex-col gap-5 px-8 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            onClick={() =>
+              navigate("/daily-reports")
+            }
+            className="mb-5 inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color =
+                "#2563EB")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                "#6B7280")
+            }
+          >
+            <ArrowLeft size={14} />
+            Back to Daily Reports
+          </button>
 
-          <div className="flex-1">
 
-            <p className="text-2xl font-black uppercase tracking-[0.12em] text-[#1E40AF]">
-              Suvidha
-            </p>
+          <Card className="mb-5 px-7 py-5">
 
-            <h1 className="mt-2 text-2xl font-bold leading-tight text-[#0F172A]">
-              {greeting}, {displayName}
-            </h1>
+            <div className="flex items-center justify-between">
 
-            <p className="mt-2 text-base text-[#64748B]">
-              Here&apos;s today&apos;s operational overview
-              across all stores.
-            </p>
+              <div>
 
-          </div>
+                <h1 className="text-[26px] font-bold">
+                  {report.store?.name}
+                </h1>
+
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+
+                  <span className="text-[13px] text-gray-500">
+                    {report.report_date}
+                  </span>
+
+                  <Dot />
+
+                  <span className="text-[13px] text-gray-500">
+                    Submitted by{" "}
+                    <span className="font-semibold text-black">
+                      {report.submitted_by?.name}
+                    </span>
+                  </span>
+
+                  <Dot />
+
+                  <span className="rounded-md border bg-gray-100 px-2 py-1 text-[11px] font-semibold">
+                    {report.store?.code}
+                  </span>
+
+                </div>
+
+              </div>
 
 
-          <div className="flex flex-shrink-0 items-center gap-3">
+              <div className="flex items-center gap-3">
 
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2">
+                <IconAction
+                  icon={
+                    <RotateCcw size={14} />
+                  }
+                  label="Refresh Report"
+                  onClick={loadReport}
+                />
 
-              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                <StatusBadge
+                  status={report.status}
+                />
 
-              <span className="text-sm font-semibold text-emerald-700">
-                {totalStores} Stores Active
-              </span>
+              </div>
 
             </div>
 
-          </div>
-
-        </Card>
+          </Card>
 
 
-        {/* Desktop KPIs */}
+          {/* KPI */}
 
-        <div className="grid grid-cols-1 gap-6 transition-all md:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-6">
 
-          <KpiCard
-            label="Total Sales"
-            value={`₹${(
-              dashboardSummary.total_sales ||
-              0
-            ).toLocaleString("en-IN")}`}
-            sub="Gross business across all stores"
-            color="border-blue-500"
-            bgColor="bg-blue-100"
-            iconColor="text-blue-600"
-            Icon={IndianRupee}
-          />
+            <SectionHeader
+              title="Executive Summary"
+              sub="Daily performance snapshot"
+            />
 
+            <div className="flex gap-4">
 
-          <KpiCard
-            label="Sales Bills"
-            value={
-              dashboardSummary.total_bills ||
-              0
-            }
-            sub="Across all stores"
-            color="border-violet-500"
-            bgColor="bg-violet-100"
-            iconColor="text-violet-600"
-            Icon={Receipt}
-          />
+              <KPICard
+                icon={<Wallet size={14} />}
+                label="Total Sales"
+                value={fmt(
+                  report.summary?.sales
+                )}
+                trend="Today's total sales"
+                dir="up"
+              />
 
+              <KPICard
+                icon={<FileText size={14} />}
+                label="Bills Generated"
+                value={
+                  report.summary?.bills
+                }
+                trend="Bills generated"
+                dir="up"
+              />
 
-          <Card className="border-t-4 border-orange-500 bg-white p-6">
+              <KPICard
+                icon={<Truck size={14} />}
+                label="Deliveries"
+                value={
+                  report.summary?.deliveries
+                }
+                trend="Completed deliveries"
+                dir="up"
+              />
 
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100">
+              <KPICard
+                icon={
+                  <ShoppingCart size={14} />
+                }
+                label="Purchases"
+                value={fmt(
+                  report.summary?.purchases
+                )}
+                trend="Today's purchases"
+                dir="up"
+              />
 
-              <ShoppingCart
-                size={20}
-                className="text-orange-600"
+              <KPICard
+                icon={
+                  <CreditCard size={14} />
+                }
+                label="Expenses"
+                value={fmt(
+                  report.summary?.expenses
+                )}
+                trend="Operating expenses"
+                dir="up"
               />
 
             </div>
 
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-              Purchases
-            </p>
-
-            <div className="mt-4">
-
-              <p className="text-xs text-slate-500">
-                Total Purchases
-              </p>
-
-              <h2 className="text-2xl font-bold text-slate-900">
-                ₹{(
-                  dashboardSummary.total_purchases ||
-                  0
-                ).toLocaleString("en-IN")}
-              </h2>
-
-            </div>
-
-            <div className="mt-5 border-t pt-4">
-
-              <p className="text-xs text-slate-500">
-                Purchase Bills Completed
-              </p>
-
-              <h2 className="text-2xl font-bold text-slate-900">
-                {dashboardSummary.purchase_bills_completed ||
-                  0}
-              </h2>
-
-            </div>
-
-          </Card>
+          </div>
 
 
-          <KpiCard
-            label="Total Deliveries"
-            value={
-              dashboardSummary.total_deliveries ||
-              0
-            }
-            sub="Completed today"
-            color="border-emerald-500"
-            bgColor="bg-emerald-100"
-            iconColor="text-emerald-600"
-            Icon={Package}
-          />
+          {/* PAYMENT */}
 
-        </div>
+          <div className="mb-6">
+
+            <PaymentBreakdown
+              payments={paymentRows}
+            />
+
+          </div>
 
 
-        {/* Desktop Charts */}
+          {/* EXPENSES */}
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="mb-6">
 
-          <Card className="overflow-hidden">
+            <ExpenseBreakdown
+              expenses={
+                report.expenses || []
+              }
+            />
 
-            <div className="flex items-center justify-between border-b border-[rgba(74,124,158,0.12)] px-7 py-5">
-
-              <h2 className="text-2xl font-bold uppercase tracking-wide text-[#0F172A]">
-                Sales Distribution
-              </h2>
-
-            </div>
+          </div>
 
 
-            <div className="flex items-center justify-center p-6">
+          {/* PURCHASES */}
 
-              <ResponsiveContainer
-                width="100%"
-                height={290}
-              >
+          <div className="mb-6">
 
-                <PieChart>
+            <CompletedPurchases
+              purchases={
+                report.completed_purchases ||
+                []
+              }
+            />
 
-                  <Pie
-                    data={salesData}
-                    cx="50%"
-                    cy="42%"
-                    innerRadius={70}
-                    outerRadius={110}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-
-                    {salesData.map(
-                      (
-                        entry,
-                        index
-                      ) => (
-                        <Cell
-                          key={`desktop-sales-${index}`}
-                          fill={
-                            [
-                              "#FACC15",
-                              "#F97316",
-                              "#EC4899",
-                              "#22C55E",
-                              "#3B82F6",
-                            ][index % 5]
-                          }
-                        />
-                      )
-                    )}
-
-                  </Pie>
+          </div>
 
 
-                  <Tooltip
-                    formatter={(
-                      value
-                    ) => [
-                      `₹${value}`,
-                      "Sales",
-                    ]}
-                    contentStyle={{
-                      backgroundColor:
-                        "#111827",
-                      border: "none",
-                      borderRadius:
-                        "12px",
-                      color: "#fff",
-                      padding:
-                        "8px 12px",
-                    }}
-                  />
+          {/* DELIVERIES */}
 
+          <div className="mb-6">
 
-                  <Legend
-                    verticalAlign="bottom"
-                    align="center"
-                    iconType="circle"
-                    wrapperStyle={{
-                      paddingTop:
-                        "20px",
-                    }}
-                    formatter={(
-                      value
-                    ) => (
-                      <span className="font-medium text-[#0F172A]">
-                        {value}
-                      </span>
-                    )}
-                  />
+            <DeliverySummary
+              deliveries={
+                report.delivery_assignments ||
+                []
+              }
+            />
 
-                </PieChart>
-
-              </ResponsiveContainer>
-
-            </div>
-
-          </Card>
-
-
-          <Card className="overflow-hidden">
-
-            <div className="flex items-center justify-between border-b border-[rgba(74,124,158,0.12)] px-7 py-5">
-
-              <h2 className="text-2xl font-bold uppercase tracking-wide text-[#0F172A]">
-                Sales vs Purchases
-              </h2>
-
-            </div>
-
-
-            <div className="flex items-center justify-center p-6">
-
-              <ResponsiveContainer
-                width="100%"
-                height={290}
-              >
-
-                <BarChart
-                  data={
-                    comparisonData
-                  }
-                  barGap={8}
-                  barCategoryGap="20%"
-                >
-
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#E5E7EB"
-                  />
-
-                  <XAxis
-                    dataKey="store"
-                    stroke="#64748B"
-                    tick={{
-                      fontSize: 12,
-                    }}
-                  />
-
-                  <YAxis
-                    stroke="#64748B"
-                    tick={{
-                      fontSize: 12,
-                    }}
-                    tickFormatter={(
-                      value
-                    ) =>
-                      `${value / 1000}k`
-                    }
-                  />
-
-                  <Tooltip
-                    formatter={(
-                      value,
-                      name
-                    ) => [
-                      `₹${value}`,
-                      name,
-                    ]}
-                    contentStyle={{
-                      backgroundColor:
-                        "#111827",
-                      border: "none",
-                      borderRadius:
-                        "12px",
-                      color: "#fff",
-                      padding:
-                        "8px 12px",
-                    }}
-                  />
-
-                  <Legend
-                    verticalAlign="bottom"
-                    align="center"
-                    wrapperStyle={{
-                      paddingTop:
-                        "20px",
-                    }}
-                    formatter={(
-                      value
-                    ) => (
-                      <span className="font-medium text-[#0F172A]">
-                        {value}
-                      </span>
-                    )}
-                  />
-
-                  <Bar
-                    dataKey="sales"
-                    name="Sales"
-                    fill="#2563eb"
-                    radius={[
-                      8,
-                      8,
-                      0,
-                      0,
-                    ]}
-                  />
-
-                  <Bar
-                    dataKey="purchases"
-                    name="Purchases"
-                    fill="#8b5cf6"
-                    radius={[
-                      8,
-                      8,
-                      0,
-                      0,
-                    ]}
-                  />
-
-                </BarChart>
-
-              </ResponsiveContainer>
-
-            </div>
-
-          </Card>
+          </div>
 
         </div>
 
-
-        <StoreTable
-          storeSummary={
-            storeSummary
-          }
-          totalStores={
-            totalStores
-          }
-        />
-
-      </main>
+      </div>
 
 
-      {/* ═══════════════════════════════════════════════════════
+      {/* =====================================================
           MOBILE
-      ═══════════════════════════════════════════════════════ */}
+      ===================================================== */}
 
-      <main className="min-h-screen overflow-x-hidden bg-[#F8FAFC] px-5 pb-24 lg:hidden">
+      <div className="lg:hidden">
 
-        {/* Page Header */}
-
-        <div className="-mx-5 mb-5 border-b border-gray-200 bg-white px-5 pb-4 pt-5">
-
-          <div className="flex items-start justify-between gap-3">
-
-            <div className="min-w-0">
-
-              <h1 className="text-[24px] font-bold leading-tight tracking-tight text-[#0F172A]">
-                Dashboard
-              </h1>
-
-              <p className="mt-1 text-[13px] font-medium leading-5 text-[#64748B]">
-                Store overview and today&apos;s activity.
-              </p>
-
-            </div>
-
-
-            {/* Stores Active */}
-
-            <div className="mt-1 flex shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-
-              <span className="text-[11px] font-medium text-emerald-700">
-                {totalStores}
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* Greeting */}
-
-       <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-
-  <div className="flex min-w-0 items-center gap-1.5">
-    <p className="shrink-0 text-[14px] font-medium leading-tight text-[#64748B]">
-      {greeting},
-    </p>
-
-    <h2 className="min-w-0 truncate text-[18px] font-semibold leading-tight tracking-tight text-[#0F172A]">
-      {displayName}
-    </h2>
-  </div>
-
-</section>
-
-        {/* Today's Overview */}
-
-        <section className="mb-5">
-
-          <div className="mb-3">
-
-            <h2 className="text-[18px] font-semibold leading-tight tracking-tight text-[#0F172A]">
-              Today&apos;s Overview
-            </h2>
-
-          </div>
-
-
-          <div className="grid grid-cols-2 gap-3">
-
-            <MobileKpiCard
-              label="Total Sales"
-              value={formatINR(
-                dashboardSummary.total_sales ||
-                  0
-              )}
-              Icon={IndianRupee}
-              iconBackground="bg-blue-50"
-              iconColor="text-blue-600"
-            />
-
-
-            <MobileKpiCard
-              label="Sales Bills"
-              value={
-                dashboardSummary.total_bills ||
-                0
-              }
-              Icon={Receipt}
-              iconBackground="bg-violet-50"
-              iconColor="text-violet-600"
-            />
-
-
-            <MobileKpiCard
-              label="Deliveries"
-              value={
-                dashboardSummary.total_deliveries ||
-                0
-              }
-              Icon={Package}
-              iconBackground="bg-emerald-50"
-              iconColor="text-emerald-600"
-            />
-
-
-            <MobileKpiCard
-              label="Purchases"
-              value={formatINR(
-                dashboardSummary.total_purchases ||
-                  0
-              )}
-              Icon={ShoppingCart}
-              iconBackground="bg-orange-50"
-              iconColor="text-orange-600"
-            />
-
-          </div>
-
-        </section>
-
-
-        {/* Store Performance */}
-
-        <MobileStorePerformance
-          storeSummary={
-            storeSummary
-          }
-          totalStores={
-            totalStores
-          }
+        <MobileDailyReport
+          report={report}
+          loadReport={loadReport}
+          navigate={navigate}
         />
 
-      </main>
-
+      </div>
     </>
   );
 }
